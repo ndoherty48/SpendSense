@@ -1,4 +1,7 @@
 <Solution>
+  <Folder Name="/App/">
+    <Project Path="App/SpendSense/SpendSense.csproj" />
+  </Folder>
   <Folder Name="/Infra/">
     <Project Path="Infra/SpendSense.AppHost/SpendSense.AppHost.csproj" />
     <Project Path="Infra/SpendSense.ServiceDefaults/SpendSense.ServiceDefaults.csproj" />
