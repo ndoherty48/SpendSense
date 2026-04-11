@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Hosting;
 
 namespace SpendSense;
 
@@ -15,6 +16,8 @@ public static class MauiProgram
 			});
 
 		builder.Services.AddMauiBlazorWebView();
+
+		builder.AddServiceDefaults();
 
 #if DEBUG
 		builder.Services.AddBlazorWebViewDeveloperTools();
