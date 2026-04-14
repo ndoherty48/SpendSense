@@ -1,6 +1,8 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Hosting;
 
+using MudBlazor.Services;
+
 namespace SpendSense;
 
 public static class MauiProgram
@@ -16,6 +18,7 @@ public static class MauiProgram
 			});
 
 		builder.Services.AddMauiBlazorWebView();
+		builder.Services.AddMudServices();
 
 		builder.AddServiceDefaults();
 
