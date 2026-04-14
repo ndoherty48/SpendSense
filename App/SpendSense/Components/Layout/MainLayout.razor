@@ -1,17 +1,18 @@
 ﻿@inherits LayoutComponentBase
 
-<MudThemeProvider />
+<MudThemeProvider Theme="_theme" @bind-IsDarkMode="@_isDarkMode"/>
 <MudPopoverProvider />
 <MudDialogProvider />
 <MudSnackbarProvider />
 
 <MudLayout>
-    <MudAppBar>
+    <MudAppBar Color="Color.Primary">
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
         SpendSense
     </MudAppBar>
     <MudDrawer @bind-Open="@_drawerOpen">
         <NavMenu/>
+        <MudSwitch @bind-Value="_isDarkMode" Color="Color.Primary" Class="ma-4" T="bool" Label="@_toggleText"/>
     </MudDrawer>
     <MudMainContent>
         @Body
@@ -20,6 +21,15 @@
 
 @code {
     bool _drawerOpen = true;
+    private MudTheme _theme = new(){
+        PaletteLight = {
+            Primary = Colors.Teal.Darken3,
+        },PaletteDark = {
+            Primary = Colors.Teal.Darken3,
+        }
+    };
+    private bool _isDarkMode;
+    private string _toggleText => _isDarkMode ? "Dark Mode" : "Light Mode";
 
     void DrawerToggle()
     {
