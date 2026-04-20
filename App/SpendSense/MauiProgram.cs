@@ -3,6 +3,9 @@ using Microsoft.Extensions.Hosting;
 
 using MudBlazor.Services;
 
+using SpendSense.Common.Data;
+using Microsoft.EntityFrameworkCore;
+
 namespace SpendSense;
 
 public static class MauiProgram
@@ -19,6 +22,7 @@ public static class MauiProgram
 
 		builder.Services.AddMauiBlazorWebView();
 		builder.Services.AddMudServices();
+		builder.Services.AddSpendSenseDb();
 
 		builder.AddServiceDefaults();
 
@@ -27,6 +31,8 @@ public static class MauiProgram
 		builder.Logging.AddDebug();
 #endif
 
-		return builder.Build();
+		var app = builder.Build();
+		app.RunDatabaseMigrations();
+		return app;
 	}
 }
