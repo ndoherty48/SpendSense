@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SpendSense.Common.Data;
 
@@ -10,9 +11,11 @@ using SpendSense.Common.Data;
 namespace SpendSense.Migrations
 {
     [DbContext(typeof(SpendSenseDbContext))]
-    partial class SpendSenseDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260514194820_Initial SpendSense Migration")]
+    partial class InitialSpendSenseMigration
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.6");
@@ -122,9 +125,6 @@ namespace SpendSense.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Name")
-                        .IsUnique();
-
                     b.ToTable("Categories");
                 });
 
@@ -163,23 +163,7 @@ namespace SpendSense.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Code")
-                        .IsUnique();
-
                     b.ToTable("Currencies");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Code = "GBP",
-                            CreatedAt = new DateTime(2026, 5, 14, 20, 21, 4, 57, DateTimeKind.Utc).AddTicks(2610),
-                            ExchangeRate = 1.0,
-                            IsDefault = true,
-                            Name = "Great British Pound",
-                            Symbol = "£",
-                            UpdatedAt = new DateTime(2026, 5, 14, 20, 21, 4, 57, DateTimeKind.Utc).AddTicks(2610)
-                        });
                 });
 
             modelBuilder.Entity("SpendSense.Common.Models.Goal", b =>
@@ -209,13 +193,11 @@ namespace SpendSense.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("Priority")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
+                    b.Property<int>("PriorityEnum")
+                        .HasColumnType("INTEGER");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
+                    b.Property<int>("StatusEnum")
+                        .HasColumnType("INTEGER");
 
                     b.Property<double>("TargetAmount")
                         .HasColumnType("REAL");
@@ -268,9 +250,6 @@ namespace SpendSense.Migrations
 
                     b.HasIndex("CurrencyId");
 
-                    b.HasIndex("Year", "Month", "CategoryId", "CurrencyId")
-                        .IsUnique();
-
                     b.ToTable("MonthlyBudgets");
                 });
 
@@ -302,9 +281,8 @@ namespace SpendSense.Migrations
                     b.Property<DateTime?>("EndDate")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("Frequency")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
+                    b.Property<int>("Frequency")
+                        .HasColumnType("INTEGER");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("INTEGER");
@@ -352,9 +330,6 @@ namespace SpendSense.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Name")
-                        .IsUnique();
-
                     b.ToTable("Tags");
                 });
 
@@ -390,9 +365,8 @@ namespace SpendSense.Migrations
                     b.Property<DateTime>("TransactionDate")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("TransactionType")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
+                    b.Property<int>("TransactionType")
+                        .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("TEXT");
