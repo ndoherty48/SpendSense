@@ -1,4 +1,4 @@
-<Project Sdk="Aspire.AppHost.Sdk/13.3.1">
+<Project Sdk="Aspire.AppHost.Sdk/13.3.3">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -9,6 +9,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Aspire.Hosting.Maui" Version="13.3.1-preview.1.26261.7" />
+    <PackageReference Include="Aspire.Hosting.Maui" Version="13.3.3-preview.1.26264.13" />
   </ItemGroup>
 </Project>

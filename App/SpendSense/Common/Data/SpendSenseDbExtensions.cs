@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 
+using SpendSense.Common.Data.Repositories;
+
 namespace SpendSense.Common.Data;
 
 public static class SpendSenseDbExtensions
@@ -8,14 +10,16 @@ public static class SpendSenseDbExtensions
     {
         public IServiceCollection AddSpendSenseDb()
         {
-            return services.AddDbContext<SpendSenseDbContext>(x =>
-            {
-                var folder = Path.Join(FileSystem.AppDataDirectory, "SpendSense");
-                if(Directory.Exists(folder) is false)
-                    Directory.CreateDirectory(folder);
-                var path = Path.Join(folder, "SpendSense.db");
-                x.UseSqlite($"Data Source={path}");
-            });
+            return services
+                .AddDbContext<SpendSenseDbContext>(x =>
+                {
+                    var folder = Path.Join(FileSystem.AppDataDirectory, "SpendSense");
+                    if(Directory.Exists(folder) is false)
+                        Directory.CreateDirectory(folder);
+                    var path = Path.Join(folder, "SpendSense.db");
+                    x.UseSqlite($"Data Source={path}");
+                })
+                .AddTransient<CurrencyRepository>();
         }
     }
 

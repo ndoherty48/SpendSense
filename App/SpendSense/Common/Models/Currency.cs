@@ -7,15 +7,15 @@ public class Currency
     [Key]
     public int Id { get; set; }
     [Required, MaxLength(3)]
-    public required string Code { get; set; }
+    public string? Code { get; set; }
     [Required, MaxLength(50)]
-    public required string Name { get; set; }
+    public string? Name { get; set; }
     [Required, MaxLength(5)]
-    public required string Symbol { get; set; }
-    public required double ExchangeRate { get; set; }
+    public string? Symbol { get; set; }
+    public double ExchangeRate { get; set; } = 1.0;
     public bool IsDefault { get; set; }
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
 
     // Navigation Properties
     public ICollection<Transaction> Transactions {get;set;} = [];

@@ -14,8 +14,8 @@ public class Category
     public string? Color { get; set; }
     [MaxLength(50)]
     public string? Icon { get; set; }
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
 
     // Navigation Properties
     public ICollection<Transaction> Transactions {get;set;} = [];

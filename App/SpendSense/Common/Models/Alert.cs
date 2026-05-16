@@ -17,8 +17,8 @@ public class Alert
     public int? RecurringTransactionId {get;set;}
     public decimal? ThresholdPercentage {get;set;}
     public bool IsActive {get;set;}
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;  
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
 
     [ForeignKey(nameof(CategoryId))]
     public Category? Category {get;set;}

@@ -11,8 +11,8 @@ public class MonthlyBudget
     [Range(1, 12)]
     public int Month { get; set; }
     public double BudgetedAmount { get; set; }
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
     public int CategoryId {get;set;}
     public int CurrencyId {get;set;}
 

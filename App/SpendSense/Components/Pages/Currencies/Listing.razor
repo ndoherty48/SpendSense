@@ -1,0 +1,42 @@
+﻿@page "/currencies"
+@using Microsoft.EntityFrameworkCore
+@using SpendSense.Common.Data
+@using SpendSense.Common.Data.Repositories
+@using SpendSense.Common.Models
+@inject CurrencyRepository Repository;
+
+
+<h1>Currencies</h1>
+<MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/currencies/add">Add</MudButton>
+
+<MudTable Items="@Elements" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@_loading" LoadingProgressColor="Color.Info">
+    <HeaderContent>
+        <MudTh>Name</MudTh>
+        <MudTh>Code</MudTh>
+        <MudTh>Symbol</MudTh>
+        <MudTh>Exchange Rate</MudTh>
+        <MudTh>Default</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Name">@context.Name</MudTd>
+        <MudTd DataLabel="Code">@context.Code</MudTd>
+        <MudTd DataLabel="Symbol">@context.Symbol</MudTd>
+        <MudTd DataLabel="Exchange Rate">@context.ExchangeRate</MudTd>
+        @if(context.IsDefault){
+            <MudTd DataLabel="Default"><MudIcon Icon="@Icons.Material.Filled.CheckCircle"/></MudTd>
+        }
+        else{
+            <MudTd DataLabel="Default"></MudTd>
+        }
+    </RowTemplate>
+</MudTable>
+
+@code{
+    public IEnumerable<Currency>? Elements;
+    private bool _loading => Elements is null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Elements = await Repository.GetAll();
+    }
+}

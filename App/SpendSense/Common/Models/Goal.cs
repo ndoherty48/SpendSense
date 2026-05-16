@@ -17,9 +17,9 @@ public class Goal
     public double CurrentAmount { get; set; } = 0.0;
     public DateTime? TargetDate { get; set; }
     public PriorityEnum Priority { get; set; } = PriorityEnum.Low;
-    public StatusEnum Status { get; set; } = StatusEnum.Active;
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+    public StatusEnum Status { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
 
 
     [ForeignKey(nameof(CategoryId))]

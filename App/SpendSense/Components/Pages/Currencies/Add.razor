@@ -1,0 +1,84 @@
+@page "/currencies/add"
+@using Microsoft.EntityFrameworkCore
+@using SpendSense.Common.Data
+@using SpendSense.Common.Data.Repositories
+@using SpendSense.Common.Models
+@using System.ComponentModel.DataAnnotations
+@inject CurrencyRepository Repository
+
+
+<EditForm Model="@model" OnValidSubmit="OnValidSubmit">
+<DataAnnotationsValidator/>
+<MudGrid>
+    <MudItem xs="12" sm="7">
+        <MudCard>
+            <MudCardContent>
+                <MudTextField 
+                    Label="Name" 
+                    @bind-Value="model.Name" 
+                    For="@(() => model.Name)"
+                />
+                <MudTextField 
+                    Label="Code" 
+                    Class="mt-3"
+                    @bind-Value="model.Code" 
+                    For="@(() => model.Code)"
+                />
+                <MudTextField 
+                    Label="Symbol" 
+                    Class="mt-3"
+                    @bind-Value="model.Symbol" 
+                    For="@(() => model.Symbol)"
+                />
+                <MudTextField 
+                    Label="Exchange Rate" 
+                    Class="mt-3"
+                    @bind-Value="model.ExchangeRate" 
+                    For="@(() => model.ExchangeRate)"
+                />
+            </MudCardContent>
+            <MudCardActions>
+                <MudButton 
+                    ButtonType="ButtonType.Submit" 
+                    Variant="Variant.Filled" 
+                    Color="Color.Primary" 
+                    Class="ml-auto"
+                >Add</MudButton>
+            </MudCardActions>
+        </MudCard>
+    </MudItem>
+    <MudItem xs="12" sm="5">
+        <MudPaper Class="pa-4 mud-height-full">
+            <MudText Typo="Typo.subtitle2">Validation Summary</MudText>
+            @if (success)
+            {
+                <MudText Color="Color.Success">Success</MudText>
+            }
+            else
+            {
+                <MudText Color="@Color.Error">
+                    <ValidationSummary />
+                </MudText>
+            }
+        </MudPaper>
+    </MudItem>
+    <MudItem xs="12">
+        <MudText Typo="Typo.body2" Align="Align.Center">
+            Fill out the form correctly to see the success message.
+        </MudText>
+    </MudItem>
+</MudGrid>
+</EditForm>
+
+
+@code {
+    Currency model = new();
+    bool success;
+
+    private void OnValidSubmit(EditContext context)
+    {
+        success = true;
+        StateHasChanged();
+        Repository.Add(model).Wait();
+    }
+}

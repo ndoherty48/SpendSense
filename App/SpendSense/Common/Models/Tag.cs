@@ -10,8 +10,8 @@ public class Tag
     public required string Name { get; set; }
     [MaxLength(7)]
     public string? Color { get; set; }
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
 
     // Navigation Properties
     public ICollection<Transaction> Transactions {get;set;} = [];

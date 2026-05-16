@@ -1,6 +1,5 @@
 
 using Microsoft.EntityFrameworkCore;
-
 using SpendSense.Common.Models;
 
 namespace SpendSense.Common.Data;
