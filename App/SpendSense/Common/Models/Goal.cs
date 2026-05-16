@@ -1,9 +1,12 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
+using SpendSense.Common.Interfaces;
+using SpendSense.Common.Models.Enums;
+
 namespace SpendSense.Common.Models;
 
-public class Goal
+public class Goal : ITimestamped
 {
     [Key]
     public int Id { get; set; }

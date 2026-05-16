@@ -1,9 +1,11 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
+using SpendSense.Common.Interfaces;
+
 namespace SpendSense.Common.Models;
 
-public class MonthlyBudget
+public class MonthlyBudget : ITimestamped
 {
     [Key]
     public int Id { get; set; }

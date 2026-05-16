@@ -1,4 +1,4 @@
-namespace SpendSense.Common.Models;
+namespace SpendSense.Common.Models.Enums;
 
 public enum StatusEnum
 {

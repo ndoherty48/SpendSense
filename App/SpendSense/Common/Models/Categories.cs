@@ -1,8 +1,11 @@
 using System.ComponentModel.DataAnnotations;
 
+using SpendSense.Common.Interfaces;
+using SpendSense.Common.Models.Enums;
+
 namespace SpendSense.Common.Models;
 
-public class Category
+public class Category : ITimestamped
 {
     [Key]
     public int Id { get; set; }

@@ -1,9 +1,11 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
+using SpendSense.Common.Interfaces;
+
 namespace SpendSense.Common.Models;
 
-public class Alert
+public class Alert : ITimestamped
 {
     [Key]
     public int Id {get;set;}

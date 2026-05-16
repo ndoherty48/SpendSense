@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
+using SpendSense.Common.Data.Interceptors;
 using SpendSense.Common.Data.Repositories;
 
 namespace SpendSense.Common.Data;
@@ -18,6 +19,7 @@ public static class SpendSenseDbExtensions
                         Directory.CreateDirectory(folder);
                     var path = Path.Join(folder, "SpendSense.db");
                     x.UseSqlite($"Data Source={path}");
+                    x.AddInterceptors(new AddEntityInterceptor(), new ModifyEntityInterceptor());
                 })
                 .AddTransient<CurrencyRepository>();
         }

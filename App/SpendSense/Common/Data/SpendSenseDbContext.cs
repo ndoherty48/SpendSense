@@ -1,6 +1,7 @@
 
 using Microsoft.EntityFrameworkCore;
 using SpendSense.Common.Models;
+using SpendSense.Common.Models.Enums;
 
 namespace SpendSense.Common.Data;
 

@@ -1,8 +1,10 @@
 using System.ComponentModel.DataAnnotations;
 
+using SpendSense.Common.Interfaces;
+
 namespace SpendSense.Common.Models;
 
-public class Tag
+public class Tag : ITimestamped
 {
     [Key]
     public int Id { get; set; }

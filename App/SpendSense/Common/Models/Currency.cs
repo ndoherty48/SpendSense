@@ -1,8 +1,10 @@
 using System.ComponentModel.DataAnnotations;
 
+using SpendSense.Common.Interfaces;
+
 namespace SpendSense.Common.Models;
 
-public class Currency
+public class Currency : ITimestamped
 {
     [Key]
     public int Id { get; set; }
