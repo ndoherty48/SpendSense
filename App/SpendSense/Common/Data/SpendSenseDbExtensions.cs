@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 
 using SpendSense.Common.Data.Interceptors;
 using SpendSense.Common.Data.Repositories;
+using SpendSense.Common.Services;
 
 namespace SpendSense.Common.Data;
 
@@ -40,6 +41,14 @@ public static class SpendSenseDbExtensions
             {
                 dbContext.Database.Migrate();
             }
+            return app;
+        }
+
+        public MauiApp GenerateRecurringTransactions()
+        {
+            using var scope = app.Services.CreateScope();
+            var generator = scope.ServiceProvider.GetRequiredService<RecurringTransactionGenerator>();
+            generator.GeneratePendingTransactions().GetAwaiter().GetResult();
             return app;
         }
     }

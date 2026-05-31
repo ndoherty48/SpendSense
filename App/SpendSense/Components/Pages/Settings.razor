@@ -1,0 +1,41 @@
+@page "/settings"
+@using SpendSense.Common.Services
+@inject SettingsService SettingsSvc
+
+<h1>Settings</h1>
+
+<MudCard Class="mt-4">
+    <MudCardContent>
+        <MudText Typo="Typo.h6">Appearance</MudText>
+        <MudSwitch Value="isDarkMode" ValueChanged="OnThemeChanged" Color="Color.Primary" T="bool" Label="Dark Mode" Class="mt-2"/>
+
+        <MudDivider Class="my-4"/>
+
+        <MudText Typo="Typo.h6">Budget</MudText>
+        <MudSwitch Value="incomeAppliesNextMonth" ValueChanged="OnIncomeSettingChanged" Color="Color.Primary" T="bool" Label="Income applies to next month" Class="mt-2"/>
+        <MudText Typo="Typo.caption" Class="ml-12">When enabled, income is counted toward the following month's budget (e.g. salary on May 28th funds June).</MudText>
+    </MudCardContent>
+</MudCard>
+
+@code {
+    bool isDarkMode;
+    bool incomeAppliesNextMonth;
+
+    protected override void OnInitialized()
+    {
+        isDarkMode = SettingsSvc.IsDarkMode;
+        incomeAppliesNextMonth = SettingsSvc.IncomeAppliesNextMonth;
+    }
+
+    void OnThemeChanged(bool value)
+    {
+        isDarkMode = value;
+        SettingsSvc.IsDarkMode = value;
+    }
+
+    void OnIncomeSettingChanged(bool value)
+    {
+        incomeAppliesNextMonth = value;
+        SettingsSvc.IncomeAppliesNextMonth = value;
+    }
+}

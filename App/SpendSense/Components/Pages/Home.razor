@@ -128,9 +128,21 @@
             .Where(mb => mb.Year == year && mb.Month == month)
             .ToListAsync();
 
-        totalIncome = monthTransactions
-            .Where(t => t.TransactionType == TransactionTypeEnum.Income)
-            .Sum(t => t.Amount);
+        // When "income applies to next month" is on, pull income from the previous month
+        if (Settings.IncomeAppliesNextMonth)
+        {
+            var prevStart = startOfMonth.AddMonths(-1);
+            var incomeTransactions = await Db.Transactions
+                .Where(t => t.TransactionDate >= prevStart && t.TransactionDate < startOfMonth && t.TransactionType == TransactionTypeEnum.Income)
+                .ToListAsync();
+            totalIncome = incomeTransactions.Sum(t => t.Amount);
+        }
+        else
+        {
+            totalIncome = monthTransactions
+                .Where(t => t.TransactionType == TransactionTypeEnum.Income)
+                .Sum(t => t.Amount);
+        }
 
         totalExpenses = monthTransactions
             .Where(t => t.TransactionType == TransactionTypeEnum.Expense)

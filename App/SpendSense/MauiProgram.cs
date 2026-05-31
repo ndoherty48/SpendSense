@@ -25,6 +25,7 @@ public static class MauiProgram
 		builder.Services.AddMudServices();
 		builder.Services.AddSpendSenseDb();
 		builder.Services.AddSingleton<SettingsService>();
+		builder.Services.AddTransient<RecurringTransactionGenerator>();
 
 		builder.AddServiceDefaults();
 
@@ -35,6 +36,7 @@ public static class MauiProgram
 
 		var app = builder.Build();
 		app.RunDatabaseMigrations();
+		app.GenerateRecurringTransactions();
 		return app;
 	}
 }

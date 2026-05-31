@@ -19,4 +19,10 @@ public class SettingsService
         get => Preferences.Get(nameof(ActiveBudgetMonth), DateTime.Now.Month);
         set => Preferences.Set(nameof(ActiveBudgetMonth), value);
     }
+
+    public bool IncomeAppliesNextMonth
+    {
+        get => Preferences.Get(nameof(IncomeAppliesNextMonth), true);
+        set => Preferences.Set(nameof(IncomeAppliesNextMonth), value);
+    }
 }
