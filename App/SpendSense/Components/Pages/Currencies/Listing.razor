@@ -21,10 +21,10 @@
         <MudTd DataLabel="Symbol">@context.Symbol</MudTd>
         <MudTd DataLabel="Exchange Rate">@context.ExchangeRate</MudTd>
         @if(context.IsDefault){
-            <MudTd DataLabel="Default"><MudIcon Icon="@Icons.Material.Filled.CheckCircle"/></MudTd>
+            <MudTd DataLabel="Default"><MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success"/></MudTd>
         }
         else{
-            <MudTd DataLabel="Default"></MudTd>
+            <MudTd DataLabel="Default"><MudButton Size="Size.Small" Variant="Variant.Text" OnClick="() => SetDefault(context)">Set Default</MudButton></MudTd>
         }
     </RowTemplate>
 </MudTable>
@@ -35,6 +35,12 @@
 
     protected override async Task OnInitializedAsync()
     {
+        Elements = await Repository.GetAll();
+    }
+
+    async Task SetDefault(Currency currency)
+    {
+        await Repository.SetDefault(currency);
         Elements = await Repository.GetAll();
     }
 }
