@@ -1,5 +1,112 @@
-﻿@page "/"
+@page "/"
+@using Microsoft.EntityFrameworkCore
+@using SpendSense.Common.Data
+@using SpendSense.Common.Models
+@using SpendSense.Common.Models.Enums
+@inject SpendSenseDbContext Db
 
-<h1>Hello, world!</h1>
+<h1>Dashboard</h1>
+<MudText Typo="Typo.subtitle1" Class="mb-4">@DateTime.Now.ToString("MMMM yyyy")</MudText>
 
-Welcome to your new app.
+<MudGrid>
+    <MudItem xs="12" sm="4">
+        <MudPaper Class="pa-4" Elevation="2">
+            <MudText Typo="Typo.subtitle2">Income</MudText>
+            <MudText Typo="Typo.h5" Color="Color.Success">£@totalIncome.ToString("F2")</MudText>
+        </MudPaper>
+    </MudItem>
+    <MudItem xs="12" sm="4">
+        <MudPaper Class="pa-4" Elevation="2">
+            <MudText Typo="Typo.subtitle2">Expenses</MudText>
+            <MudText Typo="Typo.h5" Color="Color.Error">£@totalExpenses.ToString("F2")</MudText>
+        </MudPaper>
+    </MudItem>
+    <MudItem xs="12" sm="4">
+        <MudPaper Class="pa-4" Elevation="2">
+            <MudText Typo="Typo.subtitle2">Balance</MudText>
+            <MudText Typo="Typo.h5" Color="@(balance >= 0 ? Color.Success : Color.Error)">£@balance.ToString("F2")</MudText>
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+@if (spendingByCategory.Any())
+{
+    <MudText Typo="Typo.h6" Class="mt-6 mb-2">Spending by Category</MudText>
+    <MudSimpleTable Hover="true" Dense="true">
+        <thead>
+            <tr><th>Category</th><th>Spent</th></tr>
+        </thead>
+        <tbody>
+            @foreach (var item in spendingByCategory)
+            {
+                <tr><td>@item.Category</td><td>£@item.Amount.ToString("F2")</td></tr>
+            }
+        </tbody>
+    </MudSimpleTable>
+}
+
+@if (recentTransactions.Any())
+{
+    <MudText Typo="Typo.h6" Class="mt-6 mb-2">Recent Transactions</MudText>
+    <MudSimpleTable Hover="true" Dense="true">
+        <thead>
+            <tr><th>Date</th><th>Description</th><th>Category</th><th>Amount</th></tr>
+        </thead>
+        <tbody>
+            @foreach (var t in recentTransactions)
+            {
+                <tr>
+                    <td>@t.TransactionDate.ToString("dd MMM")</td>
+                    <td>@t.Description</td>
+                    <td>@t.Category?.Name</td>
+                    <td style="color: @(t.TransactionType == TransactionTypeEnum.Income ? "green" : "red")">
+                        @(t.TransactionType == TransactionTypeEnum.Income ? "+" : "-")£@t.Amount.ToString("F2")
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </MudSimpleTable>
+}
+
+@code {
+    double totalIncome;
+    double totalExpenses;
+    double balance;
+    List<(string Category, double Amount)> spendingByCategory = [];
+    List<Transaction> recentTransactions = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        var now = DateTime.Now;
+        var startOfMonth = new DateTime(now.Year, now.Month, 1);
+        var endOfMonth = startOfMonth.AddMonths(1);
+
+        var monthTransactions = await Db.Transactions
+            .Include(t => t.Category)
+            .Where(t => t.TransactionDate >= startOfMonth && t.TransactionDate < endOfMonth)
+            .ToListAsync();
+
+        totalIncome = monthTransactions
+            .Where(t => t.TransactionType == TransactionTypeEnum.Income)
+            .Sum(t => t.Amount);
+
+        totalExpenses = monthTransactions
+            .Where(t => t.TransactionType == TransactionTypeEnum.Expense)
+            .Sum(t => t.Amount);
+
+        balance = totalIncome - totalExpenses;
+
+        spendingByCategory = monthTransactions
+            .Where(t => t.TransactionType == TransactionTypeEnum.Expense && t.Category is not null)
+            .GroupBy(t => t.Category!.Name)
+            .Select(g => (Category: g.Key, Amount: g.Sum(t => t.Amount)))
+            .OrderByDescending(x => x.Amount)
+            .ToList();
+
+        recentTransactions = await Db.Transactions
+            .Include(t => t.Category)
+            .OrderByDescending(t => t.TransactionDate)
+            .Take(10)
+            .ToListAsync();
+    }
+}
