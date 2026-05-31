@@ -39,7 +39,7 @@
 @if (spendingByCategory.Any())
 {
     <MudText Typo="Typo.h6" Class="mt-6 mb-2">Spending by Category</MudText>
-    <MudChart ChartType="ChartType.Pie" InputData="@chartData" InputLabels="@chartLabels" Width="300px" Height="300px" T="int" />
+    <MudChart ChartType="ChartType.Pie" ChartSeries="@chartData" ChartLabels="@chartLabels" Width="300px" Height="300px" T="double" />
 
     <MudSimpleTable Hover="true" Dense="true" Class="mt-4">
         <thead>
@@ -89,7 +89,7 @@
     double balance;
     List<(string Category, double Spent, double Budget)> spendingByCategory = [];
     List<Transaction> recentTransactions = [];
-    double[] chartData = [];
+    List<ChartSeries<double>> chartData = [];
     string[] chartLabels = [];
 
     protected override async Task OnInitializedAsync()
@@ -165,7 +165,7 @@
             .OrderByDescending(x => x.Spent)
             .ToList();
 
-        chartData = spendingByCategory.Select(x => x.Spent).ToArray();
+        chartData = spendingByCategory.Select(x => new ChartSeries<double> { Name = x.Category, Data = new ChartData<double>(x.Spent) }).ToList();
         chartLabels = spendingByCategory.Select(x => x.Category).ToArray();
 
         recentTransactions = await Db.Transactions
