@@ -32,7 +32,6 @@
                     Label="Category" 
                     Class="mt-3"
                     @bind-Value="model.CategoryId"
-                    For="@(() => model.CategoryId)"
                 >
                     @foreach (var cat in categories)
                     {
@@ -50,7 +49,6 @@
                     Label="Currency" 
                     Class="mt-3"
                     @bind-Value="model.CurrencyId"
-                    For="@(() => model.CurrencyId)"
                 >
                     @foreach (var cur in currencies)
                     {
