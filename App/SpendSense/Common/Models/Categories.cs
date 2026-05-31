@@ -13,7 +13,7 @@ public class Category : ITimestamped
     public required string Name { get; set; }
     [Required]
     public required TransactionTypeEnum Type { get; set; }
-    [MaxLength(7)]
+    [MaxLength(9)]
     public string? Color { get; set; }
     [MaxLength(50)]
     public string? Icon { get; set; }
