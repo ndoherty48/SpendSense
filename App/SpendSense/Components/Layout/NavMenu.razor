@@ -1,10 +1,16 @@
-﻿<MudNavMenu>
-    <MudNavLink Href="/" Match="NavLinkMatch.All">Dashboard</MudNavLink>
-    <MudNavLink Href="/monthly-budgets" Match="NavLinkMatch.Prefix">Monthly Budgets</MudNavLink>
-    <MudNavLink Href="/categories"  Match="NavLinkMatch.Prefix">Categories</MudNavLink>
-    <MudNavLink Href="/currencies"  Match="NavLinkMatch.Prefix">Currencies</MudNavLink>
-    <MudNavLink Href="/transactions"  Match="NavLinkMatch.Prefix">Transactions</MudNavLink>
-    <MudNavLink Href="/goals"  Match="NavLinkMatch.Prefix">Goals</MudNavLink>
-    <MudNavLink Href="/recurring-transactions"  Match="NavLinkMatch.Prefix">Recurring Transactions</MudNavLink>
-    <MudNavLink Href="/settings"  Match="NavLinkMatch.Prefix">Settings</MudNavLink>
+<MudNavMenu>
+    <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard">Dashboard</MudNavLink>
+    <MudNavGroup Title="Transactions" Icon="@Icons.Material.Filled.Receipt" Expanded="true">
+        <MudNavLink Href="/transactions" Match="NavLinkMatch.Prefix">All</MudNavLink>
+        <MudNavLink Href="/recurring-transactions" Match="NavLinkMatch.Prefix">Recurring</MudNavLink>
+    </MudNavGroup>
+    <MudNavGroup Title="Budget" Icon="@Icons.Material.Filled.AccountBalance" Expanded="true">
+        <MudNavLink Href="/monthly-budgets" Match="NavLinkMatch.Prefix">Monthly Budgets</MudNavLink>
+        <MudNavLink Href="/goals" Match="NavLinkMatch.Prefix">Goals</MudNavLink>
+    </MudNavGroup>
+    <MudNavGroup Title="Settings" Icon="@Icons.Material.Filled.Settings">
+        <MudNavLink Href="/categories" Match="NavLinkMatch.Prefix">Categories</MudNavLink>
+        <MudNavLink Href="/currencies" Match="NavLinkMatch.Prefix">Currencies</MudNavLink>
+        <MudNavLink Href="/settings" Match="NavLinkMatch.Prefix">Preferences</MudNavLink>
+    </MudNavGroup>
 </MudNavMenu>
