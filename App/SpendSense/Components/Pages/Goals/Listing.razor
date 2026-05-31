@@ -1,7 +1,11 @@
 @page "/goals"
+@using Microsoft.EntityFrameworkCore
+@using SpendSense.Common.Data
 @using SpendSense.Common.Data.Repositories
 @using SpendSense.Common.Models
+@using SpendSense.Common.Models.Enums
 @inject GoalRepository Repository
+@inject SpendSenseDbContext Db
 @inject IDialogService Dialog
 
 <h1>Goals</h1>
@@ -18,27 +22,48 @@
         <MudTh></MudTh>
     </HeaderContent>
     <RowTemplate>
-        <MudTd DataLabel="Name">@context.Name</MudTd>
-        <MudTd DataLabel="Category">@context.Category?.Name</MudTd>
-        <MudTd DataLabel="Progress">@context.Currency?.Symbol@context.CurrentAmount.ToString("F2") / @context.Currency?.Symbol@context.TargetAmount.ToString("F2")</MudTd>
-        <MudTd DataLabel="Target Date">@context.TargetDate?.ToString("dd MMM yyyy")</MudTd>
-        <MudTd DataLabel="Priority">@context.Priority</MudTd>
+        <MudTd DataLabel="Name">@context.Goal.Name</MudTd>
+        <MudTd DataLabel="Category">@context.Goal.Category?.Name</MudTd>
+        <MudTd DataLabel="Progress">
+            @context.Goal.Currency?.Symbol@context.Saved.ToString("F2") / @context.Goal.Currency?.Symbol@context.Goal.TargetAmount.ToString("F2")
+            <MudProgressLinear Value="@context.Percentage" Color="Color.Success" Class="mt-1" />
+        </MudTd>
+        <MudTd DataLabel="Target Date">@context.Goal.TargetDate?.ToString("dd MMM yyyy")</MudTd>
+        <MudTd DataLabel="Priority">@context.Goal.Priority</MudTd>
         <MudTd DataLabel="Status">
-            <MudChip T="string" Size="Size.Small" Color="@(context.Status == SpendSense.Common.Models.Enums.StatusEnum.Completed ? Color.Success : context.Status == SpendSense.Common.Models.Enums.StatusEnum.Abandoned ? Color.Error : Color.Info)">
-                @context.Status
+            <MudChip T="string" Size="Size.Small" Color="@(context.Goal.Status == StatusEnum.Completed ? Color.Success : context.Goal.Status == StatusEnum.Abandoned ? Color.Error : Color.Info)">
+                @context.Goal.Status
             </MudChip>
         </MudTd>
-        <MudTd><MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Href="@($"/goals/edit/{context.Id}")" /> <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => Delete(context)" /></MudTd>
+        <MudTd><MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Href="@($"/goals/edit/{context.Goal.Id}")" /> <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => Delete(context.Goal)" /></MudTd>
     </RowTemplate>
 </MudTable>
 
 @code {
-    IEnumerable<Goal>? Elements;
+    List<GoalProgress>? Elements;
     bool _loading => Elements is null;
 
     protected override async Task OnInitializedAsync()
     {
-        Elements = await Repository.GetAll();
+        await LoadGoals();
+    }
+
+    async Task LoadGoals()
+    {
+        var goals = await Repository.GetAll();
+        Elements = [];
+        foreach (var goal in goals)
+        {
+            double saved = 0;
+            if (goal.CategoryId.HasValue)
+            {
+                saved = await Db.Transactions
+                    .Where(t => t.CategoryId == goal.CategoryId && t.TransactionType == TransactionTypeEnum.Savings && t.TransactionDate >= goal.CreatedAt)
+                    .SumAsync(t => t.Amount);
+            }
+            var pct = goal.TargetAmount > 0 ? Math.Min(100, saved / goal.TargetAmount * 100) : 0;
+            Elements.Add(new GoalProgress(goal, saved, pct));
+        }
     }
 
     async Task Delete(Goal goal)
@@ -46,6 +71,8 @@
         var result = await Dialog.ShowMessageBoxAsync("Delete", $"Delete goal '{goal.Name}'?", "Yes", "Cancel");
         if (result != true) return;
         await Repository.Delete(goal);
-        Elements = await Repository.GetAll();
+        await LoadGoals();
     }
+
+    record GoalProgress(Goal Goal, double Saved, double Percentage);
 }

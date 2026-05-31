@@ -16,19 +16,25 @@
 </MudStack>
 
 <MudGrid>
-    <MudItem xs="12" sm="4">
+    <MudItem xs="6" sm="3">
         <MudPaper Class="pa-4" Elevation="2">
             <MudText Typo="Typo.subtitle2">Income</MudText>
             <MudText Typo="Typo.h5" Color="Color.Success">£@totalIncome.ToString("F2")</MudText>
         </MudPaper>
     </MudItem>
-    <MudItem xs="12" sm="4">
+    <MudItem xs="6" sm="3">
         <MudPaper Class="pa-4" Elevation="2">
             <MudText Typo="Typo.subtitle2">Expenses</MudText>
             <MudText Typo="Typo.h5" Color="Color.Error">£@totalExpenses.ToString("F2")</MudText>
         </MudPaper>
     </MudItem>
-    <MudItem xs="12" sm="4">
+    <MudItem xs="6" sm="3">
+        <MudPaper Class="pa-4" Elevation="2">
+            <MudText Typo="Typo.subtitle2">Savings</MudText>
+            <MudText Typo="Typo.h5" Color="Color.Info">£@totalSavings.ToString("F2")</MudText>
+        </MudPaper>
+    </MudItem>
+    <MudItem xs="6" sm="3">
         <MudPaper Class="pa-4" Elevation="2">
             <MudText Typo="Typo.subtitle2">Balance</MudText>
             <MudText Typo="Typo.h5" Color="@(balance >= 0 ? Color.Success : Color.Error)">£@balance.ToString("F2")</MudText>
@@ -86,6 +92,7 @@
     int month;
     double totalIncome;
     double totalExpenses;
+    double totalSavings;
     double balance;
     List<(string Category, double Spent, double Budget)> spendingByCategory = [];
     List<Transaction> recentTransactions = [];
@@ -152,7 +159,11 @@
             .Where(t => t.TransactionType == TransactionTypeEnum.Expense)
             .Sum(t => t.Amount);
 
-        balance = totalIncome - totalExpenses;
+        totalSavings = monthTransactions
+            .Where(t => t.TransactionType == TransactionTypeEnum.Savings)
+            .Sum(t => t.Amount);
+
+        balance = totalIncome - totalExpenses - totalSavings;
 
         spendingByCategory = monthTransactions
             .Where(t => t.TransactionType == TransactionTypeEnum.Expense && t.Category is not null)
