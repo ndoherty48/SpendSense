@@ -5,27 +5,18 @@
 namespace SpendSense.Migrations
 {
     /// <inheritdoc />
-    public partial class AddTransactionTypeToRecurringTransaction : Migration
+    public partial class FixEmptyTransactionTypeOnRecurringTransactions : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<string>(
-                name: "TransactionType",
-                table: "RecurringTransactions",
-                type: "TEXT",
-                nullable: false,
-                defaultValue: "Expense");
-
             migrationBuilder.Sql("UPDATE RecurringTransactions SET TransactionType = 'Expense' WHERE TransactionType = ''");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
-                name: "TransactionType",
-                table: "RecurringTransactions");
+
         }
     }
 }
