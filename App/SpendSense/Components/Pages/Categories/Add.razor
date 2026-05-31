@@ -19,8 +19,7 @@
                 <MudSelect 
                     Label="Type" 
                     Class="mt-3"
-                    @bind-Value="model.Type" 
-                    For="@(() => model.Type)"
+                    @bind-Value="model.Type"
                 >
                     @foreach (var type in Enum.GetValues<TransactionTypeEnum>())
                     {
