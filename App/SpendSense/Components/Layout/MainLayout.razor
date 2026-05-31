@@ -14,7 +14,6 @@
     </MudAppBar>
     <MudDrawer @bind-Open="@_drawerOpen">
         <NavMenu/>
-        <MudSwitch Value="_isDarkMode" ValueChanged="OnThemeToggled" Color="Color.Primary" Class="ma-4" T="bool" Label="@_toggleText"/>
     </MudDrawer>
     <MudMainContent>
         @Body
@@ -29,17 +28,10 @@
         PaletteDark = { Primary = Colors.Teal.Darken3 }
     };
     private bool _isDarkMode;
-    private string _toggleText => _isDarkMode ? "Dark Mode" : "Light Mode";
 
-    protected override void OnInitialized()
+    protected override void OnParametersSet()
     {
         _isDarkMode = Settings.IsDarkMode;
-    }
-
-    void OnThemeToggled(bool value)
-    {
-        _isDarkMode = value;
-        Settings.IsDarkMode = value;
     }
 
     void DrawerToggle()
