@@ -54,8 +54,9 @@
         <tbody>
             @foreach (var item in spendingByCategory)
             {
-                <tr>
-                    <td>@item.Category</td>
+                var overspent = item.Budget > 0 && item.Spent > item.Budget;
+                <tr style="@(overspent ? "color: var(--mud-palette-error); font-weight: bold;" : "")">
+                    <td>@item.Category @if (overspent) { <MudIcon Icon="@Icons.Material.Filled.Warning" Size="Size.Small" Color="Color.Error" /> }</td>
                     <td>£@item.Spent.ToString("F2")</td>
                     <td>@(item.Budget > 0 ? $"£{item.Budget:F2}" : "—")</td>
                 </tr>
