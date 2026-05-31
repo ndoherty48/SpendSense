@@ -58,7 +58,6 @@
                     Label="Frequency" 
                     Class="mt-3"
                     @bind-Value="model.Frequency"
-                    For="@(() => model.Frequency)"
                 >
                     @foreach (var f in Enum.GetValues<FrequencyEnum>())
                     {

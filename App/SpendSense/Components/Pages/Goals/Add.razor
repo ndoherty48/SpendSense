@@ -63,7 +63,6 @@
                     Label="Priority" 
                     Class="mt-3"
                     @bind-Value="model.Priority"
-                    For="@(() => model.Priority)"
                 >
                     @foreach (var p in Enum.GetValues<PriorityEnum>())
                     {
