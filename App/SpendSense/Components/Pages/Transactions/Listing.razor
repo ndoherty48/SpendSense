@@ -13,6 +13,7 @@
         <MudTh>Category</MudTh>
         <MudTh>Type</MudTh>
         <MudTh>Amount</MudTh>
+        <MudTh></MudTh>
     </HeaderContent>
     <RowTemplate>
         <MudTd DataLabel="Date">@context.TransactionDate.ToString("dd MMM yyyy")</MudTd>
@@ -24,6 +25,7 @@
             </MudChip>
         </MudTd>
         <MudTd DataLabel="Amount">@context.Currency?.Symbol@context.Amount.ToString("F2")</MudTd>
+        <MudTd><MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => Delete(context)" /></MudTd>
     </RowTemplate>
 </MudTable>
 
@@ -33,6 +35,12 @@
 
     protected override async Task OnInitializedAsync()
     {
+        Elements = await Repository.GetAll();
+    }
+
+    async Task Delete(Transaction transaction)
+    {
+        await Repository.Delete(transaction);
         Elements = await Repository.GetAll();
     }
 }

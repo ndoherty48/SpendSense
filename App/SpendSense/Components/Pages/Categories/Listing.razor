@@ -12,6 +12,7 @@
         <MudTh>Type</MudTh>
         <MudTh>Color</MudTh>
         <MudTh>Icon</MudTh>
+        <MudTh></MudTh>
     </HeaderContent>
     <RowTemplate>
         <MudTd DataLabel="Name">@context.Name</MudTd>
@@ -23,6 +24,7 @@
             }
         </MudTd>
         <MudTd DataLabel="Icon">@context.Icon</MudTd>
+        <MudTd><MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => Delete(context)" /></MudTd>
     </RowTemplate>
 </MudTable>
 
@@ -32,6 +34,12 @@
 
     protected override async Task OnInitializedAsync()
     {
+        Elements = await Repository.GetAll();
+    }
+
+    async Task Delete(Category category)
+    {
+        await Repository.Delete(category);
         Elements = await Repository.GetAll();
     }
 }

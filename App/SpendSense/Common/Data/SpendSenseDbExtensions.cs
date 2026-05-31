@@ -46,9 +46,18 @@ public static class SpendSenseDbExtensions
 
         public MauiApp GenerateRecurringTransactions()
         {
-            using var scope = app.Services.CreateScope();
-            var generator = scope.ServiceProvider.GetRequiredService<RecurringTransactionGenerator>();
-            generator.GeneratePendingTransactions().GetAwaiter().GetResult();
+            try
+            {
+                Console.WriteLine("[RecurringGen] Starting generation...");
+                using var scope = app.Services.CreateScope();
+                var generator = scope.ServiceProvider.GetRequiredService<RecurringTransactionGenerator>();
+                generator.GeneratePendingTransactions().GetAwaiter().GetResult();
+                Console.WriteLine("[RecurringGen] Complete.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[RecurringGen] FAILED: {ex}");
+            }
             return app;
         }
     }

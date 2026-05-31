@@ -14,6 +14,7 @@
         <MudTh>Target Date</MudTh>
         <MudTh>Priority</MudTh>
         <MudTh>Status</MudTh>
+        <MudTh></MudTh>
     </HeaderContent>
     <RowTemplate>
         <MudTd DataLabel="Name">@context.Name</MudTd>
@@ -26,6 +27,7 @@
                 @context.Status
             </MudChip>
         </MudTd>
+        <MudTd><MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => Delete(context)" /></MudTd>
     </RowTemplate>
 </MudTable>
 
@@ -35,6 +37,12 @@
 
     protected override async Task OnInitializedAsync()
     {
+        Elements = await Repository.GetAll();
+    }
+
+    async Task Delete(Goal goal)
+    {
+        await Repository.Delete(goal);
         Elements = await Repository.GetAll();
     }
 }

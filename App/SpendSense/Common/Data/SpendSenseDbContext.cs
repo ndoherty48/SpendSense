@@ -76,5 +76,8 @@ public class SpendSenseDbContext(DbContextOptions options) : DbContext(options)
         modelBuilder.Entity<RecurringTransaction>()
             .Property(p=>p.Frequency)
             .HasConversion(v=>v.ToString(), v=>Enum.Parse<FrequencyEnum>(v));
+        modelBuilder.Entity<RecurringTransaction>()
+            .Property(p=>p.TransactionType)
+            .HasConversion(v=>v.ToString(), v=>Enum.Parse<TransactionTypeEnum>(v));
     }
 }

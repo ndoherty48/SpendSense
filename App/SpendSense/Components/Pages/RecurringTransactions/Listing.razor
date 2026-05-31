@@ -14,6 +14,7 @@
         <MudTh>Frequency</MudTh>
         <MudTh>Start Date</MudTh>
         <MudTh>Active</MudTh>
+        <MudTh></MudTh>
     </HeaderContent>
     <RowTemplate>
         <MudTd DataLabel="Name">@context.Name</MudTd>
@@ -27,6 +28,7 @@
                 <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" />
             }
         </MudTd>
+        <MudTd><MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => Delete(context)" /></MudTd>
     </RowTemplate>
 </MudTable>
 
@@ -36,6 +38,12 @@
 
     protected override async Task OnInitializedAsync()
     {
+        Elements = await Repository.GetAll();
+    }
+
+    async Task Delete(RecurringTransaction recurring)
+    {
+        await Repository.Delete(recurring);
         Elements = await Repository.GetAll();
     }
 }

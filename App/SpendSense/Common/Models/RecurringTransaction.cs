@@ -20,6 +20,8 @@ public class RecurringTransaction : ITimestamped
     [Required]
     public required FrequencyEnum Frequency { get; set; }
     [Required]
+    public required TransactionTypeEnum TransactionType { get; set; }
+    [Required]
     public required DateTime StartDate { get; set; }
     public DateTime? EndDate { get; set; }
     public bool IsActive { get; set; } = true;
