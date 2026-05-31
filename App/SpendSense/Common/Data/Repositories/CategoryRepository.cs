@@ -28,6 +28,14 @@ public sealed class CategoryRepository(SpendSenseDbContext dbContext)
         return await dbContext.SaveChangesAsync();
     }
 
+    public async Task<bool> HasDependencies(int categoryId)
+    {
+        return await dbContext.Transactions.AnyAsync(t => t.CategoryId == categoryId)
+            || await dbContext.RecurringTransactions.AnyAsync(r => r.CategoryId == categoryId)
+            || await dbContext.MonthlyBudgets.AnyAsync(mb => mb.CategoryId == categoryId)
+            || await dbContext.Goals.AnyAsync(g => g.CategoryId == categoryId);
+    }
+
     public async Task<int> Delete(Category category)
     {
         dbContext.Categories.Remove(category);

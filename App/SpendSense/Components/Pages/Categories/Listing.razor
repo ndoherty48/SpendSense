@@ -40,6 +40,11 @@
 
     async Task Delete(Category category)
     {
+        if (await Repository.HasDependencies(category.Id))
+        {
+            await Dialog.ShowMessageBoxAsync("Cannot Delete", $"'{category.Name}' is used by transactions, budgets, or goals and cannot be deleted.", "OK");
+            return;
+        }
         var result = await Dialog.ShowMessageBoxAsync("Delete", $"Delete category '{category.Name}'?", "Yes", "Cancel");
         if (result != true) return;
         await Repository.Delete(category);

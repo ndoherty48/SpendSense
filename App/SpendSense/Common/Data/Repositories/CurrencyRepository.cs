@@ -28,6 +28,14 @@ public sealed class CurrencyRepository(SpendSenseDbContext dbContext)
         return 0;
     }
 
+    public async Task<bool> HasDependencies(int currencyId)
+    {
+        return await dbContext.Transactions.AnyAsync(t => t.CurrencyId == currencyId)
+            || await dbContext.RecurringTransactions.AnyAsync(r => r.CurrencyId == currencyId)
+            || await dbContext.MonthlyBudgets.AnyAsync(mb => mb.CurrencyId == currencyId)
+            || await dbContext.Goals.AnyAsync(g => g.CurrencyId == currencyId);
+    }
+
     public async Task<int> Delete(Currency currency)
     {
         dbContext.Currencies.Remove(currency);

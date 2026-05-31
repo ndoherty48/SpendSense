@@ -1,8 +1,8 @@
-﻿@page "/currencies"
+@page "/currencies"
 @using SpendSense.Common.Data.Repositories
 @using SpendSense.Common.Models
 @inject CurrencyRepository Repository
-
+@inject IDialogService Dialog
 
 <h1>Currencies</h1>
 <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/currencies/add">Add</MudButton>
@@ -14,6 +14,7 @@
         <MudTh>Symbol</MudTh>
         <MudTh>Exchange Rate</MudTh>
         <MudTh>Default</MudTh>
+        <MudTh></MudTh>
     </HeaderContent>
     <RowTemplate>
         <MudTd DataLabel="Name">@context.Name</MudTd>
@@ -26,12 +27,13 @@
         else{
             <MudTd DataLabel="Default"><MudButton Size="Size.Small" Variant="Variant.Text" OnClick="() => SetDefault(context)">Set Default</MudButton></MudTd>
         }
+        <MudTd><MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => Delete(context)" /></MudTd>
     </RowTemplate>
 </MudTable>
 
-@code{
-    public IEnumerable<Currency>? Elements;
-    private bool _loading => Elements is null;
+@code {
+    IEnumerable<Currency>? Elements;
+    bool _loading => Elements is null;
 
     protected override async Task OnInitializedAsync()
     {
@@ -41,6 +43,24 @@
     async Task SetDefault(Currency currency)
     {
         await Repository.SetDefault(currency);
+        Elements = await Repository.GetAll();
+    }
+
+    async Task Delete(Currency currency)
+    {
+        if (currency.IsDefault)
+        {
+            await Dialog.ShowMessageBoxAsync("Cannot Delete", "Cannot delete the default currency.", "OK");
+            return;
+        }
+        if (await Repository.HasDependencies(currency.Id))
+        {
+            await Dialog.ShowMessageBoxAsync("Cannot Delete", $"'{currency.Name}' is used by transactions or budgets and cannot be deleted.", "OK");
+            return;
+        }
+        var result = await Dialog.ShowMessageBoxAsync("Delete", $"Delete currency '{currency.Name}'?", "Yes", "Cancel");
+        if (result != true) return;
+        await Repository.Delete(currency);
         Elements = await Repository.GetAll();
     }
 }
