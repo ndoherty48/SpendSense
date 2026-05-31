@@ -1,4 +1,6 @@
-﻿@inherits LayoutComponentBase
+@inherits LayoutComponentBase
+@using SpendSense.Common.Services
+@inject SettingsService Settings
 
 <MudThemeProvider Theme="_theme" @bind-IsDarkMode="@_isDarkMode"/>
 <MudPopoverProvider />
@@ -12,7 +14,7 @@
     </MudAppBar>
     <MudDrawer @bind-Open="@_drawerOpen">
         <NavMenu/>
-        <MudSwitch @bind-Value="_isDarkMode" Color="Color.Primary" Class="ma-4" T="bool" Label="@_toggleText"/>
+        <MudSwitch Value="_isDarkMode" ValueChanged="OnThemeToggled" Color="Color.Primary" Class="ma-4" T="bool" Label="@_toggleText"/>
     </MudDrawer>
     <MudMainContent>
         @Body
@@ -21,15 +23,24 @@
 
 @code {
     bool _drawerOpen = true;
-    private MudTheme _theme = new(){
-        PaletteLight = {
-            Primary = Colors.Teal.Darken3,
-        },PaletteDark = {
-            Primary = Colors.Teal.Darken3,
-        }
+    private MudTheme _theme = new()
+    {
+        PaletteLight = { Primary = Colors.Teal.Darken3 },
+        PaletteDark = { Primary = Colors.Teal.Darken3 }
     };
     private bool _isDarkMode;
     private string _toggleText => _isDarkMode ? "Dark Mode" : "Light Mode";
+
+    protected override void OnInitialized()
+    {
+        _isDarkMode = Settings.IsDarkMode;
+    }
+
+    void OnThemeToggled(bool value)
+    {
+        _isDarkMode = value;
+        Settings.IsDarkMode = value;
+    }
 
     void DrawerToggle()
     {

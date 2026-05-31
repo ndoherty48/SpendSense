@@ -3,10 +3,17 @@
 @using SpendSense.Common.Data
 @using SpendSense.Common.Models
 @using SpendSense.Common.Models.Enums
+@using SpendSense.Common.Services
 @inject SpendSenseDbContext Db
+@inject SettingsService Settings
 
 <h1>Dashboard</h1>
-<MudText Typo="Typo.subtitle1" Class="mb-4">@DateTime.Now.ToString("MMMM yyyy")</MudText>
+
+<MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
+    <MudIconButton Icon="@Icons.Material.Filled.ChevronLeft" OnClick="PreviousMonth" />
+    <MudText Typo="Typo.subtitle1">@(new DateTime(year, month, 1).ToString("MMMM yyyy"))</MudText>
+    <MudIconButton Icon="@Icons.Material.Filled.ChevronRight" OnClick="NextMonth" />
+</MudStack>
 
 <MudGrid>
     <MudItem xs="12" sm="4">
@@ -34,12 +41,16 @@
     <MudText Typo="Typo.h6" Class="mt-6 mb-2">Spending by Category</MudText>
     <MudSimpleTable Hover="true" Dense="true">
         <thead>
-            <tr><th>Category</th><th>Spent</th></tr>
+            <tr><th>Category</th><th>Spent</th><th>Budget</th></tr>
         </thead>
         <tbody>
             @foreach (var item in spendingByCategory)
             {
-                <tr><td>@item.Category</td><td>£@item.Amount.ToString("F2")</td></tr>
+                <tr>
+                    <td>@item.Category</td>
+                    <td>£@item.Spent.ToString("F2")</td>
+                    <td>@(item.Budget > 0 ? $"£{item.Budget:F2}" : "—")</td>
+                </tr>
             }
         </tbody>
     </MudSimpleTable>
@@ -69,21 +80,52 @@
 }
 
 @code {
+    int year;
+    int month;
     double totalIncome;
     double totalExpenses;
     double balance;
-    List<(string Category, double Amount)> spendingByCategory = [];
+    List<(string Category, double Spent, double Budget)> spendingByCategory = [];
     List<Transaction> recentTransactions = [];
 
     protected override async Task OnInitializedAsync()
     {
-        var now = DateTime.Now;
-        var startOfMonth = new DateTime(now.Year, now.Month, 1);
+        year = Settings.ActiveBudgetYear;
+        month = Settings.ActiveBudgetMonth;
+        await LoadData();
+    }
+
+    async Task PreviousMonth()
+    {
+        if (month == 1) { month = 12; year--; }
+        else { month--; }
+        Settings.ActiveBudgetYear = year;
+        Settings.ActiveBudgetMonth = month;
+        await LoadData();
+    }
+
+    async Task NextMonth()
+    {
+        if (month == 12) { month = 1; year++; }
+        else { month++; }
+        Settings.ActiveBudgetYear = year;
+        Settings.ActiveBudgetMonth = month;
+        await LoadData();
+    }
+
+    async Task LoadData()
+    {
+        var startOfMonth = new DateTime(year, month, 1);
         var endOfMonth = startOfMonth.AddMonths(1);
 
         var monthTransactions = await Db.Transactions
             .Include(t => t.Category)
             .Where(t => t.TransactionDate >= startOfMonth && t.TransactionDate < endOfMonth)
+            .ToListAsync();
+
+        var budgets = await Db.MonthlyBudgets
+            .Include(mb => mb.Category)
+            .Where(mb => mb.Year == year && mb.Month == month)
             .ToListAsync();
 
         totalIncome = monthTransactions
@@ -99,12 +141,17 @@
         spendingByCategory = monthTransactions
             .Where(t => t.TransactionType == TransactionTypeEnum.Expense && t.Category is not null)
             .GroupBy(t => t.Category!.Name)
-            .Select(g => (Category: g.Key, Amount: g.Sum(t => t.Amount)))
-            .OrderByDescending(x => x.Amount)
+            .Select(g => (
+                Category: g.Key,
+                Spent: g.Sum(t => t.Amount),
+                Budget: budgets.FirstOrDefault(b => b.Category.Name == g.Key)?.BudgetedAmount ?? 0
+            ))
+            .OrderByDescending(x => x.Spent)
             .ToList();
 
         recentTransactions = await Db.Transactions
             .Include(t => t.Category)
+            .Where(t => t.TransactionDate >= startOfMonth && t.TransactionDate < endOfMonth)
             .OrderByDescending(t => t.TransactionDate)
             .Take(10)
             .ToListAsync();
