@@ -74,6 +74,8 @@
 
     async Task OnValidSubmit(EditContext context)
     {
+        if (model.Color?.Length > 7)
+            model.Color = model.Color[..7];
         await Repository.Add(model);
         success = true;
         Navigation.NavigateTo("/categories");
