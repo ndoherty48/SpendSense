@@ -2,6 +2,7 @@
 @using SpendSense.Common.Data.Repositories
 @using SpendSense.Common.Models
 @inject CategoryRepository Repository
+@inject IDialogService Dialog
 
 <h1>Categories</h1>
 <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/categories/add">Add</MudButton>
@@ -39,6 +40,8 @@
 
     async Task Delete(Category category)
     {
+        var result = await Dialog.ShowMessageBoxAsync("Delete", $"Delete category '{category.Name}'?", "Yes", "Cancel");
+        if (result != true) return;
         await Repository.Delete(category);
         Elements = await Repository.GetAll();
     }

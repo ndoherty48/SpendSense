@@ -2,6 +2,7 @@
 @using SpendSense.Common.Data.Repositories
 @using SpendSense.Common.Models
 @inject RecurringTransactionRepository Repository
+@inject IDialogService Dialog
 
 <h1>Recurring Transactions</h1>
 <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/recurring-transactions/add">Add</MudButton>
@@ -43,6 +44,8 @@
 
     async Task Delete(RecurringTransaction recurring)
     {
+        var result = await Dialog.ShowMessageBoxAsync("Delete", $"Delete recurring transaction '{recurring.Name}'?", "Yes", "Cancel");
+        if (result != true) return;
         await Repository.Delete(recurring);
         Elements = await Repository.GetAll();
     }

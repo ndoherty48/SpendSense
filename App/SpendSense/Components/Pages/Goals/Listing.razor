@@ -2,6 +2,7 @@
 @using SpendSense.Common.Data.Repositories
 @using SpendSense.Common.Models
 @inject GoalRepository Repository
+@inject IDialogService Dialog
 
 <h1>Goals</h1>
 <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/goals/add">Add</MudButton>
@@ -42,6 +43,8 @@
 
     async Task Delete(Goal goal)
     {
+        var result = await Dialog.ShowMessageBoxAsync("Delete", $"Delete goal '{goal.Name}'?", "Yes", "Cancel");
+        if (result != true) return;
         await Repository.Delete(goal);
         Elements = await Repository.GetAll();
     }

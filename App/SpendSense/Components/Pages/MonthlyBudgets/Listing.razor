@@ -2,6 +2,7 @@
 @using SpendSense.Common.Data.Repositories
 @using SpendSense.Common.Models
 @inject MonthlyBudgetRepository Repository
+@inject IDialogService Dialog
 
 <h1>Monthly Budgets</h1>
 <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/monthly-budgets/add">Add</MudButton>
@@ -32,6 +33,8 @@
 
     async Task Delete(MonthlyBudget budget)
     {
+        var result = await Dialog.ShowMessageBoxAsync("Delete", "Delete this monthly budget?", "Yes", "Cancel");
+        if (result != true) return;
         await Repository.Delete(budget);
         Elements = await Repository.GetAll();
     }

@@ -1,12 +1,35 @@
 @page "/transactions"
 @using SpendSense.Common.Data.Repositories
 @using SpendSense.Common.Models
+@using SpendSense.Common.Models.Enums
 @inject TransactionRepository Repository
+@inject CategoryRepository CategoryRepo
+@inject IDialogService Dialog
 
 <h1>Transactions</h1>
 <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/transactions/add">Add</MudButton>
 
-<MudTable Items="@Elements" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@_loading" LoadingProgressColor="Color.Info">
+<MudGrid Class="mt-4 mb-2">
+    <MudItem xs="12" sm="4">
+        <MudTextField Value="searchText" Placeholder="Search description..." Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" Immediate="true" ValueChanged="OnSearchChanged" T="string" />
+    </MudItem>
+    <MudItem xs="6" sm="3">
+        <MudSelect Value="filterCategory" Placeholder="Category" Clearable="true" ValueChanged="OnCategoryChanged" T="int?">
+            @foreach (var cat in categories)
+            {
+                <MudSelectItem Value="@((int?)cat.Id)">@cat.Name</MudSelectItem>
+            }
+        </MudSelect>
+    </MudItem>
+    <MudItem xs="6" sm="3">
+        <MudSelect Value="filterType" Placeholder="Type" Clearable="true" ValueChanged="OnTypeChanged" T="TransactionTypeEnum?">
+            <MudSelectItem Value="@((TransactionTypeEnum?)TransactionTypeEnum.Income)">Income</MudSelectItem>
+            <MudSelectItem Value="@((TransactionTypeEnum?)TransactionTypeEnum.Expense)">Expense</MudSelectItem>
+        </MudSelect>
+    </MudItem>
+</MudGrid>
+
+<MudTable Items="@FilteredElements" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@_loading" LoadingProgressColor="Color.Info">
     <HeaderContent>
         <MudTh>Date</MudTh>
         <MudTh>Description</MudTh>
@@ -20,7 +43,7 @@
         <MudTd DataLabel="Description">@context.Description</MudTd>
         <MudTd DataLabel="Category">@context.Category?.Name</MudTd>
         <MudTd DataLabel="Type">
-            <MudChip T="string" Color="@(context.TransactionType == SpendSense.Common.Models.Enums.TransactionTypeEnum.Income ? Color.Success : Color.Error)" Size="Size.Small">
+            <MudChip T="string" Color="@(context.TransactionType == TransactionTypeEnum.Income ? Color.Success : Color.Error)" Size="Size.Small">
                 @context.TransactionType
             </MudChip>
         </MudTd>
@@ -30,17 +53,46 @@
 </MudTable>
 
 @code {
-    IEnumerable<Transaction>? Elements;
-    bool _loading => Elements is null;
+    IReadOnlyCollection<Transaction>? allElements;
+    IEnumerable<Transaction>? FilteredElements;
+    IReadOnlyCollection<Category> categories = [];
+    bool _loading => allElements is null;
+    string searchText = "";
+    int? filterCategory;
+    TransactionTypeEnum? filterType;
 
     protected override async Task OnInitializedAsync()
     {
-        Elements = await Repository.GetAll();
+        allElements = await Repository.GetAll();
+        categories = await CategoryRepo.GetAll();
+        ApplyFilters();
     }
+
+    void ApplyFilters()
+    {
+        if (allElements is null) return;
+        var filtered = allElements.AsEnumerable();
+
+        if (!string.IsNullOrWhiteSpace(searchText))
+            filtered = filtered.Where(t => t.Description.Contains(searchText, StringComparison.OrdinalIgnoreCase));
+        if (filterCategory.HasValue)
+            filtered = filtered.Where(t => t.CategoryId == filterCategory.Value);
+        if (filterType.HasValue)
+            filtered = filtered.Where(t => t.TransactionType == filterType.Value);
+
+        FilteredElements = filtered.ToList();
+    }
+
+    void OnSearchChanged(string value) { searchText = value; ApplyFilters(); }
+    void OnCategoryChanged(int? value) { filterCategory = value; ApplyFilters(); }
+    void OnTypeChanged(TransactionTypeEnum? value) { filterType = value; ApplyFilters(); }
 
     async Task Delete(Transaction transaction)
     {
+        var result = await Dialog.ShowMessageBoxAsync("Delete", $"Delete transaction '{transaction.Description}'?", "Yes", "Cancel");
+        if (result != true) return;
         await Repository.Delete(transaction);
-        Elements = await Repository.GetAll();
+        allElements = await Repository.GetAll();
+        ApplyFilters();
     }
 }
