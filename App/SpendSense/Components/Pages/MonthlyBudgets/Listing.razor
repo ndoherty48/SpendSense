@@ -5,7 +5,10 @@
 @inject IDialogService Dialog
 
 <h1>Monthly Budgets</h1>
-<MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/monthly-budgets/add">Add</MudButton>
+<MudStack Row="true" Spacing="2">
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/monthly-budgets/add">Add</MudButton>
+    <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="CopyToNextMonth" StartIcon="@Icons.Material.Filled.ContentCopy">Copy to Next Month</MudButton>
+</MudStack>
 
 <MudTable Items="@Elements" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@_loading" LoadingProgressColor="Color.Info">
     <HeaderContent>
@@ -37,5 +40,19 @@
         if (result != true) return;
         await Repository.Delete(budget);
         Elements = await Repository.GetAll();
+    }
+
+    async Task CopyToNextMonth()
+    {
+        var latest = Elements?.FirstOrDefault();
+        if (latest is null) return;
+
+        var next = new DateTime(latest.Year, latest.Month, 1).AddMonths(1);
+
+        var count = await Repository.CopyMonth(latest.Year, latest.Month, next.Year, next.Month);
+        if (count > 0)
+            Elements = await Repository.GetAll();
+        else
+            await Dialog.ShowMessageBoxAsync("Info", $"Budgets for {next:yyyy-MM} already exist.", "OK");
     }
 }
