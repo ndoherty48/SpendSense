@@ -1,0 +1,53 @@
+@page "/categories/edit/{Id:int}"
+@using SpendSense.Common.Data.Repositories
+@using SpendSense.Common.Models
+@using SpendSense.Common.Models.Enums
+@inject CategoryRepository Repository
+@inject NavigationManager Navigation
+
+@if (model is null)
+{
+    <MudText>Loading...</MudText>
+}
+else
+{
+<EditForm Model="@model" OnValidSubmit="OnValidSubmit">
+<DataAnnotationsValidator/>
+<MudGrid>
+    <MudItem xs="12" sm="7">
+        <MudCard>
+            <MudCardContent>
+                <MudTextField Label="Name" @bind-Value="model.Name" For="@(() => model.Name)" />
+                <MudSelect Label="Type" Class="mt-3" @bind-Value="model.Type">
+                    @foreach (var type in Enum.GetValues<TransactionTypeEnum>())
+                    {
+                        <MudSelectItem Value="type">@type</MudSelectItem>
+                    }
+                </MudSelect>
+                <MudColorPicker Label="Color" Class="mt-3" @bind-Text="model.Color" ColorPickerMode="ColorPickerMode.HEX" />
+                <MudTextField Label="Icon" Class="mt-3" @bind-Value="model.Icon" For="@(() => model.Icon)" />
+            </MudCardContent>
+            <MudCardActions>
+                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Save</MudButton>
+            </MudCardActions>
+        </MudCard>
+    </MudItem>
+</MudGrid>
+</EditForm>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+    Category? model;
+
+    protected override async Task OnInitializedAsync()
+    {
+        model = await Repository.GetById(Id);
+    }
+
+    async Task OnValidSubmit(EditContext context)
+    {
+        await Repository.Update(model!);
+        Navigation.NavigateTo("/categories");
+    }
+}

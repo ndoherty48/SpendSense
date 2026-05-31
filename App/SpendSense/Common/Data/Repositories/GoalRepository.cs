@@ -15,9 +15,23 @@ public sealed class GoalRepository(SpendSenseDbContext dbContext)
             .ToListAsync();
     }
 
+    public async Task<Goal?> GetById(int id)
+    {
+        return await dbContext.Goals
+            .Include(g => g.Category)
+            .Include(g => g.Currency)
+            .FirstOrDefaultAsync(g => g.Id == id);
+    }
+
     public async Task<int> Add(Goal goal)
     {
         dbContext.Goals.Add(goal);
+        return await dbContext.SaveChangesAsync();
+    }
+
+    public async Task<int> Update(Goal goal)
+    {
+        dbContext.Goals.Update(goal);
         return await dbContext.SaveChangesAsync();
     }
 

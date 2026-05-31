@@ -16,9 +16,23 @@ public sealed class MonthlyBudgetRepository(SpendSenseDbContext dbContext)
             .ToListAsync();
     }
 
+    public async Task<MonthlyBudget?> GetById(int id)
+    {
+        return await dbContext.MonthlyBudgets
+            .Include(mb => mb.Category)
+            .Include(mb => mb.Currency)
+            .FirstOrDefaultAsync(mb => mb.Id == id);
+    }
+
     public async Task<int> Add(MonthlyBudget budget)
     {
         dbContext.MonthlyBudgets.Add(budget);
+        return await dbContext.SaveChangesAsync();
+    }
+
+    public async Task<int> Update(MonthlyBudget budget)
+    {
+        dbContext.MonthlyBudgets.Update(budget);
         return await dbContext.SaveChangesAsync();
     }
 

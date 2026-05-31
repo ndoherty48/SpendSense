@@ -1,0 +1,83 @@
+@page "/goals/edit/{Id:int}"
+@using SpendSense.Common.Data.Repositories
+@using SpendSense.Common.Models
+@using SpendSense.Common.Models.Enums
+@inject GoalRepository GoalRepo
+@inject CategoryRepository CategoryRepo
+@inject CurrencyRepository CurrencyRepo
+@inject NavigationManager Navigation
+
+@if (model is null)
+{
+    <MudText>Loading...</MudText>
+}
+else
+{
+<EditForm Model="@model" OnValidSubmit="OnValidSubmit">
+<DataAnnotationsValidator/>
+<MudGrid>
+    <MudItem xs="12" sm="7">
+        <MudCard>
+            <MudCardContent>
+                <MudTextField Label="Name" @bind-Value="model.Name" For="@(() => model.Name)" />
+                <MudTextField Label="Description" Class="mt-3" @bind-Value="model.Description" Lines="2" />
+                <MudSelect Label="Category (optional)" Class="mt-3" @bind-Value="model.CategoryId" Clearable="true">
+                    @foreach (var cat in categories)
+                    {
+                        <MudSelectItem Value="@((int?)cat.Id)">@cat.Name</MudSelectItem>
+                    }
+                </MudSelect>
+                <MudNumericField Label="Target Amount" Class="mt-3" @bind-Value="model.TargetAmount" For="@(() => model.TargetAmount)" Min="0.01" />
+                <MudNumericField Label="Current Amount" Class="mt-3" @bind-Value="model.CurrentAmount" Min="0.0" />
+                <MudSelect Label="Currency" Class="mt-3" @bind-Value="model.CurrencyId">
+                    @foreach (var cur in currencies)
+                    {
+                        <MudSelectItem Value="cur.Id">@cur.Code - @cur.Name</MudSelectItem>
+                    }
+                </MudSelect>
+                <MudDatePicker Label="Target Date (optional)" Class="mt-3" @bind-Date="targetDate" />
+                <MudSelect Label="Priority" Class="mt-3" @bind-Value="model.Priority">
+                    @foreach (var p in Enum.GetValues<PriorityEnum>())
+                    {
+                        <MudSelectItem Value="p">@p</MudSelectItem>
+                    }
+                </MudSelect>
+                <MudSelect Label="Status" Class="mt-3" @bind-Value="model.Status">
+                    @foreach (var s in Enum.GetValues<StatusEnum>())
+                    {
+                        <MudSelectItem Value="s">@s</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudCardContent>
+            <MudCardActions>
+                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Save</MudButton>
+            </MudCardActions>
+        </MudCard>
+    </MudItem>
+</MudGrid>
+</EditForm>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+    Goal? model;
+    DateTime? targetDate;
+    IReadOnlyCollection<Category> categories = [];
+    IReadOnlyCollection<Currency> currencies = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        model = await GoalRepo.GetById(Id);
+        categories = await CategoryRepo.GetAll();
+        currencies = await CurrencyRepo.GetAll();
+        if (model is not null)
+            targetDate = model.TargetDate;
+    }
+
+    async Task OnValidSubmit(EditContext context)
+    {
+        model!.TargetDate = targetDate;
+        await GoalRepo.Update(model);
+        Navigation.NavigateTo("/goals");
+    }
+}

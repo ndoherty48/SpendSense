@@ -15,9 +15,23 @@ public sealed class RecurringTransactionRepository(SpendSenseDbContext dbContext
             .ToListAsync();
     }
 
+    public async Task<RecurringTransaction?> GetById(int id)
+    {
+        return await dbContext.RecurringTransactions
+            .Include(r => r.Category)
+            .Include(r => r.Currency)
+            .FirstOrDefaultAsync(r => r.Id == id);
+    }
+
     public async Task<int> Add(RecurringTransaction recurring)
     {
         dbContext.RecurringTransactions.Add(recurring);
+        return await dbContext.SaveChangesAsync();
+    }
+
+    public async Task<int> Update(RecurringTransaction recurring)
+    {
+        dbContext.RecurringTransactions.Update(recurring);
         return await dbContext.SaveChangesAsync();
     }
 

@@ -15,9 +15,23 @@ public sealed class TransactionRepository(SpendSenseDbContext dbContext)
             .ToListAsync();
     }
 
+    public async Task<Transaction?> GetById(int id)
+    {
+        return await dbContext.Transactions
+            .Include(t => t.Category)
+            .Include(t => t.Currency)
+            .FirstOrDefaultAsync(t => t.Id == id);
+    }
+
     public async Task<int> Add(Transaction transaction)
     {
         dbContext.Transactions.Add(transaction);
+        return await dbContext.SaveChangesAsync();
+    }
+
+    public async Task<int> Update(Transaction transaction)
+    {
+        dbContext.Transactions.Update(transaction);
         return await dbContext.SaveChangesAsync();
     }
 

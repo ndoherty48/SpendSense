@@ -11,9 +11,20 @@ public sealed class CategoryRepository(SpendSenseDbContext dbContext)
         return await dbContext.Categories.ToListAsync();
     }
 
+    public async Task<Category?> GetById(int id)
+    {
+        return await dbContext.Categories.FindAsync(id);
+    }
+
     public async Task<int> Add(Category category)
     {
         dbContext.Categories.Add(category);
+        return await dbContext.SaveChangesAsync();
+    }
+
+    public async Task<int> Update(Category category)
+    {
+        dbContext.Categories.Update(category);
         return await dbContext.SaveChangesAsync();
     }
 
