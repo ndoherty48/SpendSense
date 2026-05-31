@@ -1,5 +1,30 @@
-﻿@page "/monthly-budgets"
+@page "/monthly-budgets"
+@using SpendSense.Common.Data.Repositories
+@using SpendSense.Common.Models
+@inject MonthlyBudgetRepository Repository
 
 <h1>Monthly Budgets</h1>
+<MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/monthly-budgets/add">Add</MudButton>
 
-Welcome to your new app.
+<MudTable Items="@Elements" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@_loading" LoadingProgressColor="Color.Info">
+    <HeaderContent>
+        <MudTh>Period</MudTh>
+        <MudTh>Category</MudTh>
+        <MudTh>Budgeted Amount</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Period">@($"{context.Year}-{context.Month:D2}")</MudTd>
+        <MudTd DataLabel="Category">@context.Category?.Name</MudTd>
+        <MudTd DataLabel="Budgeted Amount">@context.Currency?.Symbol@context.BudgetedAmount.ToString("F2")</MudTd>
+    </RowTemplate>
+</MudTable>
+
+@code {
+    IEnumerable<MonthlyBudget>? Elements;
+    bool _loading => Elements is null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Elements = await Repository.GetAll();
+    }
+}

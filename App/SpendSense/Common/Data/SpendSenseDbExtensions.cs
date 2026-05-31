@@ -23,7 +23,10 @@ public static class SpendSenseDbExtensions
                 })
                 .AddTransient<CurrencyRepository>()
                 .AddTransient<CategoryRepository>()
-                .AddTransient<TransactionRepository>();
+                .AddTransient<TransactionRepository>()
+                .AddTransient<MonthlyBudgetRepository>()
+                .AddTransient<GoalRepository>()
+                .AddTransient<RecurringTransactionRepository>();
         }
     }
 

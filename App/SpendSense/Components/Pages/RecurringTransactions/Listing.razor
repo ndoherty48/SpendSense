@@ -1,5 +1,41 @@
-﻿@page "/transactions/recurring"
+@page "/recurring-transactions"
+@using SpendSense.Common.Data.Repositories
+@using SpendSense.Common.Models
+@inject RecurringTransactionRepository Repository
 
 <h1>Recurring Transactions</h1>
+<MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/recurring-transactions/add">Add</MudButton>
 
-Welcome to your new app.
+<MudTable Items="@Elements" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@_loading" LoadingProgressColor="Color.Info">
+    <HeaderContent>
+        <MudTh>Name</MudTh>
+        <MudTh>Category</MudTh>
+        <MudTh>Amount</MudTh>
+        <MudTh>Frequency</MudTh>
+        <MudTh>Start Date</MudTh>
+        <MudTh>Active</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Name">@context.Name</MudTd>
+        <MudTd DataLabel="Category">@context.Category?.Name</MudTd>
+        <MudTd DataLabel="Amount">@context.Currency?.Symbol@context.Amount.ToString("F2")</MudTd>
+        <MudTd DataLabel="Frequency">@context.Frequency</MudTd>
+        <MudTd DataLabel="Start Date">@context.StartDate.ToString("dd MMM yyyy")</MudTd>
+        <MudTd DataLabel="Active">
+            @if (context.IsActive)
+            {
+                <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" />
+            }
+        </MudTd>
+    </RowTemplate>
+</MudTable>
+
+@code {
+    IEnumerable<RecurringTransaction>? Elements;
+    bool _loading => Elements is null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Elements = await Repository.GetAll();
+    }
+}

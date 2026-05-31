@@ -1,5 +1,40 @@
-﻿@page "/goals"
+@page "/goals"
+@using SpendSense.Common.Data.Repositories
+@using SpendSense.Common.Models
+@inject GoalRepository Repository
 
 <h1>Goals</h1>
+<MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/goals/add">Add</MudButton>
 
-Welcome to your new app.
+<MudTable Items="@Elements" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@_loading" LoadingProgressColor="Color.Info">
+    <HeaderContent>
+        <MudTh>Name</MudTh>
+        <MudTh>Category</MudTh>
+        <MudTh>Progress</MudTh>
+        <MudTh>Target Date</MudTh>
+        <MudTh>Priority</MudTh>
+        <MudTh>Status</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Name">@context.Name</MudTd>
+        <MudTd DataLabel="Category">@context.Category?.Name</MudTd>
+        <MudTd DataLabel="Progress">@context.Currency?.Symbol@context.CurrentAmount.ToString("F2") / @context.Currency?.Symbol@context.TargetAmount.ToString("F2")</MudTd>
+        <MudTd DataLabel="Target Date">@context.TargetDate?.ToString("dd MMM yyyy")</MudTd>
+        <MudTd DataLabel="Priority">@context.Priority</MudTd>
+        <MudTd DataLabel="Status">
+            <MudChip T="string" Size="Size.Small" Color="@(context.Status == SpendSense.Common.Models.Enums.StatusEnum.Completed ? Color.Success : context.Status == SpendSense.Common.Models.Enums.StatusEnum.Abandoned ? Color.Error : Color.Info)">
+                @context.Status
+            </MudChip>
+        </MudTd>
+    </RowTemplate>
+</MudTable>
+
+@code {
+    IEnumerable<Goal>? Elements;
+    bool _loading => Elements is null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Elements = await Repository.GetAll();
+    }
+}
