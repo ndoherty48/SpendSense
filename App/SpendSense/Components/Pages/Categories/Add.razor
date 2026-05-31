@@ -1,9 +1,9 @@
-@page "/currencies/add"
+@page "/categories/add"
 @using SpendSense.Common.Data.Repositories
 @using SpendSense.Common.Models
-@inject CurrencyRepository Repository
+@using SpendSense.Common.Models.Enums
+@inject CategoryRepository Repository
 @inject NavigationManager Navigation
-
 
 <EditForm Model="@model" OnValidSubmit="OnValidSubmit">
 <DataAnnotationsValidator/>
@@ -16,23 +16,28 @@
                     @bind-Value="model.Name" 
                     For="@(() => model.Name)"
                 />
-                <MudTextField 
-                    Label="Code" 
+                <MudSelect 
+                    Label="Type" 
                     Class="mt-3"
-                    @bind-Value="model.Code" 
-                    For="@(() => model.Code)"
+                    @bind-Value="model.Type" 
+                    For="@(() => model.Type)"
+                >
+                    @foreach (var type in Enum.GetValues<TransactionTypeEnum>())
+                    {
+                        <MudSelectItem Value="type">@type</MudSelectItem>
+                    }
+                </MudSelect>
+                <MudColorPicker 
+                    Label="Color" 
+                    Class="mt-3"
+                    @bind-Text="model.Color"
+                    ColorPickerMode="ColorPickerMode.HEX"
                 />
                 <MudTextField 
-                    Label="Symbol" 
+                    Label="Icon" 
                     Class="mt-3"
-                    @bind-Value="model.Symbol" 
-                    For="@(() => model.Symbol)"
-                />
-                <MudTextField 
-                    Label="Exchange Rate" 
-                    Class="mt-3"
-                    @bind-Value="model.ExchangeRate" 
-                    For="@(() => model.ExchangeRate)"
+                    @bind-Value="model.Icon" 
+                    For="@(() => model.Icon)"
                 />
             </MudCardContent>
             <MudCardActions>
@@ -60,23 +65,17 @@
             }
         </MudPaper>
     </MudItem>
-    <MudItem xs="12">
-        <MudText Typo="Typo.body2" Align="Align.Center">
-            Fill out the form correctly to see the success message.
-        </MudText>
-    </MudItem>
 </MudGrid>
 </EditForm>
 
-
 @code {
-    Currency model = new();
+    Category model = new() { Name = "", Type = TransactionTypeEnum.Expense };
     bool success;
 
     async Task OnValidSubmit(EditContext context)
     {
         await Repository.Add(model);
         success = true;
-        Navigation.NavigateTo("/currencies");
+        Navigation.NavigateTo("/categories");
     }
 }

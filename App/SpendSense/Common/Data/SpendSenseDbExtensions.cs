@@ -21,7 +21,9 @@ public static class SpendSenseDbExtensions
                     x.UseSqlite($"Data Source={path}");
                     x.AddInterceptors(new AddEntityInterceptor(), new ModifyEntityInterceptor());
                 })
-                .AddTransient<CurrencyRepository>();
+                .AddTransient<CurrencyRepository>()
+                .AddTransient<CategoryRepository>()
+                .AddTransient<TransactionRepository>();
         }
     }
 

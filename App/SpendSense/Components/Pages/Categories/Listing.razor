@@ -1,5 +1,37 @@
-﻿@page "/categories"
+@page "/categories"
+@using SpendSense.Common.Data.Repositories
+@using SpendSense.Common.Models
+@inject CategoryRepository Repository
 
 <h1>Categories</h1>
+<MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/categories/add">Add</MudButton>
 
-Welcome to your new app.
+<MudTable Items="@Elements" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@_loading" LoadingProgressColor="Color.Info">
+    <HeaderContent>
+        <MudTh>Name</MudTh>
+        <MudTh>Type</MudTh>
+        <MudTh>Color</MudTh>
+        <MudTh>Icon</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Name">@context.Name</MudTd>
+        <MudTd DataLabel="Type">@context.Type</MudTd>
+        <MudTd DataLabel="Color">
+            @if (context.Color is not null)
+            {
+                <MudIcon Icon="@Icons.Material.Filled.Circle" Style="@($"color:{context.Color}")" />
+            }
+        </MudTd>
+        <MudTd DataLabel="Icon">@context.Icon</MudTd>
+    </RowTemplate>
+</MudTable>
+
+@code {
+    IEnumerable<Category>? Elements;
+    bool _loading => Elements is null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Elements = await Repository.GetAll();
+    }
+}
