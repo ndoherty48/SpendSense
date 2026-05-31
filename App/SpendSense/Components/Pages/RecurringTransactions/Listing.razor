@@ -10,6 +10,7 @@
 <MudTable Items="@Elements" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@_loading" LoadingProgressColor="Color.Info">
     <HeaderContent>
         <MudTh>Name</MudTh>
+        <MudTh>Type</MudTh>
         <MudTh>Category</MudTh>
         <MudTh>Amount</MudTh>
         <MudTh>Frequency</MudTh>
@@ -19,6 +20,11 @@
     </HeaderContent>
     <RowTemplate>
         <MudTd DataLabel="Name">@context.Name</MudTd>
+        <MudTd DataLabel="Type">
+            <MudChip T="string" Size="Size.Small" Color="@(context.TransactionType == SpendSense.Common.Models.Enums.TransactionTypeEnum.Income ? Color.Success : context.TransactionType == SpendSense.Common.Models.Enums.TransactionTypeEnum.Savings ? Color.Info : Color.Error)">
+                @context.TransactionType
+            </MudChip>
+        </MudTd>
         <MudTd DataLabel="Category">@context.Category?.Name</MudTd>
         <MudTd DataLabel="Amount">@context.Currency?.Symbol@context.Amount.ToString("F2")</MudTd>
         <MudTd DataLabel="Frequency">@context.Frequency</MudTd>

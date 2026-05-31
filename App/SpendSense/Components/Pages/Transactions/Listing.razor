@@ -11,7 +11,7 @@
 
 <MudGrid Class="mt-4 mb-2">
     <MudItem xs="12" sm="4">
-        <MudTextField Value="searchText" Placeholder="Search description..." Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" Immediate="true" ValueChanged="OnSearchChanged" T="string" />
+        <MudTextField Value="searchText" Placeholder="Search description or notes..." Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" Immediate="true" ValueChanged="OnSearchChanged" T="string" />
     </MudItem>
     <MudItem xs="6" sm="3">
         <MudSelect Value="filterCategory" Placeholder="Category" Clearable="true" ValueChanged="OnCategoryChanged" T="int?">
@@ -74,7 +74,8 @@
         var filtered = allElements.AsEnumerable();
 
         if (!string.IsNullOrWhiteSpace(searchText))
-            filtered = filtered.Where(t => t.Description.Contains(searchText, StringComparison.OrdinalIgnoreCase));
+            filtered = filtered.Where(t => t.Description.Contains(searchText, StringComparison.OrdinalIgnoreCase)
+                || (t.Notes?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false));
         if (filterCategory.HasValue)
             filtered = filtered.Where(t => t.CategoryId == filterCategory.Value);
         if (filterType.HasValue)
