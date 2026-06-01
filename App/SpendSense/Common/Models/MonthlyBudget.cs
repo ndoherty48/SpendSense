@@ -19,7 +19,7 @@ public class MonthlyBudget : ITimestamped
     public int CurrencyId {get;set;}
 
     [ForeignKey(nameof(CategoryId))]
-    public required Category Category { get; set; }
+    public Category? Category { get; set; }
     [ForeignKey(nameof(CurrencyId))]
-    public required Currency Currency { get; set; }
+    public Currency? Currency { get; set; }
 }

@@ -43,9 +43,7 @@ public class RecurringTransactionGenerator(SpendSenseDbContext db, ILogger<Recur
                     CategoryId = recurring.CategoryId,
                     TransactionDate = nextDate,
                     TransactionType = recurring.TransactionType,
-                    RecurringTransactionId = recurring.Id,
-                    Category = null!,
-                    Currency = null!
+                    RecurringTransactionId = recurring.Id
                 });
 
                 nextDate = GetNextOccurrence(recurring, nextDate);

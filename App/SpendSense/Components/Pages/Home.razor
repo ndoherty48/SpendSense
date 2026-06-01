@@ -172,7 +172,7 @@
             .Select(g => (
                 Category: g.Key,
                 Spent: g.Sum(t => t.Amount),
-                Budget: budgets.FirstOrDefault(b => b.Category.Name == g.Key)?.BudgetedAmount ?? 0
+                Budget: budgets.FirstOrDefault(b => b.Category?.Name == g.Key)?.BudgetedAmount ?? 0
             ))
             .OrderByDescending(x => x.Spent)
             .ToList();

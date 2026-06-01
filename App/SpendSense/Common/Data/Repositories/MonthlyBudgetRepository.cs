@@ -61,9 +61,7 @@ public sealed class MonthlyBudgetRepository(SpendSenseDbContext dbContext)
                 Month = toMonth,
                 CategoryId = budget.CategoryId,
                 CurrencyId = budget.CurrencyId,
-                BudgetedAmount = budget.BudgetedAmount,
-                Category = null!,
-                Currency = null!
+                BudgetedAmount = budget.BudgetedAmount
             });
         }
 

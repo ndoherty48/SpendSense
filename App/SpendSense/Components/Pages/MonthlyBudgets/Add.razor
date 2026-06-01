@@ -85,9 +85,7 @@
     MonthlyBudget model = new()
     {
         Year = DateTime.Today.Year,
-        Month = DateTime.Today.Month,
-        Category = null!,
-        Currency = null!
+        Month = DateTime.Today.Month
     };
     IReadOnlyCollection<Category> categories = [];
     IReadOnlyCollection<Currency> currencies = [];
