@@ -20,8 +20,8 @@ public class Transaction : ITimestamped
     public required DateTime TransactionDate {get;set;}
     [Required]
     public required TransactionTypeEnum TransactionType {get;set;}
-    public bool IsRecurringTransaction => RecurringTransaction is not null;
-    public int RecurringTransactionId{get;set;}
+    public bool IsRecurringTransaction => RecurringTransactionId is not null;
+    public int? RecurringTransactionId{get;set;}
     public string? Notes {get;set;}
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
