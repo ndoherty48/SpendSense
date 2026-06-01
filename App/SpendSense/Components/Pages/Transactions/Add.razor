@@ -1,4 +1,5 @@
 @page "/transactions/add"
+@using Microsoft.EntityFrameworkCore
 @using SpendSense.Common.Data.Repositories
 @using SpendSense.Common.Models
 @using SpendSense.Common.Models.Enums
@@ -6,6 +7,7 @@
 @inject CategoryRepository CategoryRepo
 @inject CurrencyRepository CurrencyRepo
 @inject SpendSense.Common.Services.NotificationService NotificationSvc
+@inject SpendSense.Common.Data.SpendSenseDbContext Db
 @inject NavigationManager Navigation
 
 <EditForm Model="@model" OnValidSubmit="OnValidSubmit">
@@ -15,8 +17,11 @@
             <MudCardContent>
                 <MudTextField 
                     Label="Description" 
-                    @bind-Value="model.Description" 
-                    For="@(() => model.Description)"
+                    Value="model.Description"
+                    ValueChanged="OnDescriptionChanged"
+                    T="string"
+                    DebounceInterval="500"
+                    Immediate="true"
                 />
                 <MudSelect 
                     Label="Type" 
@@ -125,5 +130,24 @@
         await NotificationSvc.CheckGoalMilestones();
         success = true;
         Navigation.NavigateTo("/transactions");
+    }
+
+    async Task OnDescriptionChanged(string value)
+    {
+        model.Description = value;
+        if (string.IsNullOrWhiteSpace(value) || value.Length < 3) return;
+
+        var suggestion = await Db.Transactions
+            .Where(t => t.Description.Contains(value) && t.CategoryId != null)
+            .GroupBy(t => t.CategoryId)
+            .OrderByDescending(g => g.Count())
+            .Select(g => g.Key)
+            .FirstOrDefaultAsync();
+
+        if (suggestion.HasValue && model.CategoryId != suggestion.Value)
+        {
+            model.CategoryId = suggestion.Value;
+            StateHasChanged();
+        }
     }
 }
