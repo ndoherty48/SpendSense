@@ -5,6 +5,7 @@
 @inject TransactionRepository Repository
 @inject CategoryRepository CategoryRepo
 @inject IDialogService Dialog
+@inject SpendSense.Common.Services.SettingsService Settings
 
 <h1>Transactions</h1>
 <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/transactions/add">Add</MudButton>
@@ -47,7 +48,7 @@
                 @context.TransactionType
             </MudChip>
         </MudTd>
-        <MudTd DataLabel="Amount">@context.Currency?.Symbol@context.Amount.ToString("F2")</MudTd>
+        <MudTd DataLabel="Amount">@Settings.FormatAmount(context.Currency?.Symbol ?? "£", context.Amount)</MudTd>
         <MudTd><MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Href="@($"/transactions/edit/{context.Id}")" /> <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => Delete(context)" /></MudTd>
     </RowTemplate>
 </MudTable>

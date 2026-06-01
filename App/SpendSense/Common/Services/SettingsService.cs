@@ -25,4 +25,15 @@ public class SettingsService
         get => Preferences.Get(nameof(IncomeAppliesNextMonth), true);
         set => Preferences.Set(nameof(IncomeAppliesNextMonth), value);
     }
+
+    public bool HideAmounts
+    {
+        get => Preferences.Get(nameof(HideAmounts), false);
+        set => Preferences.Set(nameof(HideAmounts), value);
+    }
+
+    public string FormatAmount(string symbol, double amount)
+    {
+        return HideAmounts ? $"{symbol}•••" : $"{symbol}{amount:F2}";
+    }
 }

@@ -15,17 +15,25 @@
         <MudText Typo="Typo.h6">Budget</MudText>
         <MudSwitch Value="incomeAppliesNextMonth" ValueChanged="OnIncomeSettingChanged" Color="Color.Primary" T="bool" Label="Income applies to next month" Class="mt-2"/>
         <MudText Typo="Typo.caption" Class="ml-12">When enabled, income is counted toward the following month's budget (e.g. salary on May 28th funds June).</MudText>
+
+        <MudDivider Class="my-4"/>
+
+        <MudText Typo="Typo.h6">Privacy</MudText>
+        <MudSwitch Value="hideAmounts" ValueChanged="OnHideAmountsChanged" Color="Color.Primary" T="bool" Label="Hide amounts" Class="mt-2"/>
+        <MudText Typo="Typo.caption" Class="ml-12">Replaces all monetary values with ••• for privacy when showing your screen.</MudText>
     </MudCardContent>
 </MudCard>
 
 @code {
     bool isDarkMode;
     bool incomeAppliesNextMonth;
+    bool hideAmounts;
 
     protected override void OnInitialized()
     {
         isDarkMode = SettingsSvc.IsDarkMode;
         incomeAppliesNextMonth = SettingsSvc.IncomeAppliesNextMonth;
+        hideAmounts = SettingsSvc.HideAmounts;
     }
 
     void OnThemeChanged(bool value)
@@ -39,5 +47,11 @@
     {
         incomeAppliesNextMonth = value;
         SettingsSvc.IncomeAppliesNextMonth = value;
+    }
+
+    void OnHideAmountsChanged(bool value)
+    {
+        hideAmounts = value;
+        SettingsSvc.HideAmounts = value;
     }
 }

@@ -19,25 +19,25 @@
     <MudItem xs="6" sm="3">
         <MudPaper Class="pa-4" Elevation="2">
             <MudText Typo="Typo.subtitle2">Income</MudText>
-            <MudText Typo="Typo.h5" Color="Color.Success">£@totalIncome.ToString("F2")</MudText>
+            <MudText Typo="Typo.h5" Color="Color.Success">@Settings.FormatAmount("£", totalIncome)</MudText>
         </MudPaper>
     </MudItem>
     <MudItem xs="6" sm="3">
         <MudPaper Class="pa-4" Elevation="2">
             <MudText Typo="Typo.subtitle2">Expenses</MudText>
-            <MudText Typo="Typo.h5" Color="Color.Error">£@totalExpenses.ToString("F2")</MudText>
+            <MudText Typo="Typo.h5" Color="Color.Error">@Settings.FormatAmount("£", totalExpenses)</MudText>
         </MudPaper>
     </MudItem>
     <MudItem xs="6" sm="3">
         <MudPaper Class="pa-4" Elevation="2">
             <MudText Typo="Typo.subtitle2">Savings</MudText>
-            <MudText Typo="Typo.h5" Color="Color.Info">£@totalSavings.ToString("F2")</MudText>
+            <MudText Typo="Typo.h5" Color="Color.Info">@Settings.FormatAmount("£", totalSavings)</MudText>
         </MudPaper>
     </MudItem>
     <MudItem xs="6" sm="3">
         <MudPaper Class="pa-4" Elevation="2">
             <MudText Typo="Typo.subtitle2">Balance</MudText>
-            <MudText Typo="Typo.h5" Color="@(balance >= 0 ? Color.Success : Color.Error)">£@balance.ToString("F2")</MudText>
+            <MudText Typo="Typo.h5" Color="@(balance >= 0 ? Color.Success : Color.Error)">@Settings.FormatAmount("£", balance)</MudText>
         </MudPaper>
     </MudItem>
 </MudGrid>
@@ -57,8 +57,8 @@
                 var overspent = item.Budget > 0 && item.Spent > item.Budget;
                 <tr style="@(overspent ? "color: var(--mud-palette-error); font-weight: bold;" : "")">
                     <td>@item.Category @if (overspent) { <MudIcon Icon="@Icons.Material.Filled.Warning" Size="Size.Small" Color="Color.Error" /> }</td>
-                    <td>£@item.Spent.ToString("F2")</td>
-                    <td>@(item.Budget > 0 ? $"£{item.Budget:F2}" : "—")</td>
+                    <td>@Settings.FormatAmount("£", item.Spent)</td>
+                    <td>@(item.Budget > 0 ? Settings.FormatAmount("£", item.Budget) : "—")</td>
                 </tr>
             }
         </tbody>
@@ -80,7 +80,7 @@
                     <td>@t.Description</td>
                     <td>@t.Category?.Name</td>
                     <td style="color: @(t.TransactionType == TransactionTypeEnum.Income ? "green" : "red")">
-                        @(t.TransactionType == TransactionTypeEnum.Income ? "+" : "-")£@t.Amount.ToString("F2")
+                        @(t.TransactionType == TransactionTypeEnum.Income ? "+" : "-")@Settings.FormatAmount("£", t.Amount)
                     </td>
                 </tr>
             }
