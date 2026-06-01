@@ -45,7 +45,7 @@
 @if (spendingByCategory.Any())
 {
     <MudText Typo="Typo.h6" Class="mt-6 mb-2">Spending by Category</MudText>
-    <MudChart ChartType="ChartType.Pie" ChartSeries="@chartData" ChartLabels="@chartLabels" Width="300px" Height="300px" T="double" />
+    <MudChart ChartType="ChartType.Pie" ChartSeries="@chartData.AsChartDataSet()" ChartLabels="@chartLabels" Width="100%" Height="300px" />
 
     <MudSimpleTable Hover="true" Dense="true" Class="mt-4">
         <thead>
@@ -95,9 +95,9 @@
     double totalExpenses;
     double totalSavings;
     double balance;
-    List<(string Category, double Spent, double Budget)> spendingByCategory = [];
+    List<(string Category, double Spent, double Budget, string? Color)> spendingByCategory = [];
     List<Transaction> recentTransactions = [];
-    List<ChartSeries<double>> chartData = [];
+    double[] chartData = [];
     string[] chartLabels = [];
 
     protected override async Task OnInitializedAsync()
@@ -168,16 +168,17 @@
 
         spendingByCategory = monthTransactions
             .Where(t => t.TransactionType == TransactionTypeEnum.Expense && t.Category is not null)
-            .GroupBy(t => t.Category!.Name)
+            .GroupBy(t => t.Category!)
             .Select(g => (
-                Category: g.Key,
+                Category: g.Key.Name,
                 Spent: g.Sum(t => t.Amount),
-                Budget: budgets.FirstOrDefault(b => b.Category?.Name == g.Key)?.BudgetedAmount ?? 0
+                Budget: budgets.FirstOrDefault(b => b.Category?.Name == g.Key.Name)?.BudgetedAmount ?? 0,
+                Color: g.Key.Color
             ))
             .OrderByDescending(x => x.Spent)
             .ToList();
 
-        chartData = spendingByCategory.Select(x => new ChartSeries<double> { Name = x.Category, Data = new ChartData<double>(x.Spent) }).ToList();
+        chartData = spendingByCategory.Select(x => x.Spent).ToArray();
         chartLabels = spendingByCategory.Select(x => x.Category).ToArray();
 
         recentTransactions = await Db.Transactions
