@@ -42,6 +42,11 @@
     </MudItem>
 </MudGrid>
 
+@if (comparisonText is not null)
+{
+    <MudText Typo="Typo.body2" Class="mt-2" Color="@comparisonColor">@comparisonText</MudText>
+}
+
 @if (spendingByCategory.Any())
 {
     <MudText Typo="Typo.h6" Class="mt-6 mb-2">Spending by Category</MudText>
@@ -99,6 +104,8 @@
     List<Transaction> recentTransactions = [];
     double[] chartData = [];
     string[] chartLabels = [];
+    string? comparisonText;
+    Color comparisonColor = Color.Default;
 
     protected override async Task OnInitializedAsync()
     {
@@ -187,5 +194,35 @@
             .OrderByDescending(t => t.TransactionDate)
             .Take(10)
             .ToListAsync();
+
+        // Month-over-month comparison
+        var compStart = startOfMonth.AddMonths(-1);
+        var prevExpenses = await Db.Transactions
+            .Where(t => t.TransactionDate >= compStart && t.TransactionDate < startOfMonth && t.TransactionType == TransactionTypeEnum.Expense)
+            .SumAsync(t => t.Amount);
+
+        if (prevExpenses > 0)
+        {
+            var diff = ((totalExpenses - prevExpenses) / prevExpenses) * 100;
+            if (Math.Abs(diff) < 1)
+            {
+                comparisonText = "Spending is about the same as last month";
+                comparisonColor = Color.Default;
+            }
+            else if (diff > 0)
+            {
+                comparisonText = $"You're spending {diff:F0}% more than last month";
+                comparisonColor = Color.Error;
+            }
+            else
+            {
+                comparisonText = $"You're spending {Math.Abs(diff):F0}% less than last month";
+                comparisonColor = Color.Success;
+            }
+        }
+        else
+        {
+            comparisonText = null;
+        }
     }
 }

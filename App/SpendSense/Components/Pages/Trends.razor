@@ -1,0 +1,87 @@
+@page "/trends"
+@using Microsoft.EntityFrameworkCore
+@using SpendSense.Common.Data
+@using SpendSense.Common.Models
+@using SpendSense.Common.Models.Enums
+@inject SpendSenseDbContext Db
+
+<h1>Spending Trends</h1>
+
+<MudSelect Value="selectedRange" ValueChanged="OnRangeChanged" T="int" Label="Period" Class="mb-4" Style="max-width: 200px;">
+    <MudSelectItem Value="3">Last 3 months</MudSelectItem>
+    <MudSelectItem Value="6">Last 6 months</MudSelectItem>
+    <MudSelectItem Value="12">Last 12 months</MudSelectItem>
+</MudSelect>
+
+<MudText Typo="Typo.h6" Class="mt-4 mb-2">Total Spending</MudText>
+@if (totalSeries.Any())
+{
+    <MudChart ChartType="ChartType.Line" ChartSeries="@totalSeries" ChartLabels="@monthLabels" Width="100%" Height="300px" T="double" />
+}
+
+<MudText Typo="Typo.h6" Class="mt-6 mb-2">Spending by Category</MudText>
+@if (categorySeries.Any())
+{
+    <MudChart ChartType="ChartType.Bar" ChartSeries="@categorySeries" ChartLabels="@monthLabels" Width="100%" Height="300px" T="double" />
+}
+
+@code {
+    int selectedRange = 6;
+    List<ChartSeries<double>> totalSeries = [];
+    List<ChartSeries<double>> categorySeries = [];
+    string[] monthLabels = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    async Task OnRangeChanged(int value)
+    {
+        selectedRange = value;
+        await LoadData();
+    }
+
+    async Task LoadData()
+    {
+        var now = DateTime.Now;
+        var months = Enumerable.Range(0, selectedRange)
+            .Select(i => new DateTime(now.Year, now.Month, 1).AddMonths(-(selectedRange - 1) + i))
+            .ToList();
+
+        monthLabels = months.Select(m => m.ToString("MMM yy")).ToArray();
+
+        var transactions = await Db.Transactions
+            .Include(t => t.Category)
+            .Where(t => t.TransactionType == TransactionTypeEnum.Expense && t.TransactionDate >= months.First())
+            .ToListAsync();
+
+        totalSeries =
+        [
+            new ChartSeries<double>
+            {
+                Name = "Total Spending",
+                Data = months.Select(m =>
+                    transactions.Where(t => t.TransactionDate.Year == m.Year && t.TransactionDate.Month == m.Month)
+                        .Sum(t => t.Amount)
+                ).ToArray()
+            }
+        ];
+
+        var categories = transactions
+            .Where(t => t.Category is not null)
+            .Select(t => t.Category!.Name)
+            .Distinct()
+            .OrderBy(c => c)
+            .ToList();
+
+        categorySeries = categories.Select(cat => new ChartSeries<double>
+        {
+            Name = cat,
+            Data = months.Select(m =>
+                transactions.Where(t => t.Category?.Name == cat && t.TransactionDate.Year == m.Year && t.TransactionDate.Month == m.Month)
+                    .Sum(t => t.Amount)
+            ).ToArray()
+        }).ToList();
+    }
+}
