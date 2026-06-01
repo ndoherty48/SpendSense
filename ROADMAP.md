@@ -9,9 +9,21 @@
 - Dashboard one-liner: "You spent X% more/less than last month"
 
 ### Local Notifications ✅
-- Budget threshold alerts (80% and 100% spent) — triggered after adding transactions
-- Goal milestones (50% and 100%) — triggered after adding transactions
+- Budget threshold alerts (80% and 100% spent) — triggered after adding transactions and on app launch
+- Goal milestones (50% and 100%) — triggered after adding transactions and on app launch
 - Uses Plugin.LocalNotification for on-device notifications (no backend needed)
+- Persists notified state via Preferences to avoid repeat notifications
+
+### Category Auto-Suggestion ✅
+- As user types a transaction description, queries past transactions for the most-used category
+- Pre-selects the suggested category in the dropdown (user can override)
+- Debounced at 500ms, triggers after 3+ characters
+
+### Predictive Overspend Warnings ✅
+- Linear projection on dashboard: `(spentSoFar / daysElapsed) * daysInMonth`
+- Shows warning when projected spend exceeds budget by >10%
+- Only after day 5 of the month (avoids noisy early projections)
+- Recalculates on every dashboard load — adjusts as spending pace changes
 
 ## Near Term
 
@@ -59,21 +71,6 @@
 - Requires backend and careful sync/permissions design
 - Not planned for near/medium term
 
-### Category Auto-Suggestion
-- As user types a transaction description, query past transactions for the most-used category with similar descriptions
-- Pre-select the suggested category in the dropdown (user can override)
-- No ML — simple frequency-based lookup from transaction history
-- Gets smarter as the user adds more transactions
-- Especially useful after bank statement imports (repetitive merchant names)
-
-### Predictive Overspend Warnings
-- Linear projection: `(spentSoFar / daysElapsed) * daysInMonth`
-- Recalculates on every dashboard load — adjusts as spending pace changes
-- Show warning on dashboard when projected spend exceeds budget by >10%
-- Warning disappears if spending slows down and projection drops below budget
-- Only show after first few days of the month (early projections are noisy)
-- Only for categories with a monthly budget set
-
 ## Nice to Have
 
 ### Onboarding Wizard
@@ -84,10 +81,6 @@
 - Share Blazor components via Blazor Server/WASM
 - View-only dashboard accessible from desktop browser
 - Requires backend (above)
-
-### Widgets (iOS/Android)
-- Home screen widget showing current month balance
-- Quick-add transaction from widget
 
 ### Data Export
 - CSV export of transactions for a date range
