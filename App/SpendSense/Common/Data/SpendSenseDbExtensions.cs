@@ -60,5 +60,21 @@ public static class SpendSenseDbExtensions
             }
             return app;
         }
+
+        public MauiApp CheckNotifications()
+        {
+            try
+            {
+                using var scope = app.Services.CreateScope();
+                var svc = scope.ServiceProvider.GetRequiredService<NotificationService>();
+                svc.CheckBudgetThresholds().GetAwaiter().GetResult();
+                svc.CheckGoalMilestones().GetAwaiter().GetResult();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Notifications] FAILED: {ex}");
+            }
+            return app;
+        }
     }
 }

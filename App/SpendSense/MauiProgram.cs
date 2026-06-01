@@ -7,6 +7,8 @@ using SpendSense.Common.Data;
 using SpendSense.Common.Services;
 using Microsoft.EntityFrameworkCore;
 
+using Plugin.LocalNotification;
+
 namespace SpendSense;
 
 public static class MauiProgram
@@ -16,6 +18,7 @@ public static class MauiProgram
 		var builder = MauiApp.CreateBuilder();
 		builder
 			.UseMauiApp<App>()
+			.UseLocalNotification()
 			.ConfigureFonts(fonts =>
 			{
 				fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
@@ -26,6 +29,7 @@ public static class MauiProgram
 		builder.Services.AddSpendSenseDb();
 		builder.Services.AddSingleton<SettingsService>();
 		builder.Services.AddTransient<RecurringTransactionGenerator>();
+		builder.Services.AddTransient<NotificationService>();
 
 		builder.AddServiceDefaults();
 
@@ -37,6 +41,7 @@ public static class MauiProgram
 		var app = builder.Build();
 		app.RunDatabaseMigrations();
 		app.GenerateRecurringTransactions();
+		app.CheckNotifications();
 		return app;
 	}
 }

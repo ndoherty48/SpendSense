@@ -5,6 +5,7 @@
 @inject TransactionRepository TransactionRepo
 @inject CategoryRepository CategoryRepo
 @inject CurrencyRepository CurrencyRepo
+@inject SpendSense.Common.Services.NotificationService NotificationSvc
 @inject NavigationManager Navigation
 
 <EditForm Model="@model" OnValidSubmit="OnValidSubmit">
@@ -120,6 +121,8 @@
     {
         model.TransactionDate = transactionDate ?? DateTime.Today;
         await TransactionRepo.Add(model);
+        await NotificationSvc.CheckBudgetThresholds();
+        await NotificationSvc.CheckGoalMilestones();
         success = true;
         Navigation.NavigateTo("/transactions");
     }

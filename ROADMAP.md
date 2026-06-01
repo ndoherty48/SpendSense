@@ -1,5 +1,18 @@
 # SpendSense Roadmap
 
+## Completed
+
+### Spending Trends ✅
+- Dedicated "Trends" page with configurable range (3/6/12 months)
+  - Total spending line chart
+  - Spending by category bar chart
+- Dashboard one-liner: "You spent X% more/less than last month"
+
+### Local Notifications ✅
+- Budget threshold alerts (80% and 100% spent) — triggered after adding transactions
+- Goal milestones (50% and 100%) — triggered after adding transactions
+- Uses Plugin.LocalNotification for on-device notifications (no backend needed)
+
 ## Near Term
 
 ### Bank Statement CSV Import
@@ -20,13 +33,6 @@
 - Display thumbnail on transaction listing/detail
 - Use MAUI `MediaPicker` for capture/selection
 - Future: OCR to auto-fill amount/description from receipt photo
-
-### Spending Trends
-- Dedicated "Trends" page (keeps dashboard clean)
-  - Month-over-month bar chart: spending per category across months, spot categories creeping up
-  - Total spending trend line over 6-12 months, one data point per month
-- Dashboard one-liner: "You spent X% more/less than last month" — quick context without clutter
-- All derived from existing transaction data, no new collection needed
 
 ### Monthly Summary Report
 - In-app summary view for a completed month
@@ -69,13 +75,6 @@
 - Only for categories with a monthly budget set
 
 ## Nice to Have
-
-### Push Notifications
-- Budget threshold alerts (80% spent, 100% spent)
-- Recurring transaction reminders
-- Weekly spending summary ("You spent £320 this week across 14 transactions")
-- Goal milestones ("You're 50% of the way to Holiday Fund! 🎉")
-- Requires background service or scheduled local notifications
 
 ### Onboarding Wizard
 - First-launch flow: set up categories, default currency, first monthly budget, income
