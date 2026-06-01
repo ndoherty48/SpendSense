@@ -47,6 +47,16 @@
     <MudText Typo="Typo.body2" Class="mt-2" Color="@comparisonColor">@comparisonText</MudText>
 }
 
+@if (overspendWarnings.Any())
+{
+    <MudAlert Severity="Severity.Warning" Class="mt-4">
+        @foreach (var warning in overspendWarnings)
+        {
+            <MudText Typo="Typo.body2">⚠️ @warning</MudText>
+        }
+    </MudAlert>
+}
+
 @if (spendingByCategory.Any())
 {
     <MudText Typo="Typo.h6" Class="mt-6 mb-2">Spending by Category</MudText>
@@ -106,6 +116,7 @@
     string[] chartLabels = [];
     string? comparisonText;
     Color comparisonColor = Color.Default;
+    List<string> overspendWarnings = [];
 
     protected override async Task OnInitializedAsync()
     {
@@ -187,6 +198,22 @@
 
         chartData = spendingByCategory.Select(x => x.Spent).ToArray();
         chartLabels = spendingByCategory.Select(x => x.Category).ToArray();
+
+        // Predictive overspend warnings
+        overspendWarnings = [];
+        var daysElapsed = (DateTime.Now - startOfMonth).Days;
+        var daysInMonth = (endOfMonth - startOfMonth).Days;
+        if (daysElapsed >= 5)
+        {
+            foreach (var item in spendingByCategory.Where(x => x.Budget > 0))
+            {
+                var projected = item.Spent / daysElapsed * daysInMonth;
+                if (projected > item.Budget * 1.1)
+                {
+                    overspendWarnings.Add($"{item.Category}: on track to spend £{projected:F0} (budget £{item.Budget:F0})");
+                }
+            }
+        }
 
         recentTransactions = await Db.Transactions
             .Include(t => t.Category)
