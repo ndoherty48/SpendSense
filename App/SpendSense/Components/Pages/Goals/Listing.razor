@@ -54,11 +54,11 @@
         Elements = [];
         foreach (var goal in goals)
         {
-            double saved = 0;
+            double saved = goal.CurrentAmount;
             if (goal.CategoryId.HasValue)
             {
-                saved = await Db.Transactions
-                    .Where(t => t.CategoryId == goal.CategoryId && t.TransactionType == TransactionTypeEnum.Savings && t.TransactionDate >= goal.CreatedAt)
+                saved += await Db.Transactions
+                    .Where(t => t.CategoryId == goal.CategoryId && t.TransactionType == TransactionTypeEnum.Savings)
                     .SumAsync(t => t.Amount);
             }
             var pct = goal.TargetAmount > 0 ? Math.Min(100, saved / goal.TargetAmount * 100) : 0;
