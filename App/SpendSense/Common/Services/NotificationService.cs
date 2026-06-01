@@ -9,6 +9,17 @@ namespace SpendSense.Common.Services;
 
 public class NotificationService(SpendSenseDbContext db)
 {
+    // Track what we've already notified using Preferences for persistence
+    static bool HasNotified(string key)
+    {
+        return Preferences.Get(key, false);
+    }
+
+    static void MarkNotified(string key)
+    {
+        Preferences.Set(key, true);
+    }
+
     public async Task CheckBudgetThresholds()
     {
         var now = DateTime.Now;
@@ -30,15 +41,18 @@ public class NotificationService(SpendSenseDbContext db)
                 .SumAsync(t => t.Amount);
 
             var percentage = budget.BudgetedAmount > 0 ? spent / budget.BudgetedAmount * 100 : 0;
+            var key = $"budget_{budget.CategoryId}_{now.Year}_{now.Month}";
 
-            if (percentage >= 100)
+            if (percentage >= 100 && !HasNotified($"{key}_100"))
             {
+                MarkNotified($"{key}_100");
                 await ShowNotification(
                     $"Budget exceeded: {budget.Category?.Name}",
                     $"You've spent £{spent:F2} of your £{budget.BudgetedAmount:F2} budget.");
             }
-            else if (percentage >= 80)
+            else if (percentage >= 80 && percentage < 100 && !HasNotified($"{key}_80"))
             {
+                MarkNotified($"{key}_80");
                 await ShowNotification(
                     $"Budget warning: {budget.Category?.Name}",
                     $"You've used {percentage:F0}% of your £{budget.BudgetedAmount:F2} budget.");
@@ -60,15 +74,18 @@ public class NotificationService(SpendSenseDbContext db)
                 .SumAsync(t => t.Amount);
 
             var percentage = goal.TargetAmount > 0 ? saved / goal.TargetAmount * 100 : 0;
+            var key = $"goal_{goal.Id}";
 
-            if (percentage >= 100)
+            if (percentage >= 100 && !HasNotified($"{key}_100"))
             {
+                MarkNotified($"{key}_100");
                 await ShowNotification(
                     $"Goal reached: {goal.Name}! 🎉",
                     $"You've saved £{saved:F2} — target of £{goal.TargetAmount:F2} achieved!");
             }
-            else if (percentage >= 50 && percentage < 55)
+            else if (percentage >= 50 && percentage < 55 && !HasNotified($"{key}_50"))
             {
+                MarkNotified($"{key}_50");
                 await ShowNotification(
                     $"Goal milestone: {goal.Name}",
                     $"You're halfway there! £{saved:F2} of £{goal.TargetAmount:F2} saved.");
