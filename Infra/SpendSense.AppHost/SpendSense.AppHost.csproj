@@ -9,6 +9,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Aspire.Hosting.Maui" Version="13.4.0-preview.1.26281.18" />
+    <PackageReference Include="Aspire.Hosting.Maui" Version="13.4.2-preview.1.26303.6" />
   </ItemGroup>
 </Project>
