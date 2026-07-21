@@ -54,8 +54,7 @@ SpendSense/
 ### Run with Aspire
 
 ```bash
-cd Infra/SpendSense.AppHost
-dotnet run
+aspire start
 ```
 
 ### Run standalone (Mac Catalyst)
