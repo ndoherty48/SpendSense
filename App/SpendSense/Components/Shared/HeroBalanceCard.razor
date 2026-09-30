@@ -1,7 +1,7 @@
 <section class="hero" aria-label="@Label">
     <div class="label">@Label</div>
     <div class="amount">
-        <Money Amount="Amount" Symbol="@Symbol" Size="MoneySize.Large" />
+        <Money Amount="Amount" Symbol="@Symbol" Size="MoneySize.Large" Tone="Tone" />
     </div>
     @if (ChildContent is not null)
     {
@@ -15,6 +15,9 @@
     [Parameter, EditorRequired] public double Amount { get; set; }
 
     [Parameter] public string Symbol { get; set; } = "£";
+
+    /// <summary>Colour of the balance, e.g. <see cref="MoneyTone.Error"/> when negative.</summary>
+    [Parameter] public MoneyTone Tone { get; set; } = MoneyTone.Neutral;
 
     /// <summary>A row of <see cref="StatTile"/>s shown under the balance.</summary>
     [Parameter] public RenderFragment? ChildContent { get; set; }
