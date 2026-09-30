@@ -1,0 +1,38 @@
+@using SpendSense.Common.Models
+
+<FormShell Title="@Title" BackHref="/monthly-budgets" Model="Model" OnValidSubmit="OnValidSubmit" SubmitLabel="Save" PrimaryLabel="@SubmitLabel">
+    <FormSection Title="Period">
+        <div class="period">
+            <MudNumericField Label="Year" @bind-Value="Model.Year" For="@(() => Model.Year)" Min="2020" Max="2100" Variant="Variant.Outlined" HideSpinButtons="true" />
+            <MudNumericField Label="Month" @bind-Value="Model.Month" For="@(() => Model.Month)" Min="1" Max="12" Variant="Variant.Outlined" HideSpinButtons="true" />
+        </div>
+    </FormSection>
+
+    <CategorySelect Categories="Categories" Value="Model.CategoryId" ValueChanged="OnCategoryChanged" />
+
+    <MoneyInput @bind-Value="Model.BudgetedAmount" Label="Budgeted amount" Symbol="@CurrentSymbol" Min="0.01" />
+
+    <CurrencySelect Currencies="Currencies" @bind-Value="Model.CurrencyId" />
+</FormShell>
+
+@code {
+    [Parameter, EditorRequired] public MonthlyBudget Model { get; set; } = default!;
+
+    [Parameter, EditorRequired] public IReadOnlyCollection<Category> Categories { get; set; } = [];
+
+    [Parameter, EditorRequired] public IReadOnlyCollection<Currency> Currencies { get; set; } = [];
+
+    [Parameter, EditorRequired] public string Title { get; set; } = "";
+
+    [Parameter] public string SubmitLabel { get; set; } = "Save";
+
+    /// <summary>The page persists the budget.</summary>
+    [Parameter] public EventCallback OnSubmit { get; set; }
+
+    string CurrentSymbol => Currencies.FirstOrDefault(c => c.Id == Model.CurrencyId)?.Symbol ?? "£";
+
+    // The budget's category is required (non-null), the shared select works with int?.
+    void OnCategoryChanged(int? id) => Model.CategoryId = id ?? 0;
+
+    Task OnValidSubmit(EditContext context) => OnSubmit.InvokeAsync();
+}

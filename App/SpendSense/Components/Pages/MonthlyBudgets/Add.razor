@@ -1,4 +1,5 @@
 @page "/monthly-budgets/add"
+@layout FocusLayout
 @using SpendSense.Common.Data.Repositories
 @using SpendSense.Common.Models
 @inject MonthlyBudgetRepository BudgetRepo
@@ -6,79 +7,7 @@
 @inject CurrencyRepository CurrencyRepo
 @inject NavigationManager Navigation
 
-<EditForm Model="@model" OnValidSubmit="OnValidSubmit">
-<MudGrid>
-    <MudItem xs="12" sm="7">
-        <MudCard>
-            <MudCardContent>
-                <MudNumericField 
-                    Label="Year" 
-                    @bind-Value="model.Year" 
-                    For="@(() => model.Year)"
-                    Min="2020" Max="2100"
-                />
-                <MudNumericField 
-                    Label="Month" 
-                    Class="mt-3"
-                    @bind-Value="model.Month" 
-                    For="@(() => model.Month)"
-                    Min="1" Max="12"
-                />
-                <MudSelect 
-                    Label="Category" 
-                    Class="mt-3"
-                    @bind-Value="model.CategoryId"
-                >
-                    @foreach (var cat in categories)
-                    {
-                        <MudSelectItem Value="cat.Id">@cat.Name</MudSelectItem>
-                    }
-                </MudSelect>
-                <MudNumericField 
-                    Label="Budgeted Amount" 
-                    Class="mt-3"
-                    @bind-Value="model.BudgetedAmount" 
-                    For="@(() => model.BudgetedAmount)"
-                    Min="0.01"
-                />
-                <MudSelect 
-                    Label="Currency" 
-                    Class="mt-3"
-                    @bind-Value="model.CurrencyId"
-                >
-                    @foreach (var cur in currencies)
-                    {
-                        <MudSelectItem Value="cur.Id">@cur.Code - @cur.Name</MudSelectItem>
-                    }
-                </MudSelect>
-            </MudCardContent>
-            <MudCardActions>
-                <MudButton 
-                    ButtonType="ButtonType.Submit" 
-                    Variant="Variant.Filled" 
-                    Color="Color.Primary" 
-                    Class="ml-auto"
-                >Add</MudButton>
-            </MudCardActions>
-        </MudCard>
-    </MudItem>
-    <MudItem xs="12" sm="5">
-        <MudPaper Class="pa-4 mud-height-full">
-            <MudText Typo="Typo.subtitle2">Validation Summary</MudText>
-            @if (success)
-            {
-                <MudText Color="Color.Success">Success</MudText>
-            }
-            else
-            {
-                <MudText Color="@Color.Error">
-                    <ValidationSummary />
-                </MudText>
-            }
-        </MudPaper>
-    </MudItem>
-</MudGrid>
-</EditForm>
+<BudgetForm Title="New budget" Model="model" Categories="categories" Currencies="currencies" SubmitLabel="Add budget" OnSubmit="Submit" />
 
 @code {
     MonthlyBudget model = new()
@@ -88,7 +17,6 @@
     };
     IReadOnlyCollection<Category> categories = [];
     IReadOnlyCollection<Currency> currencies = [];
-    bool success;
 
     protected override async Task OnInitializedAsync()
     {
@@ -99,10 +27,9 @@
             model.CurrencyId = defaultCurrency.Id;
     }
 
-    async Task OnValidSubmit(EditContext context)
+    async Task Submit()
     {
         await BudgetRepo.Add(model);
-        success = true;
         Navigation.NavigateTo("/monthly-budgets");
     }
 }
