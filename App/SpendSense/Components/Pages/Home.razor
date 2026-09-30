@@ -105,7 +105,7 @@
         {
             var income = t.TransactionType == TransactionTypeEnum.Income;
             <ListRow Title="@t.Description" Subtitle="@RecentSubtitle(t)" Href="@($"/transactions/edit/{t.Id}")">
-                <Leading><IconTile Icon="@TransactionIcon(t.TransactionType)" Tone="@(income ? IconTone.Accent : IconTone.Neutral)" Circle="true" /></Leading>
+                <Leading><IconTile Icon="@TransactionVisuals.Icon(t.TransactionType)" Tone="@TransactionVisuals.Tone(t.TransactionType)" Circle="true" /></Leading>
                 <Trailing><Money Amount="@(income ? t.Amount : -t.Amount)" Signed="true" Tone="@(income ? MoneyTone.Income : MoneyTone.Neutral)" /></Trailing>
             </ListRow>
         }
@@ -121,13 +121,6 @@
     public void Dispose() => Theme.Changed -= OnThemeChanged;
 
     string ComparisonClass => comparisonColor == Color.Error ? "is-worse" : comparisonColor == Color.Success ? "is-better" : "";
-
-    static string TransactionIcon(TransactionTypeEnum type) => type switch
-    {
-        TransactionTypeEnum.Income => Icons.Material.Filled.Payments,
-        TransactionTypeEnum.Savings => Icons.Material.Filled.Savings,
-        _ => Icons.Material.Filled.Receipt
-    };
 
     static string RecentSubtitle(Transaction t) => $"{t.Category?.Name ?? "Uncategorised"} · {t.TransactionDate:dd MMM}";
 
