@@ -2,32 +2,35 @@
 @using SpendSense.Common.Services
 @inject SettingsService SettingsSvc
 
-<h1>Settings</h1>
+<PageHeader Title="Preferences" />
 
-<MudCard Class="mt-4">
-    <MudCardContent>
-        <MudText Typo="Typo.h6">Appearance</MudText>
-        <MudSelect Value="themeMode" ValueChanged="OnThemeChanged" T="ThemeMode" Label="Theme" Class="mt-2" Style="max-width: 240px;">
-            <MudSelectItem Value="ThemeMode.System">System</MudSelectItem>
-            <MudSelectItem Value="ThemeMode.Light">Light</MudSelectItem>
-            <MudSelectItem Value="ThemeMode.Dark">Dark</MudSelectItem>
-        </MudSelect>
+<SectionHeader Title="Appearance" />
+<SegmentedControl T="ThemeMode" Segments="themes" Value="themeMode" ValueChanged="OnThemeChanged" AriaLabel="Theme" />
 
-        <MudDivider Class="my-4"/>
+<SectionHeader Title="Budget" />
+<div class="group">
+    <ToggleRow Label="Income applies to next month"
+               Description="Count income toward the following month's budget (e.g. salary on May 28th funds June)."
+               Value="incomeAppliesNextMonth"
+               ValueChanged="OnIncomeSettingChanged" />
+</div>
 
-        <MudText Typo="Typo.h6">Budget</MudText>
-        <MudSwitch Value="incomeAppliesNextMonth" ValueChanged="OnIncomeSettingChanged" Color="Color.Primary" T="bool" Label="Income applies to next month" Class="mt-2"/>
-        <MudText Typo="Typo.caption" Class="ml-12">When enabled, income is counted toward the following month's budget (e.g. salary on May 28th funds June).</MudText>
-
-        <MudDivider Class="my-4"/>
-
-        <MudText Typo="Typo.h6">Privacy</MudText>
-        <MudSwitch Value="hideAmounts" ValueChanged="OnHideAmountsChanged" Color="Color.Primary" T="bool" Label="Hide amounts" Class="mt-2"/>
-        <MudText Typo="Typo.caption" Class="ml-12">Replaces all monetary values with ••• for privacy when showing your screen.</MudText>
-    </MudCardContent>
-</MudCard>
+<SectionHeader Title="Privacy" />
+<div class="group">
+    <ToggleRow Label="Hide amounts"
+               Description="Replace all monetary values with ••• when showing your screen."
+               Value="hideAmounts"
+               ValueChanged="OnHideAmountsChanged" />
+</div>
 
 @code {
+    static readonly IReadOnlyList<Segment<ThemeMode>> themes =
+    [
+        new(ThemeMode.System, "System"),
+        new(ThemeMode.Light, "Light"),
+        new(ThemeMode.Dark, "Dark")
+    ];
+
     ThemeMode themeMode;
     bool incomeAppliesNextMonth;
     bool hideAmounts;
