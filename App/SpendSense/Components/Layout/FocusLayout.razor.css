@@ -1,0 +1,10 @@
+.focus-shell {
+    min-height: 100vh;
+    box-sizing: border-box;
+    padding: 0 var(--ss-space-4) var(--ss-space-6);
+}
+
+.column {
+    max-width: var(--ss-content-max);
+    margin: 0 auto;
+}

@@ -1,0 +1,15 @@
+<nav class="side-rail" aria-label="Main">
+    @foreach (var tab in NavDestinations.Tabs)
+    {
+        var active = tab.Key == ActiveKey;
+        <a class="item @(active ? "is-active" : null)" href="@tab.Href" aria-current="@(active ? "page" : null)">
+            <svg viewBox="0 0 24 24" fill="currentColor" focusable="false" aria-hidden="true">@((MarkupString)tab.Icon)</svg>
+            <span class="label">@tab.Label</span>
+        </a>
+    }
+</nav>
+
+@code {
+    /// <summary>The <see cref="NavTab.Key"/> of the current tab.</summary>
+    [Parameter] public string? ActiveKey { get; set; }
+}

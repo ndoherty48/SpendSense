@@ -1,0 +1,9 @@
+<a class="fab" href="@Href" aria-label="@Label">
+    <svg viewBox="0 0 24 24" fill="currentColor" focusable="false" aria-hidden="true">@((MarkupString)Icons.Material.Filled.Add)</svg>
+</a>
+
+@code {
+    [Parameter, EditorRequired] public string Href { get; set; } = "";
+
+    [Parameter, EditorRequired] public string Label { get; set; } = "";
+}
