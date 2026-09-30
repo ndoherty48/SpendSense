@@ -6,6 +6,10 @@
     <Application.Resources>
         <ResourceDictionary>
 
+            <!-- Native page background per theme; mirrors --ss-bg in wwwroot/css/tokens.css. -->
+            <Color x:Key="PageBackgroundLight">#F5F7FA</Color>
+            <Color x:Key="PageBackgroundDark">#12151C</Color>
+
             <!--
                 For information about styling .NET MAUI pages
                 please refer to the documentation:
