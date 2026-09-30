@@ -1,7 +1,6 @@
 @page "/transactions/edit/{Id:int}"
 @using SpendSense.Common.Data.Repositories
 @using SpendSense.Common.Models
-@using SpendSense.Common.Models.Enums
 @inject TransactionRepository TransactionRepo
 @inject CategoryRepository CategoryRepo
 @inject CurrencyRepository CurrencyRepo
@@ -13,47 +12,12 @@
 }
 else
 {
-<EditForm Model="@model" OnValidSubmit="OnValidSubmit">
-<MudGrid>
-    <MudItem xs="12" sm="7">
-        <MudCard>
-            <MudCardContent>
-                <MudTextField Label="Description" @bind-Value="model.Description" For="@(() => model.Description)" />
-                <MudSelect Label="Type" Class="mt-3" @bind-Value="model.TransactionType">
-                    @foreach (var type in Enum.GetValues<TransactionTypeEnum>())
-                    {
-                        <MudSelectItem Value="type">@type</MudSelectItem>
-                    }
-                </MudSelect>
-                <MudSelect Label="Category" Class="mt-3" @bind-Value="model.CategoryId">
-                    @foreach (var cat in categories)
-                    {
-                        <MudSelectItem Value="@((int?)cat.Id)">@cat.Name</MudSelectItem>
-                    }
-                </MudSelect>
-                <MudNumericField Label="Amount" Class="mt-3" @bind-Value="model.Amount" For="@(() => model.Amount)" Min="0.01" />
-                <MudSelect Label="Currency" Class="mt-3" @bind-Value="model.CurrencyId">
-                    @foreach (var cur in currencies)
-                    {
-                        <MudSelectItem Value="cur.Id">@cur.Code - @cur.Name</MudSelectItem>
-                    }
-                </MudSelect>
-                <MudDatePicker Label="Date" Class="mt-3" @bind-Date="transactionDate" />
-                <MudTextField Label="Notes" Class="mt-3" @bind-Value="model.Notes" Lines="3" />
-            </MudCardContent>
-            <MudCardActions>
-                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Save</MudButton>
-            </MudCardActions>
-        </MudCard>
-    </MudItem>
-</MudGrid>
-</EditForm>
+    <TransactionForm Model="model" Categories="categories" Currencies="currencies" OnSubmit="Submit" />
 }
 
 @code {
     [Parameter] public int Id { get; set; }
     Transaction? model;
-    DateTime? transactionDate;
     IReadOnlyCollection<Category> categories = [];
     IReadOnlyCollection<Currency> currencies = [];
 
@@ -62,14 +26,11 @@ else
         model = await TransactionRepo.GetById(Id);
         categories = await CategoryRepo.GetAll();
         currencies = await CurrencyRepo.GetAll();
-        if (model is not null)
-            transactionDate = model.TransactionDate;
     }
 
-    async Task OnValidSubmit(EditContext context)
+    async Task Submit()
     {
-        model!.TransactionDate = transactionDate ?? DateTime.Today;
-        await TransactionRepo.Update(model);
+        await TransactionRepo.Update(model!);
         Navigation.NavigateTo("/transactions");
     }
 }
