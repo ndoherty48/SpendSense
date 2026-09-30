@@ -1,109 +1,136 @@
 @page "/"
+@implements IDisposable
 @using Microsoft.EntityFrameworkCore
 @using SpendSense.Common.Data
 @using SpendSense.Common.Models
 @using SpendSense.Common.Models.Enums
 @using SpendSense.Common.Services
+@using SpendSense.Common.Theming
 @inject SpendSenseDbContext Db
 @inject SettingsService Settings
+@inject ThemeService Theme
 
-<h1>Dashboard</h1>
+<PageHeader Title="Dashboard" />
 
-<MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
-    <MudIconButton Icon="@Icons.Material.Filled.ChevronLeft" OnClick="PreviousMonth" />
-    <MudText Typo="Typo.subtitle1">@(new DateTime(year, month, 1).ToString("MMMM yyyy"))</MudText>
-    <MudIconButton Icon="@Icons.Material.Filled.ChevronRight" OnClick="NextMonth" />
-</MudStack>
+<div class="month-nav">
+    <MudIconButton Icon="@Icons.Material.Filled.ChevronLeft" OnClick="PreviousMonth" aria-label="Previous month" />
+    <span class="month" aria-live="polite">@(new DateTime(year, month, 1).ToString("MMMM yyyy"))</span>
+    <MudIconButton Icon="@Icons.Material.Filled.ChevronRight" OnClick="NextMonth" aria-label="Next month" />
+</div>
 
-<MudGrid>
-    <MudItem xs="6" sm="3">
-        <MudPaper Class="pa-4" Elevation="2">
-            <MudText Typo="Typo.subtitle2">Income</MudText>
-            <MudText Typo="Typo.h5" Color="Color.Success">@Settings.FormatAmount("£", totalIncome)</MudText>
-        </MudPaper>
-    </MudItem>
-    <MudItem xs="6" sm="3">
-        <MudPaper Class="pa-4" Elevation="2">
-            <MudText Typo="Typo.subtitle2">Expenses</MudText>
-            <MudText Typo="Typo.h5" Color="Color.Error">@Settings.FormatAmount("£", totalExpenses)</MudText>
-        </MudPaper>
-    </MudItem>
-    <MudItem xs="6" sm="3">
-        <MudPaper Class="pa-4" Elevation="2">
-            <MudText Typo="Typo.subtitle2">Savings</MudText>
-            <MudText Typo="Typo.h5" Color="Color.Info">@Settings.FormatAmount("£", totalSavings)</MudText>
-        </MudPaper>
-    </MudItem>
-    <MudItem xs="6" sm="3">
-        <MudPaper Class="pa-4" Elevation="2">
-            <MudText Typo="Typo.subtitle2">Balance</MudText>
-            <MudText Typo="Typo.h5" Color="@(balance >= 0 ? Color.Success : Color.Error)">@Settings.FormatAmount("£", balance)</MudText>
-        </MudPaper>
-    </MudItem>
-</MudGrid>
+<HeroBalanceCard Label="Balance this month" Amount="balance" Tone="@(balance < 0 ? MoneyTone.Error : MoneyTone.Neutral)">
+    <StatTile Label="Income"><Money Amount="totalIncome" /></StatTile>
+    <StatTile Label="Expenses"><Money Amount="totalExpenses" /></StatTile>
+    <StatTile Label="Savings"><Money Amount="totalSavings" Tone="MoneyTone.Income" /></StatTile>
+</HeroBalanceCard>
 
 @if (comparisonText is not null)
 {
-    <MudText Typo="Typo.body2" Class="mt-2" Color="@comparisonColor">@comparisonText</MudText>
+    <p class="comparison @ComparisonClass">@comparisonText</p>
 }
 
 @if (overspendWarnings.Any())
 {
-    <MudAlert Severity="Severity.Warning" Class="mt-4">
-        @foreach (var warning in overspendWarnings)
-        {
-            <MudText Typo="Typo.body2">⚠️ @warning</MudText>
-        }
-    </MudAlert>
+    <div class="alert" role="alert">
+        <svg class="alert-icon" viewBox="0 0 24 24" fill="currentColor" focusable="false" aria-hidden="true">@((MarkupString)Icons.Material.Filled.Warning)</svg>
+        <ul class="alert-list">
+            @foreach (var warning in overspendWarnings)
+            {
+                <li>@warning</li>
+            }
+        </ul>
+    </div>
+}
+
+@if (!spendingByCategory.Any() && !recentTransactions.Any())
+{
+    <EmptyState Icon="@Icons.Material.Filled.Receipt"
+                Title="Nothing this month yet"
+                Message="Add a transaction to see your spending, budgets and trends here." />
 }
 
 @if (spendingByCategory.Any())
 {
-    <MudText Typo="Typo.h6" Class="mt-6 mb-2">Spending by Category</MudText>
-    <MudChart ChartType="ChartType.Pie" ChartSeries="@chartData.AsChartDataSet()" ChartLabels="@chartLabels" Width="100%" Height="300px" />
+    <SectionHeader Title="Spending by category" />
+    <div class="donut">
+        <MudChart ChartType="ChartType.Donut" ChartSeries="@chartData.AsChartDataSet()" ChartLabels="@chartLabels" ChartOptions="ChartTheme.Options(Theme.ResolvedDark)" Width="100%" Height="260px" />
+    </div>
 
-    <MudSimpleTable Hover="true" Dense="true" Class="mt-4">
-        <thead>
-            <tr><th>Category</th><th>Spent</th><th>Budget</th></tr>
-        </thead>
-        <tbody>
-            @foreach (var item in spendingByCategory)
-            {
-                var overspent = item.Budget > 0 && item.Spent > item.Budget;
-                <tr style="@(overspent ? "color: var(--mud-palette-error); font-weight: bold;" : "")">
-                    <td>@item.Category @if (overspent) { <MudIcon Icon="@Icons.Material.Filled.Warning" Size="Size.Small" Color="Color.Error" /> }</td>
-                    <td>@Settings.FormatAmount("£", item.Spent)</td>
-                    <td>@(item.Budget > 0 ? Settings.FormatAmount("£", item.Budget) : "—")</td>
-                </tr>
-            }
-        </tbody>
-    </MudSimpleTable>
+    <ul class="categories">
+        @foreach (var item in spendingByCategory)
+        {
+            var overspent = item.Budget > 0 && item.Spent > item.Budget;
+            <li class="category">
+                <IconTile Icon="@Icons.Material.Filled.Category" Tone="@(overspent ? IconTone.Error : IconTone.Brand)" Size="34" />
+                <div class="category-body">
+                    <div class="category-head">
+                        <span class="category-name">
+                            @item.Category
+                            @if (overspent)
+                            {
+                                <svg class="over-icon" viewBox="0 0 24 24" fill="currentColor" focusable="false" aria-hidden="true">@((MarkupString)Icons.Material.Filled.Warning)</svg>
+                                <span class="ss-sr-only">Over budget</span>
+                            }
+                        </span>
+                        <span class="category-amounts">
+                            <Money Amount="item.Spent" Size="MoneySize.Small" Tone="@(overspent ? MoneyTone.Error : MoneyTone.Neutral)" />
+                            @if (item.Budget > 0)
+                            {
+                                <span class="sep" aria-hidden="true">/</span>
+                                <Money Amount="item.Budget" Size="MoneySize.Small" Tone="MoneyTone.Muted" />
+                            }
+                            else
+                            {
+                                <span class="no-budget">No budget</span>
+                            }
+                        </span>
+                    </div>
+                    @if (item.Budget > 0)
+                    {
+                        <ProgressBar Percent="@(item.Spent / item.Budget * 100)" Label="@item.Category" ValueText="@($"{item.Spent / item.Budget * 100:0}% of budget")" />
+                    }
+                </div>
+            </li>
+        }
+    </ul>
 }
 
 @if (recentTransactions.Any())
 {
-    <MudText Typo="Typo.h6" Class="mt-6 mb-2">Recent Transactions</MudText>
-    <MudSimpleTable Hover="true" Dense="true">
-        <thead>
-            <tr><th>Date</th><th>Description</th><th>Category</th><th>Amount</th></tr>
-        </thead>
-        <tbody>
-            @foreach (var t in recentTransactions)
-            {
-                <tr>
-                    <td>@t.TransactionDate.ToString("dd MMM")</td>
-                    <td>@t.Description</td>
-                    <td>@t.Category?.Name</td>
-                    <td style="color: @(t.TransactionType == TransactionTypeEnum.Income ? "green" : "red")">
-                        @(t.TransactionType == TransactionTypeEnum.Income ? "+" : "-")@Settings.FormatAmount("£", t.Amount)
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </MudSimpleTable>
+    <SectionHeader Title="Recent">
+        <Actions><a href="/transactions">See all</a></Actions>
+    </SectionHeader>
+    <div class="recent">
+        @foreach (var t in recentTransactions)
+        {
+            var income = t.TransactionType == TransactionTypeEnum.Income;
+            <ListRow Title="@t.Description" Subtitle="@RecentSubtitle(t)" Href="@($"/transactions/edit/{t.Id}")">
+                <Leading><IconTile Icon="@TransactionIcon(t.TransactionType)" Tone="@(income ? IconTone.Accent : IconTone.Neutral)" Circle="true" /></Leading>
+                <Trailing><Money Amount="@(income ? t.Amount : -t.Amount)" Signed="true" Tone="@(income ? MoneyTone.Income : MoneyTone.Neutral)" /></Trailing>
+            </ListRow>
+        }
+    </div>
 }
 
 @code {
+    protected override void OnInitialized() => Theme.Changed += OnThemeChanged;
+
+    // ThemeService can raise Changed from the native UI thread; the chart palette depends on it.
+    void OnThemeChanged() => _ = InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Theme.Changed -= OnThemeChanged;
+
+    string ComparisonClass => comparisonColor == Color.Error ? "is-worse" : comparisonColor == Color.Success ? "is-better" : "";
+
+    static string TransactionIcon(TransactionTypeEnum type) => type switch
+    {
+        TransactionTypeEnum.Income => Icons.Material.Filled.Payments,
+        TransactionTypeEnum.Savings => Icons.Material.Filled.Savings,
+        _ => Icons.Material.Filled.Receipt
+    };
+
+    static string RecentSubtitle(Transaction t) => $"{t.Category?.Name ?? "Uncategorised"} · {t.TransactionDate:dd MMM}";
+
     int year;
     int month;
     double totalIncome;

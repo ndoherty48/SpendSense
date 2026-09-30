@@ -119,6 +119,24 @@ glyph as well as colour (WCAG 1.4.1).
 | `Fab` | `accent` fill, `on-accent` icon, `shadow-fab` |
 | Form inputs | `surface-2` fill, `border-strong` outline, `ink` text |
 
+## Chart palette
+
+`MudChart` takes its series colours from `ChartOptions`, not the MudTheme palette, so they live in
+`Common/Theming/ChartTheme.cs` (eight colours per theme, in this order). The light set is darker so each
+slice keeps contrast against a white surface. Charts always carry a legend and values, so colour is never
+the only signal.
+
+| # | Dark | Light |
+|---|---|---|
+| 1 | `#33D6A6` | `#097754` |
+| 2 | `#6EA8FF` | `#2F6FD6` |
+| 3 | `#FF9A6E` | `#C25A1E` |
+| 4 | `#B08CFF` | `#7A4FD6` |
+| 5 | `#F0B94E` | `#8A5A00` |
+| 6 | `#4FD1D9` | `#0F7F8A` |
+| 7 | `#7FDB8F` | `#3B8A4A` |
+| 8 | `#FF6B5E` | `#B83629` |
+
 ## Accessibility rules
 
 - Text contrast >= 4.5:1, icons and UI boundaries >= 3:1, in both themes (table above).
