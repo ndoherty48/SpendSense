@@ -1,79 +1,19 @@
 @page "/categories/add"
+@layout FocusLayout
 @using SpendSense.Common.Data.Repositories
 @using SpendSense.Common.Models
 @using SpendSense.Common.Models.Enums
 @inject CategoryRepository Repository
 @inject NavigationManager Navigation
 
-<EditForm Model="@model" OnValidSubmit="OnValidSubmit">
-<MudGrid>
-    <MudItem xs="12" sm="7">
-        <MudCard>
-            <MudCardContent>
-                <MudTextField 
-                    Label="Name" 
-                    @bind-Value="model.Name" 
-                    For="@(() => model.Name)"
-                />
-                <MudSelect 
-                    Label="Type" 
-                    Class="mt-3"
-                    @bind-Value="model.Type"
-                >
-                    @foreach (var type in Enum.GetValues<TransactionTypeEnum>())
-                    {
-                        <MudSelectItem Value="type">@type</MudSelectItem>
-                    }
-                </MudSelect>
-                <MudColorPicker 
-                    Label="Color" 
-                    Class="mt-3"
-                    @bind-Text="model.Color"
-                    ColorPickerMode="ColorPickerMode.HEX"
-                />
-                <MudTextField 
-                    Label="Icon" 
-                    Class="mt-3"
-                    @bind-Value="model.Icon" 
-                    For="@(() => model.Icon)"
-                />
-            </MudCardContent>
-            <MudCardActions>
-                <MudButton 
-                    ButtonType="ButtonType.Submit" 
-                    Variant="Variant.Filled" 
-                    Color="Color.Primary" 
-                    Class="ml-auto"
-                >Add</MudButton>
-            </MudCardActions>
-        </MudCard>
-    </MudItem>
-    <MudItem xs="12" sm="5">
-        <MudPaper Class="pa-4 mud-height-full">
-            <MudText Typo="Typo.subtitle2">Validation Summary</MudText>
-            @if (success)
-            {
-                <MudText Color="Color.Success">Success</MudText>
-            }
-            else
-            {
-                <MudText Color="@Color.Error">
-                    <ValidationSummary />
-                </MudText>
-            }
-        </MudPaper>
-    </MudItem>
-</MudGrid>
-</EditForm>
+<CategoryForm Title="New category" Model="model" SubmitLabel="Add category" OnSubmit="Submit" />
 
 @code {
     Category model = new() { Name = "", Type = TransactionTypeEnum.Expense };
-    bool success;
 
-    async Task OnValidSubmit(EditContext context)
+    async Task Submit()
     {
         await Repository.Add(model);
-        success = true;
         Navigation.NavigateTo("/categories");
     }
 }

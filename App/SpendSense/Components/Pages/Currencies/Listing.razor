@@ -4,32 +4,38 @@
 @inject CurrencyRepository Repository
 @inject IDialogService Dialog
 
-<h1>Currencies</h1>
-<MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/currencies/add">Add</MudButton>
+<PageHeader Title="Currencies">
+    <Actions>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/currencies/add" StartIcon="@Icons.Material.Filled.Add">Add</MudButton>
+    </Actions>
+</PageHeader>
 
-<MudTable Items="@Elements" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@_loading" LoadingProgressColor="Color.Info">
-    <HeaderContent>
-        <MudTh>Name</MudTh>
-        <MudTh>Code</MudTh>
-        <MudTh>Symbol</MudTh>
-        <MudTh>Exchange Rate</MudTh>
-        <MudTh>Default</MudTh>
-        <MudTh></MudTh>
-    </HeaderContent>
-    <RowTemplate>
-        <MudTd DataLabel="Name">@context.Name</MudTd>
-        <MudTd DataLabel="Code">@context.Code</MudTd>
-        <MudTd DataLabel="Symbol">@context.Symbol</MudTd>
-        <MudTd DataLabel="Exchange Rate">@context.ExchangeRate</MudTd>
-        @if(context.IsDefault){
-            <MudTd DataLabel="Default"><MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success"/></MudTd>
-        }
-        else{
-            <MudTd DataLabel="Default"><MudButton Size="Size.Small" Variant="Variant.Text" OnClick="() => SetDefault(context)">Set Default</MudButton></MudTd>
-        }
-        <MudTd><MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => Delete(context)" /></MudTd>
-    </RowTemplate>
-</MudTable>
+@if (_loading)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" aria-label="Loading currencies" />
+}
+else
+{
+    @foreach (var currency in Elements!)
+    {
+        <div class="item">
+            <ListRow Title="@($"{currency.Code} — {currency.Name}")" Subtitle="@($"Rate {currency.ExchangeRate}")">
+                <Leading><span class="symbol" aria-hidden="true">@currency.Symbol</span></Leading>
+                <Trailing>
+                    @if (currency.IsDefault)
+                    {
+                        <Badge Tone="BadgeTone.Accent">Default</Badge>
+                    }
+                    else
+                    {
+                        <MudButton Size="Size.Small" Variant="Variant.Text" OnClick="() => SetDefault(currency)">Set default</MudButton>
+                    }
+                </Trailing>
+            </ListRow>
+            <MudIconButton Icon="@Icons.Material.Filled.DeleteOutline" OnClick="() => Delete(currency)" aria-label="@($"Delete {currency.Name}")" />
+        </div>
+    }
+}
 
 @code {
     IEnumerable<Currency>? Elements;
