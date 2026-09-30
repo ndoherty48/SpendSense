@@ -14,4 +14,16 @@
         <MudNavLink Href="/currencies" Match="NavLinkMatch.Prefix">Currencies</MudNavLink>
         <MudNavLink Href="/settings" Match="NavLinkMatch.Prefix">Preferences</MudNavLink>
     </MudNavGroup>
+    @if (IsDebug)
+    {
+        <MudNavLink Href="/dev/gallery" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Palette">Design gallery</MudNavLink>
+    }
 </MudNavMenu>
+
+@code {
+#if DEBUG
+    static readonly bool IsDebug = true;
+#else
+    static readonly bool IsDebug = false;
+#endif
+}

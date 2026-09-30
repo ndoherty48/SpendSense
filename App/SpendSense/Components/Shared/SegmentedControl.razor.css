@@ -1,0 +1,29 @@
+.segmented {
+    display: flex;
+    padding: 2px;
+    border-radius: var(--ss-radius-pill);
+    background: var(--ss-surface-2);
+}
+
+.segment {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    padding: 0 var(--ss-space-3);
+    border: 0;
+    border-radius: var(--ss-radius-pill);
+    background: none;
+    color: var(--ss-ink-muted);
+    cursor: pointer;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.segment.is-selected {
+    background: var(--ss-surface);
+    color: var(--ss-ink);
+}

@@ -1,0 +1,109 @@
+@page "/dev/gallery"
+@using SpendSense.Common.Services
+@inject SettingsService Settings
+
+@* Design-system gallery for reviewers. Compiled into every build, but only renders in DEBUG. *@
+
+@if (!IsDebug)
+{
+    <NotFound />
+}
+else
+{
+    <PageHeader Title="Design gallery">
+        <Actions>
+            <MudSelect Value="Settings.ThemeMode" ValueChanged="OnThemeChanged" T="ThemeMode" Label="Theme" Dense="true" Style="min-width: 120px;">
+                <MudSelectItem Value="ThemeMode.System">System</MudSelectItem>
+                <MudSelectItem Value="ThemeMode.Light">Light</MudSelectItem>
+                <MudSelectItem Value="ThemeMode.Dark">Dark</MudSelectItem>
+            </MudSelect>
+            <MudSwitch Value="Settings.HideAmounts" ValueChanged="OnHideChanged" T="bool" Label="Hide amounts" Color="Color.Primary" />
+        </Actions>
+    </PageHeader>
+
+    <SectionHeader Title="Money" />
+    <div class="gallery-row">
+        <Money Amount="1234.5" />
+        <Money Amount="-62.1" />
+        <Money Amount="180" Signed="true" Tone="MoneyTone.Income" />
+        <Money Amount="-260" Tone="MoneyTone.Error" />
+        <Money Amount="-12.5" Tone="MoneyTone.Auto" />
+        <Money Amount="3200" Decimals="0" Size="MoneySize.Small" Tone="MoneyTone.Muted" />
+    </div>
+    <Money Amount="660" Size="MoneySize.Large" />
+
+    <SectionHeader Title="Hero balance and stats" />
+    <HeroBalanceCard Label="Balance this month" Amount="660">
+        <StatTile Label="Income"><Money Amount="3200" Decimals="0" /></StatTile>
+        <StatTile Label="Expenses"><Money Amount="2140" Decimals="0" /></StatTile>
+        <StatTile Label="Savings"><Money Amount="400" Decimals="0" Tone="MoneyTone.Income" /></StatTile>
+    </HeroBalanceCard>
+
+    <SectionHeader Title="List rows">
+        <Actions><a href="/dev/gallery">See all</a></Actions>
+    </SectionHeader>
+    <ListRow Title="Whole Foods Market" Subtitle="Groceries · Today" Href="/dev/gallery">
+        <Leading><IconTile Icon="@Icons.Material.Filled.ShoppingCart" Circle="true" /></Leading>
+        <Trailing><Money Amount="-62.1" /></Trailing>
+    </ListRow>
+    <ListRow Title="Freelance payment" Subtitle="Income · Yesterday">
+        <Leading><IconTile Icon="@Icons.Material.Filled.Payments" Tone="IconTone.Accent" Circle="true" /></Leading>
+        <Trailing><Money Amount="180" Signed="true" Tone="MoneyTone.Income" /></Trailing>
+    </ListRow>
+    <ListRow Title="Dining" Subtitle="Over budget">
+        <Leading><IconTile Icon="@Icons.Material.Filled.Restaurant" Tone="IconTone.Error" /></Leading>
+        <Trailing><Badge Tone="BadgeTone.Error">Over</Badge></Trailing>
+    </ListRow>
+
+    <SectionHeader Title="Progress" />
+    <div class="gallery-stack">
+        <ProgressBar Percent="93" Label="Groceries" ValueText="£420 of £450" />
+        <ProgressBar Percent="173" Label="Dining" ValueText="£260 of £150" />
+        <ProgressBar Percent="0" Label="Empty" />
+    </div>
+
+    <SectionHeader Title="Badges" />
+    <div class="gallery-row">
+        <Badge>Neutral</Badge>
+        <Badge Tone="BadgeTone.Accent">Default</Badge>
+        <Badge Tone="BadgeTone.Error">High</Badge>
+        <Badge Tone="BadgeTone.Warn">Medium</Badge>
+    </div>
+
+    <SectionHeader Title="Segmented control" />
+    <div class="gallery-stack">
+        <SegmentedControl T="string" AriaLabel="State example" Segments="segments" Value="@selected" ValueChanged="@(v => selected = v)" />
+        <SegmentedControl T="string" AriaLabel="Link example" Segments="linkSegments" Value="@("a")" />
+    </div>
+
+    <SectionHeader Title="Empty state" />
+    <EmptyState Icon="@Icons.Material.Filled.Receipt" Title="No transactions yet" Message="Add your first transaction to see it here.">
+        <Actions><MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/dev/gallery">Add transaction</MudButton></Actions>
+    </EmptyState>
+}
+
+@code {
+#if DEBUG
+    static readonly bool IsDebug = true;
+#else
+    static readonly bool IsDebug = false;
+#endif
+
+    string selected = "all";
+
+    static readonly IReadOnlyList<Segment<string>> segments =
+    [
+        new("all", "All"),
+        new("recurring", "Recurring")
+    ];
+
+    static readonly IReadOnlyList<Segment<string>> linkSegments =
+    [
+        new("a", "Monthly", "/dev/gallery"),
+        new("b", "Goals", "/dev/gallery")
+    ];
+
+    void OnThemeChanged(ThemeMode mode) => Settings.ThemeMode = mode;
+
+    void OnHideChanged(bool hide) => Settings.HideAmounts = hide;
+}

@@ -1,0 +1,48 @@
+@using SpendSense.Common.Services
+@inject SettingsService Settings
+
+@if (hidden)
+{
+    @* Masked: read by assistive tech as "Amount hidden", not as bullets *@
+    <span class="money @ToneClass @SizeClass" aria-hidden="true">@MoneyFormat.Format(Amount, Symbol, hidden: true)</span>
+    <span class="ss-sr-only">Amount hidden</span>
+}
+else
+{
+    <span class="money @ToneClass @SizeClass">@MoneyFormat.Format(Amount, Symbol, hidden: false, Signed, Decimals)</span>
+}
+
+@code {
+    /// <summary>The amount. Negative values render with a minus sign.</summary>
+    [Parameter, EditorRequired] public double Amount { get; set; }
+
+    [Parameter] public string Symbol { get; set; } = "£";
+
+    /// <summary>Show an explicit + on positive amounts. Sign is always conveyed by a glyph, never colour alone.</summary>
+    [Parameter] public bool Signed { get; set; }
+
+    [Parameter] public int Decimals { get; set; } = 2;
+
+    [Parameter] public MoneyTone Tone { get; set; } = MoneyTone.Neutral;
+
+    [Parameter] public MoneySize Size { get; set; } = MoneySize.Body;
+
+    // Read on every render: the privacy setting has no change notification.
+    bool hidden => Settings.HideAmounts;
+
+    string ToneClass => Tone switch
+    {
+        MoneyTone.Income => "money--income",
+        MoneyTone.Error => "money--error",
+        MoneyTone.Muted => "money--muted",
+        MoneyTone.Auto => Amount > 0 ? "money--income" : Amount < 0 ? "money--error" : "",
+        _ => ""
+    };
+
+    string SizeClass => Size switch
+    {
+        MoneySize.Small => "money--small",
+        MoneySize.Large => "money--large",
+        _ => ""
+    };
+}

@@ -1,0 +1,16 @@
+.stat {
+    flex: 1;
+    min-width: 0;
+}
+
+.label {
+    color: var(--ss-ink-muted);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.value {
+    margin-top: 3px;
+}
