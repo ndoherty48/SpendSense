@@ -1,0 +1,32 @@
+/* Phone: centred above the pill, overlapping its top edge. */
+.fab {
+    position: fixed;
+    left: 50%;
+    bottom: calc(var(--ss-nav-gap) + var(--ss-nav-height) - 16px + env(safe-area-inset-bottom, 0px));
+    z-index: 20;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    transform: translateX(-50%);
+    border-radius: var(--ss-radius-pill);
+    background: var(--ss-accent);
+    box-shadow: var(--ss-shadow-fab);
+    color: var(--ss-on-accent);
+}
+
+.fab svg {
+    width: 26px;
+    height: 26px;
+}
+
+/* Wide: bottom-right of the window. */
+@media (min-width: 768px) {
+    .fab {
+        right: var(--ss-space-7);
+        bottom: var(--ss-space-7);
+        left: auto;
+        transform: none;
+    }
+}

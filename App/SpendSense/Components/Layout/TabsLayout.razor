@@ -1,0 +1,32 @@
+@inherits LayoutComponentBase
+@layout MainLayout
+@inject NavigationManager Navigation
+
+<SideRail ActiveKey="@state.Tab?.Key" />
+
+<div class="tabs-shell">
+    <div class="column">
+        @if (state.Switch is { } section)
+        {
+            <div class="switch">
+                <SegmentedControl T="string" Segments="section.Segments" Value="@section.Value" AriaLabel="@section.Label" />
+            </div>
+        }
+        @Body
+    </div>
+</div>
+
+<BottomNav ActiveKey="@state.Tab?.Key" />
+
+@if (state.AddHref is { } addHref)
+{
+    <Fab Href="@addHref" Label="@(state.AddLabel ?? "Add")" />
+}
+
+@code {
+    NavState state = NavState.None;
+
+    // Runs on every navigation because the layout's Body changes with the route.
+    protected override void OnParametersSet() =>
+        state = NavDestinations.Resolve(Navigation.ToBaseRelativePath(Navigation.Uri));
+}

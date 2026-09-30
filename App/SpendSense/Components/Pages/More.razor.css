@@ -1,0 +1,19 @@
+.group {
+    padding: var(--ss-space-1) var(--ss-space-4);
+    border: 1px solid var(--ss-border);
+    border-radius: var(--ss-radius-md);
+    background: var(--ss-surface);
+}
+
+.chevron {
+    width: 20px;
+    height: 20px;
+    color: var(--ss-ink-muted);
+}
+
+.footnote {
+    margin-top: var(--ss-space-6);
+    color: var(--ss-ink-muted);
+    font-size: 11px;
+    text-align: center;
+}
