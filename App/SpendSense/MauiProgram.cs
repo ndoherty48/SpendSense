@@ -28,6 +28,7 @@ public static class MauiProgram
 		builder.Services.AddMudServices();
 		builder.Services.AddSpendSenseDb();
 		builder.Services.AddSingleton<SettingsService>();
+		builder.Services.AddSingleton<ThemeService>();
 		builder.Services.AddTransient<RecurringTransactionGenerator>();
 		builder.Services.AddTransient<NotificationService>();
 

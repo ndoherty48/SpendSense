@@ -33,8 +33,9 @@ h1:focus {
 }
 
 #blazor-error-ui {
-    color-scheme: light only;
-    background: lightyellow;
+    background: var(--ss-warn-soft);
+    color: var(--ss-ink);
+    border-top: 1px solid var(--ss-border);
     bottom: 0;
     box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.2);
     box-sizing: border-box;
@@ -86,7 +87,7 @@ h1:focus {
         position: sticky;
         top: 0;
         height: env(safe-area-inset-top);
-        background-color: #f7f7f7;
+        background-color: var(--ss-bg);
         width: 100%;
         z-index: 1;
     }

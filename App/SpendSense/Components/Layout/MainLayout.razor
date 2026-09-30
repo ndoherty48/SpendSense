@@ -1,8 +1,11 @@
 @inherits LayoutComponentBase
+@implements IDisposable
 @using SpendSense.Common.Services
-@inject SettingsService Settings
+@using SpendSense.Common.Theming
+@inject ThemeService Theme
+@inject IJSRuntime JS
 
-<MudThemeProvider Theme="_theme" @bind-IsDarkMode="@_isDarkMode"/>
+<MudThemeProvider Theme="_theme" IsDarkMode="_isDarkMode"/>
 <MudPopoverProvider />
 <MudDialogProvider />
 <MudSnackbarProvider />
@@ -22,16 +25,45 @@
 
 @code {
     bool _drawerOpen = true;
-    private readonly MudTheme _theme = SpendSense.Common.Theming.LedgerTheme.Theme;
+    private readonly MudTheme _theme = LedgerTheme.Theme;
     private bool _isDarkMode;
 
-    protected override void OnParametersSet()
+    protected override void OnInitialized()
     {
-        _isDarkMode = Settings.IsDarkMode;
+        _isDarkMode = Theme.ResolvedDark;
+        Theme.Changed += OnThemeChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+            await ApplyWebThemeAsync();
+    }
+
+    // ThemeService can raise Changed from the native UI thread, so hop back onto the Blazor renderer.
+    void OnThemeChanged() => _ = InvokeAsync(async () =>
+    {
+        _isDarkMode = Theme.ResolvedDark;
+        StateHasChanged();
+        await ApplyWebThemeAsync();
+    });
+
+    async Task ApplyWebThemeAsync()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("ssTheme.apply", Theme.Mode.ToString().ToLowerInvariant(), Theme.ResolvedDark);
+        }
+        catch (JSException)
+        {
+            // The boot script is missing or the webview is shutting down; the CSS falls back to the OS theme.
+        }
     }
 
     void DrawerToggle()
     {
         _drawerOpen = !_drawerOpen;
     }
+
+    public void Dispose() => Theme.Changed -= OnThemeChanged;
 }

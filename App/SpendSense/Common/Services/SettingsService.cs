@@ -1,11 +1,38 @@
 namespace SpendSense.Common.Services;
 
+public enum ThemeMode
+{
+    System,
+    Light,
+    Dark
+}
+
 public class SettingsService
 {
-    public bool IsDarkMode
+    const string LegacyIsDarkModeKey = "IsDarkMode";
+
+    /// <summary>Raised after <see cref="ThemeMode"/> is changed, so the UI can apply it live.</summary>
+    public event Action? ThemeModeChanged;
+
+    public ThemeMode ThemeMode
     {
-        get => Preferences.Get(nameof(IsDarkMode), false);
-        set => Preferences.Set(nameof(IsDarkMode), value);
+        get
+        {
+            if (Enum.TryParse<ThemeMode>(Preferences.Get(nameof(ThemeMode), ""), out var mode))
+                return mode;
+
+            // One-time migration from the old dark-mode switch: an explicit choice is kept,
+            // and anyone who never touched it follows the system.
+            if (Preferences.ContainsKey(LegacyIsDarkModeKey))
+                return Preferences.Get(LegacyIsDarkModeKey, false) ? ThemeMode.Dark : ThemeMode.Light;
+
+            return ThemeMode.System;
+        }
+        set
+        {
+            Preferences.Set(nameof(ThemeMode), value.ToString());
+            ThemeModeChanged?.Invoke();
+        }
     }
 
     public int ActiveBudgetYear
