@@ -1,0 +1,14 @@
+<div class="section-header">
+    <h2 class="title">@Title</h2>
+    @if (Actions is not null)
+    {
+        <div class="actions">@Actions</div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public string Title { get; set; } = "";
+
+    /// <summary>Trailing actions, e.g. a "See all" link.</summary>
+    [Parameter] public RenderFragment? Actions { get; set; }
+}

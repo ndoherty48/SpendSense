@@ -1,0 +1,48 @@
+@if (!string.IsNullOrEmpty(Href))
+{
+    <a class="row row--interactive" href="@Href">@Content</a>
+}
+else if (OnClick.HasDelegate)
+{
+    <button type="button" class="row row--interactive" @onclick="OnClick">@Content</button>
+}
+else
+{
+    <div class="row">@Content</div>
+}
+
+@code {
+    /// <summary>Leading visual, usually an <see cref="IconTile"/>.</summary>
+    [Parameter] public RenderFragment? Leading { get; set; }
+
+    [Parameter, EditorRequired] public string Title { get; set; } = "";
+
+    [Parameter] public string? Subtitle { get; set; }
+
+    /// <summary>Trailing slot, usually a <see cref="Money"/>, a <see cref="Badge"/> or an action.</summary>
+    [Parameter] public RenderFragment? Trailing { get; set; }
+
+    /// <summary>Makes the whole row a link.</summary>
+    [Parameter] public string? Href { get; set; }
+
+    /// <summary>Makes the whole row a button (ignored when <see cref="Href"/> is set).</summary>
+    [Parameter] public EventCallback OnClick { get; set; }
+
+    RenderFragment Content => @<text>
+        @if (Leading is not null)
+        {
+            <span class="leading">@Leading</span>
+        }
+        <span class="text">
+            <span class="title">@Title</span>
+            @if (!string.IsNullOrEmpty(Subtitle))
+            {
+                <span class="subtitle">@Subtitle</span>
+            }
+        </span>
+        @if (Trailing is not null)
+        {
+            <span class="trailing">@Trailing</span>
+        }
+    </text>;
+}

@@ -1,0 +1,28 @@
+<div class="empty" role="status">
+    @if (!string.IsNullOrEmpty(Icon))
+    {
+        <span class="icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="currentColor" focusable="false">@((MarkupString)Icon)</svg>
+        </span>
+    }
+    <p class="title">@Title</p>
+    @if (!string.IsNullOrEmpty(Message))
+    {
+        <p class="message">@Message</p>
+    }
+    @if (Actions is not null)
+    {
+        <div class="actions">@Actions</div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public string Title { get; set; } = "";
+
+    [Parameter] public string? Message { get; set; }
+
+    /// <summary>A MudBlazor icon string.</summary>
+    [Parameter] public string? Icon { get; set; }
+
+    [Parameter] public RenderFragment? Actions { get; set; }
+}

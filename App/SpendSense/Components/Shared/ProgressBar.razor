@@ -1,0 +1,28 @@
+<div class="progress @(IsOver ? "progress--over" : null)"
+     role="progressbar"
+     aria-valuemin="0"
+     aria-valuemax="100"
+     aria-valuenow="@Math.Round(Math.Min(Percent, 100))"
+     aria-valuetext="@ValueText"
+     aria-label="@Label">
+    <div class="fill" style="width: @Fill%"></div>
+</div>
+
+@code {
+    /// <summary>Progress as a percentage. Values over 100 are drawn full and flagged as over.</summary>
+    [Parameter, EditorRequired] public double Percent { get; set; }
+
+    /// <summary>Accessible name, e.g. the category name.</summary>
+    [Parameter] public string? Label { get; set; }
+
+    /// <summary>Accessible value, e.g. "£260 of £150". Defaults to the percentage.</summary>
+    [Parameter] public string? ValueText { get; set; }
+
+    /// <summary>Force the over-budget treatment; by default it applies above 100%.</summary>
+    [Parameter] public bool? Over { get; set; }
+
+    bool IsOver => Over ?? Percent > 100;
+
+    // Invariant culture: a comma decimal separator would make the CSS width invalid.
+    string Fill => Math.Clamp(Percent, 0, 100).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+}

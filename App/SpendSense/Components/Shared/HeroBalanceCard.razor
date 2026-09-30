@@ -1,0 +1,21 @@
+<section class="hero" aria-label="@Label">
+    <div class="label">@Label</div>
+    <div class="amount">
+        <Money Amount="Amount" Symbol="@Symbol" Size="MoneySize.Large" />
+    </div>
+    @if (ChildContent is not null)
+    {
+        <div class="stats">@ChildContent</div>
+    }
+</section>
+
+@code {
+    [Parameter, EditorRequired] public string Label { get; set; } = "";
+
+    [Parameter, EditorRequired] public double Amount { get; set; }
+
+    [Parameter] public string Symbol { get; set; } = "£";
+
+    /// <summary>A row of <see cref="StatTile"/>s shown under the balance.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}

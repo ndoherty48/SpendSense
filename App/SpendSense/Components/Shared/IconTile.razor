@@ -1,0 +1,25 @@
+<span class="icon-tile @ToneClass @ShapeClass" style="--tile-size: @(Size)px" aria-hidden="true">
+    <svg viewBox="0 0 24 24" fill="currentColor" focusable="false">@((MarkupString)Icon)</svg>
+</span>
+
+@code {
+    /// <summary>A MudBlazor icon string, e.g. <c>Icons.Material.Filled.ShoppingCart</c>.</summary>
+    [Parameter, EditorRequired] public string Icon { get; set; } = "";
+
+    [Parameter] public IconTone Tone { get; set; } = IconTone.Neutral;
+
+    /// <summary>Circle for transactions, rounded square for categories.</summary>
+    [Parameter] public bool Circle { get; set; }
+
+    [Parameter] public int Size { get; set; } = 36;
+
+    string ToneClass => Tone switch
+    {
+        IconTone.Brand => "icon-tile--brand",
+        IconTone.Accent => "icon-tile--accent",
+        IconTone.Error => "icon-tile--error",
+        _ => ""
+    };
+
+    string ShapeClass => Circle ? "icon-tile--circle" : "";
+}

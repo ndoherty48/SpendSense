@@ -1,0 +1,11 @@
+<div class="stat">
+    <div class="label">@Label</div>
+    <div class="value">@ChildContent</div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public string Label { get; set; } = "";
+
+    /// <summary>The value, usually a <see cref="Money"/>.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}
