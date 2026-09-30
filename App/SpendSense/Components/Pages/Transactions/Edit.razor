@@ -1,4 +1,5 @@
 @page "/transactions/edit/{Id:int}"
+@layout FocusLayout
 @using SpendSense.Common.Data.Repositories
 @using SpendSense.Common.Models
 @inject TransactionRepository TransactionRepo
@@ -12,7 +13,7 @@
 }
 else
 {
-    <TransactionForm Model="model" Categories="categories" Currencies="currencies" OnSubmit="Submit" />
+    <TransactionForm Title="Edit transaction" Model="model" Categories="categories" Currencies="currencies" OnSubmit="Submit" />
 }
 
 @code {
