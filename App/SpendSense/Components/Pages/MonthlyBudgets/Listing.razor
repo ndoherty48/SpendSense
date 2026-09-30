@@ -4,27 +4,44 @@
 @inject MonthlyBudgetRepository Repository
 @inject IDialogService Dialog
 
-<h1>Monthly Budgets</h1>
-<MudStack Row="true" Spacing="2">
-    <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="CopyToNextMonth" StartIcon="@Icons.Material.Filled.ContentCopy">Copy to Next Month</MudButton>
-</MudStack>
+<PageHeader Title="Monthly budgets">
+    <Actions>
+        <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="CopyToNextMonth" StartIcon="@Icons.Material.Filled.ContentCopy">Copy to next month</MudButton>
+    </Actions>
+</PageHeader>
 
-<MudTable Items="@Elements" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@_loading" LoadingProgressColor="Color.Info">
-    <HeaderContent>
-        <MudTh>Period</MudTh>
-        <MudTh>Category</MudTh>
-        <MudTh>Budgeted Amount</MudTh>
-        <MudTh></MudTh>
-    </HeaderContent>
-    <RowTemplate>
-        <MudTd DataLabel="Period">@($"{context.Year}-{context.Month:D2}")</MudTd>
-        <MudTd DataLabel="Category">@context.Category?.Name</MudTd>
-        <MudTd DataLabel="Budgeted Amount">@context.Currency?.Symbol@context.BudgetedAmount.ToString("F2")</MudTd>
-        <MudTd><MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Href="@($"/monthly-budgets/edit/{context.Id}")" /> <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => Delete(context)" /></MudTd>
-    </RowTemplate>
-</MudTable>
+@if (_loading)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" aria-label="Loading budgets" />
+}
+else if (!Periods.Any())
+{
+    <EmptyState Icon="@Icons.Material.Filled.AccountBalanceWallet"
+                Title="No budgets yet"
+                Message="Tap + to set a spending limit for a category." />
+}
+else
+{
+    @foreach (var period in Periods)
+    {
+        <h2 class="period">@(new DateTime(period.Key.Year, period.Key.Month, 1).ToString("MMMM yyyy"))</h2>
+        @foreach (var budget in period)
+        {
+            <div class="item">
+                <ListRow Title="@(budget.Category?.Name ?? "Uncategorised")" Subtitle="@budget.Currency?.Code" Href="@($"/monthly-budgets/edit/{budget.Id}")">
+                    <Leading><IconTile Icon="@Icons.Material.Filled.Category" Tone="IconTone.Brand" /></Leading>
+                    <Trailing><Money Amount="budget.BudgetedAmount" Symbol="@(budget.Currency?.Symbol ?? "£")" /></Trailing>
+                </ListRow>
+                <MudIconButton Icon="@Icons.Material.Filled.DeleteOutline" OnClick="() => Delete(budget)" aria-label="@($"Delete {budget.Category?.Name} budget")" />
+            </div>
+        }
+    }
+}
 
 @code {
+    IEnumerable<IGrouping<(int Year, int Month), MonthlyBudget>> Periods =>
+        (Elements ?? []).GroupBy(b => (b.Year, b.Month)).OrderByDescending(g => g.Key.Year).ThenByDescending(g => g.Key.Month);
+
     IEnumerable<MonthlyBudget>? Elements;
     bool _loading => Elements is null;
 
