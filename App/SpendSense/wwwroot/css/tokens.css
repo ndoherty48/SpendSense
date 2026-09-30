@@ -1,0 +1,108 @@
+/*
+ * Ledger Noir design tokens. Contract and verified contrast: docs/design/tokens.md
+ *
+ * Colour hex values are mirrored in Common/Theming/LedgerTheme.cs for MudBlazor
+ * (MudColor cannot parse var()). Change both together.
+ *
+ * Theme resolution: an explicit [data-theme] on <html> always wins. With no attribute,
+ * dark is the default and the OS light preference switches to light.
+ */
+
+/* Non-colour tokens: identical in both themes */
+:root {
+    --ss-font-display: 'Space Grotesk', system-ui, sans-serif;
+    --ss-font-body: 'IBM Plex Sans', system-ui, sans-serif;
+    --ss-font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+    --ss-radius-sm: 10px;
+    --ss-radius-md: 14px;
+    --ss-radius-lg: 20px;
+    --ss-radius-pill: 999px;
+
+    --ss-space-1: 4px;
+    --ss-space-2: 8px;
+    --ss-space-3: 12px;
+    --ss-space-4: 16px;
+    --ss-space-5: 20px;
+    --ss-space-6: 24px;
+    --ss-space-7: 32px;
+    --ss-space-8: 40px;
+
+    --ss-target: 44px;
+    --ss-content-max: 720px;
+    --ss-nav-height: 64px;
+    --ss-nav-gap: 22px;
+    --ss-rail-width: 88px;
+}
+
+/* Dark (default) */
+:root,
+:root[data-theme="dark"] {
+    color-scheme: dark;
+
+    --ss-bg: #12151C;
+    --ss-surface: #1B2029;
+    --ss-surface-2: #232A36;
+    --ss-border: #2E3644;
+    --ss-border-strong: #6B7689;
+    --ss-ink: #F4F6F8;
+    --ss-ink-muted: #9BA3B4;
+    --ss-accent: #33D6A6;
+    --ss-accent-soft: #16332B;
+    --ss-on-accent: #12151C;
+    --ss-error: #FF6B5E;
+    --ss-error-soft: #3A2129;
+    --ss-warn: #F0B94E;
+    --ss-warn-soft: #3A2E13;
+
+    --ss-shadow-nav: 0 12px 28px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.03);
+    --ss-shadow-fab: 0 10px 22px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+/* Light */
+:root[data-theme="light"] {
+    color-scheme: light;
+
+    --ss-bg: #F5F7FA;
+    --ss-surface: #FFFFFF;
+    --ss-surface-2: #ECF0F5;
+    --ss-border: #DFE4EC;
+    --ss-border-strong: #7F8A9B;
+    --ss-ink: #14181F;
+    --ss-ink-muted: #5B6472;
+    --ss-accent: #097754;
+    --ss-accent-soft: #DCF3EA;
+    --ss-on-accent: #FFFFFF;
+    --ss-error: #B83629;
+    --ss-error-soft: #FBE2DE;
+    --ss-warn: #8A5A00;
+    --ss-warn-soft: #F7E9C8;
+
+    --ss-shadow-nav: 0 10px 24px rgba(20, 24, 31, 0.10), 0 0 0 1px rgba(20, 24, 31, 0.02);
+    --ss-shadow-fab: 0 10px 20px rgba(9, 119, 84, 0.35);
+}
+
+/* Light via the OS when no explicit theme is set. Keep in sync with the block above. */
+@media (prefers-color-scheme: light) {
+    :root:not([data-theme]) {
+        color-scheme: light;
+
+        --ss-bg: #F5F7FA;
+        --ss-surface: #FFFFFF;
+        --ss-surface-2: #ECF0F5;
+        --ss-border: #DFE4EC;
+        --ss-border-strong: #7F8A9B;
+        --ss-ink: #14181F;
+        --ss-ink-muted: #5B6472;
+        --ss-accent: #097754;
+        --ss-accent-soft: #DCF3EA;
+        --ss-on-accent: #FFFFFF;
+        --ss-error: #B83629;
+        --ss-error-soft: #FBE2DE;
+        --ss-warn: #8A5A00;
+        --ss-warn-soft: #F7E9C8;
+
+        --ss-shadow-nav: 0 10px 24px rgba(20, 24, 31, 0.10), 0 0 0 1px rgba(20, 24, 31, 0.02);
+        --ss-shadow-fab: 0 10px 20px rgba(9, 119, 84, 0.35);
+    }
+}
