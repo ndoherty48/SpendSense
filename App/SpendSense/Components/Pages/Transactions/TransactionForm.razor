@@ -3,91 +3,27 @@
 @using SpendSense.Common.Models.Enums
 @inject SpendSense.Common.Data.SpendSenseDbContext Db
 
-<EditForm Model="@Model" OnValidSubmit="OnValidSubmit">
-<MudGrid>
-    <MudItem xs="12" sm="7">
-        <MudCard>
-            <MudCardContent>
-                <MudTextField
-                    Label="Description"
-                    Value="Model.Description"
-                    ValueChanged="OnDescriptionChanged"
-                    T="string"
-                    DebounceInterval="500"
-                    Immediate="true"
-                />
-                <MudSelect
-                    Label="Type"
-                    Class="mt-3"
-                    @bind-Value="Model.TransactionType"
-                >
-                    @foreach (var type in Enum.GetValues<TransactionTypeEnum>())
-                    {
-                        <MudSelectItem Value="type">@type</MudSelectItem>
-                    }
-                </MudSelect>
-                <MudSelect
-                    Label="Category"
-                    Class="mt-3"
-                    @bind-Value="Model.CategoryId"
-                >
-                    @foreach (var cat in Categories)
-                    {
-                        <MudSelectItem Value="@((int?)cat.Id)">@cat.Name</MudSelectItem>
-                    }
-                </MudSelect>
-                <MudNumericField
-                    Label="Amount"
-                    Class="mt-3"
-                    @bind-Value="Model.Amount"
-                    For="@(() => Model.Amount)"
-                    Min="0.01"
-                />
-                <MudSelect
-                    Label="Currency"
-                    Class="mt-3"
-                    @bind-Value="Model.CurrencyId"
-                >
-                    @foreach (var cur in Currencies)
-                    {
-                        <MudSelectItem Value="cur.Id">@cur.Code - @cur.Name</MudSelectItem>
-                    }
-                </MudSelect>
-                <MudDatePicker
-                    Label="Date"
-                    Class="mt-3"
-                    @bind-Date="transactionDate"
-                />
-                <MudTextField
-                    Label="Notes"
-                    Class="mt-3"
-                    @bind-Value="Model.Notes"
-                    Lines="3"
-                />
-            </MudCardContent>
-            <MudCardActions>
-                <MudButton
-                    ButtonType="ButtonType.Submit"
-                    Variant="Variant.Filled"
-                    Color="Color.Primary"
-                    Class="ml-auto"
-                >@SubmitLabel</MudButton>
-            </MudCardActions>
-        </MudCard>
-    </MudItem>
-    @if (ShowValidationSummary)
-    {
-        <MudItem xs="12" sm="5">
-            <MudPaper Class="pa-4 mud-height-full">
-                <MudText Typo="Typo.subtitle2">Validation Summary</MudText>
-                <MudText Color="@Color.Error">
-                    <ValidationSummary />
-                </MudText>
-            </MudPaper>
-        </MudItem>
-    }
-</MudGrid>
-</EditForm>
+<FormShell Title="@Title" BackHref="/transactions" Model="Model" OnValidSubmit="OnValidSubmit" SubmitLabel="Save" PrimaryLabel="@SubmitLabel">
+    <SegmentedControl T="TransactionTypeEnum" Segments="types" Value="Model.TransactionType" ValueChanged="OnTypeChanged" AriaLabel="Transaction type" />
+
+    <MoneyInput @bind-Value="Model.Amount" Symbol="@CurrentSymbol" Min="0.01" />
+
+    <MudTextField Label="Description"
+                  Value="Model.Description"
+                  ValueChanged="OnDescriptionChanged"
+                  T="string"
+                  DebounceInterval="500"
+                  Immediate="true"
+                  Variant="Variant.Outlined" />
+
+    <CategorySelect Categories="Categories" @bind-Value="Model.CategoryId" />
+
+    <CurrencySelect Currencies="Currencies" @bind-Value="Model.CurrencyId" />
+
+    <DateField @bind-Value="transactionDate" />
+
+    <MudTextField Label="Notes" @bind-Value="Model.Notes" Lines="3" Variant="Variant.Outlined" />
+</FormShell>
 
 @code {
     [Parameter, EditorRequired] public Transaction Model { get; set; } = default!;
@@ -96,19 +32,31 @@
 
     [Parameter, EditorRequired] public IReadOnlyCollection<Currency> Currencies { get; set; } = [];
 
+    [Parameter, EditorRequired] public string Title { get; set; } = "";
+
     /// <summary>Pre-select the category most used for similar descriptions (Add only).</summary>
     [Parameter] public bool SuggestCategory { get; set; }
 
-    [Parameter] public bool ShowValidationSummary { get; set; }
-
+    /// <summary>Label for the full-width button, e.g. "Add transaction".</summary>
     [Parameter] public string SubmitLabel { get; set; } = "Save";
 
     /// <summary>Called after the model's date has been applied; the page persists the transaction.</summary>
     [Parameter] public EventCallback OnSubmit { get; set; }
 
+    static readonly IReadOnlyList<Segment<TransactionTypeEnum>> types =
+    [
+        new(TransactionTypeEnum.Expense, "Expense"),
+        new(TransactionTypeEnum.Income, "Income"),
+        new(TransactionTypeEnum.Savings, "Savings")
+    ];
+
     DateTime? transactionDate;
 
+    string CurrentSymbol => Currencies.FirstOrDefault(c => c.Id == Model.CurrencyId)?.Symbol ?? "£";
+
     protected override void OnInitialized() => transactionDate = Model.TransactionDate;
+
+    void OnTypeChanged(TransactionTypeEnum type) => Model.TransactionType = type;
 
     async Task OnValidSubmit(EditContext context)
     {

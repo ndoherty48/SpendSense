@@ -1,4 +1,5 @@
 @page "/transactions/add"
+@layout FocusLayout
 @using SpendSense.Common.Data.Repositories
 @using SpendSense.Common.Models
 @using SpendSense.Common.Models.Enums
@@ -8,7 +9,7 @@
 @inject SpendSense.Common.Services.NotificationService NotificationSvc
 @inject NavigationManager Navigation
 
-<TransactionForm Model="model" Categories="categories" Currencies="currencies" SuggestCategory="true" ShowValidationSummary="true" SubmitLabel="Add" OnSubmit="Submit" />
+<TransactionForm Title="New transaction" Model="model" Categories="categories" Currencies="currencies" SuggestCategory="true" SubmitLabel="Add transaction" OnSubmit="Submit" />
 
 @code {
     Transaction model = new()
