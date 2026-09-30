@@ -1,0 +1,65 @@
+@using SpendSense.Common.Models
+@using SpendSense.Common.Models.Enums
+
+<FormShell Title="@Title" BackHref="/goals" Model="Model" OnValidSubmit="OnValidSubmit" SubmitLabel="Save" PrimaryLabel="@SubmitLabel">
+    <MudTextField Label="Name" @bind-Value="Model.Name" For="@(() => Model.Name)" Variant="Variant.Outlined" />
+    <MudTextField Label="Description" @bind-Value="Model.Description" Lines="2" Variant="Variant.Outlined" />
+
+    <MoneyInput @bind-Value="Model.TargetAmount" Label="Target amount" Symbol="@CurrentSymbol" Min="0.01" />
+
+    @if (ShowCurrentAmount)
+    {
+        <MoneyInput @bind-Value="Model.CurrentAmount" Label="Saved so far" Symbol="@CurrentSymbol" Min="0" />
+    }
+
+    <CategorySelect Categories="Categories" @bind-Value="Model.CategoryId" Label="Category (optional)" Clearable="true" />
+
+    <CurrencySelect Currencies="Currencies" @bind-Value="Model.CurrencyId" />
+
+    <DateField @bind-Value="targetDate" Label="Target date (optional)" Clearable="true" />
+
+    <SegmentedControl T="PriorityEnum" Segments="priorities" Value="Model.Priority" ValueChanged="OnPriorityChanged" AriaLabel="Priority" />
+
+    @if (ShowStatus)
+    {
+        <EnumSelect TEnum="StatusEnum" Label="Status" @bind-Value="Model.Status" />
+    }
+</FormShell>
+
+@code {
+    [Parameter, EditorRequired] public Goal Model { get; set; } = default!;
+
+    [Parameter, EditorRequired] public IReadOnlyCollection<Category> Categories { get; set; } = [];
+
+    [Parameter, EditorRequired] public IReadOnlyCollection<Currency> Currencies { get; set; } = [];
+
+    [Parameter, EditorRequired] public string Title { get; set; } = "";
+
+    [Parameter] public string SubmitLabel { get; set; } = "Save";
+
+    /// <summary>Edit only: the amount saved so far.</summary>
+    [Parameter] public bool ShowCurrentAmount { get; set; }
+
+    /// <summary>Edit only: the goal's status (Add always starts Active).</summary>
+    [Parameter] public bool ShowStatus { get; set; }
+
+    /// <summary>Called after the target date has been applied; the page persists the goal.</summary>
+    [Parameter] public EventCallback OnSubmit { get; set; }
+
+    static readonly IReadOnlyList<Segment<PriorityEnum>> priorities =
+        Enum.GetValues<PriorityEnum>().Select(p => new Segment<PriorityEnum>(p, p.ToString())).ToList();
+
+    DateTime? targetDate;
+
+    string CurrentSymbol => Currencies.FirstOrDefault(c => c.Id == Model.CurrencyId)?.Symbol ?? "£";
+
+    protected override void OnInitialized() => targetDate = Model.TargetDate;
+
+    void OnPriorityChanged(PriorityEnum priority) => Model.Priority = priority;
+
+    async Task OnValidSubmit(EditContext context)
+    {
+        Model.TargetDate = targetDate;
+        await OnSubmit.InvokeAsync();
+    }
+}
