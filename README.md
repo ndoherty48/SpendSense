@@ -57,6 +57,8 @@ SpendSense/
 aspire start
 ```
 
+Run from the repo root — `aspire.config.json` points the Aspire CLI at the AppHost project.
+
 ### Run standalone (Mac Catalyst)
 
 ```bash
