@@ -4,32 +4,40 @@
 @inject CategoryRepository Repository
 @inject IDialogService Dialog
 
-<h1>Categories</h1>
-<MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/categories/add">Add</MudButton>
+<PageHeader Title="Categories">
+    <Actions>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/categories/add" StartIcon="@Icons.Material.Filled.Add">Add</MudButton>
+    </Actions>
+</PageHeader>
 
-<MudTable Items="@Elements" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@_loading" LoadingProgressColor="Color.Info">
-    <HeaderContent>
-        <MudTh>Name</MudTh>
-        <MudTh>Type</MudTh>
-        <MudTh>Color</MudTh>
-        <MudTh>Icon</MudTh>
-        <MudTh></MudTh>
-    </HeaderContent>
-    <RowTemplate>
-        <MudTd DataLabel="Name">@context.Name</MudTd>
-        <MudTd DataLabel="Type">@context.Type</MudTd>
-        <MudTd DataLabel="Color">
-            @if (context.Color is not null)
-            {
-                <MudIcon Icon="@Icons.Material.Filled.Circle" Style="@($"color:{context.Color}")" />
-            }
-        </MudTd>
-        <MudTd DataLabel="Icon">@context.Icon</MudTd>
-        <MudTd><MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Href="@($"/categories/edit/{context.Id}")" /> <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => Delete(context)" /></MudTd>
-    </RowTemplate>
-</MudTable>
+@if (_loading)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" aria-label="Loading categories" />
+}
+else if (!Elements!.Any())
+{
+    <EmptyState Icon="@Icons.Material.Filled.Label" Title="No categories yet" Message="Add a category to start organising your transactions." />
+}
+else
+{
+    @foreach (var category in Elements!)
+    {
+        <div class="item">
+            <ListRow Title="@category.Name" Subtitle="@(string.IsNullOrWhiteSpace(category.Icon) ? category.Type.ToString() : $"{category.Type} · {category.Icon}")" Href="@($"/categories/edit/{category.Id}")">
+                <Leading>
+                    <span class="swatch" style="@(SafeColor(category.Color) is { } c ? $"--swatch: {c}" : null)" aria-hidden="true"></span>
+                </Leading>
+            </ListRow>
+            <MudIconButton Icon="@Icons.Material.Filled.DeleteOutline" OnClick="() => Delete(category)" aria-label="@($"Delete {category.Name}")" />
+        </div>
+    }
+}
 
 @code {
+    // Category colours are user data; only draw a value that is a valid hex colour.
+    static string? SafeColor(string? color) =>
+        color is not null && System.Text.RegularExpressions.Regex.IsMatch(color, "^#[0-9A-Fa-f]{3,8}$") ? color : null;
+
     IEnumerable<Category>? Elements;
     bool _loading => Elements is null;
 
