@@ -1,31 +1,56 @@
 @page "/trends"
+@implements IDisposable
 @using Microsoft.EntityFrameworkCore
 @using SpendSense.Common.Data
 @using SpendSense.Common.Models
 @using SpendSense.Common.Models.Enums
+@using SpendSense.Common.Services
+@using SpendSense.Common.Theming
 @inject SpendSenseDbContext Db
+@inject ThemeService Theme
 
-<h1>Spending Trends</h1>
+<PageHeader Title="Trends" />
 
-<MudSelect Value="selectedRange" ValueChanged="OnRangeChanged" T="int" Label="Period" Class="mb-4" Style="max-width: 200px;">
-    <MudSelectItem Value="3">Last 3 months</MudSelectItem>
-    <MudSelectItem Value="6">Last 6 months</MudSelectItem>
-    <MudSelectItem Value="12">Last 12 months</MudSelectItem>
-</MudSelect>
+<SegmentedControl T="int" Segments="ranges" Value="selectedRange" ValueChanged="OnRangeChanged" AriaLabel="Period" />
 
-<MudText Typo="Typo.h6" Class="mt-4 mb-2">Total Spending</MudText>
-@if (totalSeries.Any())
+@if (!totalSeries.Any() && !categorySeries.Any())
 {
-    <MudChart ChartType="ChartType.Line" ChartSeries="@totalSeries" ChartLabels="@monthLabels" Width="100%" Height="300px" T="double" />
+    <EmptyState Icon="@Icons.Material.Filled.TrendingUp"
+                Title="No spending to chart yet"
+                Message="Once you record some expenses, your monthly trends will show up here." />
 }
 
-<MudText Typo="Typo.h6" Class="mt-6 mb-2">Spending by Category</MudText>
+@if (totalSeries.Any())
+{
+    <SectionHeader Title="Total spending" />
+    <div class="card">
+        <MudChart ChartType="ChartType.Line" ChartSeries="@totalSeries" ChartLabels="@monthLabels" ChartOptions="ChartTheme.Options(Theme.ResolvedDark)" Width="100%" Height="300px" T="double" />
+    </div>
+}
+
 @if (categorySeries.Any())
 {
-    <MudChart ChartType="ChartType.Bar" ChartSeries="@categorySeries" ChartLabels="@monthLabels" Width="100%" Height="300px" T="double" />
+    <SectionHeader Title="Spending by category" />
+    <div class="card">
+        <MudChart ChartType="ChartType.Bar" ChartSeries="@categorySeries" ChartLabels="@monthLabels" ChartOptions="ChartTheme.Options(Theme.ResolvedDark)" Width="100%" Height="300px" T="double" />
+    </div>
 }
 
 @code {
+    protected override void OnInitialized() => Theme.Changed += OnThemeChanged;
+
+    // ThemeService can raise Changed from the native UI thread; the chart palette depends on it.
+    void OnThemeChanged() => _ = InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Theme.Changed -= OnThemeChanged;
+
+    static readonly IReadOnlyList<Segment<int>> ranges =
+    [
+        new(3, "3 months"),
+        new(6, "6 months"),
+        new(12, "12 months")
+    ];
+
     int selectedRange = 6;
     List<ChartSeries<double>> totalSeries = [];
     List<ChartSeries<double>> categorySeries = [];
