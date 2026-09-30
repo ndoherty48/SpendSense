@@ -1,42 +1,42 @@
 @page "/recurring-transactions"
 @using SpendSense.Common.Data.Repositories
 @using SpendSense.Common.Models
+@using SpendSense.Common.Models.Enums
 @inject RecurringTransactionRepository Repository
 @inject IDialogService Dialog
 
-<h1>Recurring Transactions</h1>
+<PageHeader Title="Recurring transactions" />
 
-<MudTable Items="@Elements" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@_loading" LoadingProgressColor="Color.Info">
-    <HeaderContent>
-        <MudTh>Name</MudTh>
-        <MudTh>Type</MudTh>
-        <MudTh>Category</MudTh>
-        <MudTh>Amount</MudTh>
-        <MudTh>Frequency</MudTh>
-        <MudTh>Start Date</MudTh>
-        <MudTh>Active</MudTh>
-        <MudTh></MudTh>
-    </HeaderContent>
-    <RowTemplate>
-        <MudTd DataLabel="Name">@context.Name</MudTd>
-        <MudTd DataLabel="Type">
-            <MudChip T="string" Size="Size.Small" Color="@(context.TransactionType == SpendSense.Common.Models.Enums.TransactionTypeEnum.Income ? Color.Success : context.TransactionType == SpendSense.Common.Models.Enums.TransactionTypeEnum.Savings ? Color.Info : Color.Error)">
-                @context.TransactionType
-            </MudChip>
-        </MudTd>
-        <MudTd DataLabel="Category">@context.Category?.Name</MudTd>
-        <MudTd DataLabel="Amount">@context.Currency?.Symbol@context.Amount.ToString("F2")</MudTd>
-        <MudTd DataLabel="Frequency">@context.Frequency</MudTd>
-        <MudTd DataLabel="Start Date">@context.StartDate.ToString("dd MMM yyyy")</MudTd>
-        <MudTd DataLabel="Active">
-            @if (context.IsActive)
-            {
-                <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" />
-            }
-        </MudTd>
-        <MudTd><MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Href="@($"/recurring-transactions/edit/{context.Id}")" /> <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => Delete(context)" /></MudTd>
-    </RowTemplate>
-</MudTable>
+@if (_loading)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" aria-label="Loading recurring transactions" />
+}
+else if (!Elements!.Any())
+{
+    <EmptyState Icon="@Icons.Material.Filled.Autorenew"
+                Title="No recurring transactions"
+                Message="Tap + to add a salary, rent or subscription that repeats." />
+}
+else
+{
+    @foreach (var r in Elements!)
+    {
+        var income = r.TransactionType == TransactionTypeEnum.Income;
+        <div class="item">
+            <ListRow Title="@r.Name" Subtitle="@($"{r.Frequency} · {r.Category?.Name ?? "Uncategorised"} · from {r.StartDate:dd MMM yyyy}")" Href="@($"/recurring-transactions/edit/{r.Id}")">
+                <Leading><IconTile Icon="@TransactionVisuals.Icon(r.TransactionType)" Tone="@TransactionVisuals.Tone(r.TransactionType)" Circle="true" /></Leading>
+                <Trailing>
+                    @if (!r.IsActive)
+                    {
+                        <Badge Tone="BadgeTone.Warn">Paused</Badge>
+                    }
+                    <Money Amount="@(income ? r.Amount : -r.Amount)" Symbol="@(r.Currency?.Symbol ?? "£")" Signed="true" Tone="@(income ? MoneyTone.Income : MoneyTone.Neutral)" />
+                </Trailing>
+            </ListRow>
+            <MudIconButton Icon="@Icons.Material.Filled.DeleteOutline" OnClick="() => Delete(r)" aria-label="@($"Delete {r.Name}")" />
+        </div>
+    }
+}
 
 @code {
     IEnumerable<RecurringTransaction>? Elements;

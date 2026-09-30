@@ -1,0 +1,65 @@
+@using SpendSense.Common.Models
+@using SpendSense.Common.Models.Enums
+
+<FormShell Title="@Title" BackHref="/recurring-transactions" Model="Model" OnValidSubmit="OnValidSubmit" SubmitLabel="Save" PrimaryLabel="@SubmitLabel">
+    <SegmentedControl T="TransactionTypeEnum" Segments="types" Value="Model.TransactionType" ValueChanged="OnTypeChanged" AriaLabel="Transaction type" />
+
+    <MoneyInput @bind-Value="Model.Amount" Symbol="@CurrentSymbol" Min="0.01" />
+
+    <MudTextField Label="Name" @bind-Value="Model.Name" For="@(() => Model.Name)" Variant="Variant.Outlined" />
+    <MudTextField Label="Description" @bind-Value="Model.Description" Lines="2" Variant="Variant.Outlined" />
+
+    <CategorySelect Categories="Categories" @bind-Value="Model.CategoryId" Label="Category (optional)" Clearable="true" />
+
+    <CurrencySelect Currencies="Currencies" @bind-Value="Model.CurrencyId" />
+
+    <EnumSelect TEnum="FrequencyEnum" Label="Frequency" @bind-Value="Model.Frequency" />
+
+    <DateField @bind-Value="startDate" Label="Start date" />
+
+    <MudNumericField T="int?" Label="Day of month (optional)" @bind-Value="Model.DayOfMonth" Min="1" Max="31" Variant="Variant.Outlined" HideSpinButtons="true" />
+
+    @if (ShowActive)
+    {
+        <ToggleRow Label="Active" Description="Paused rules stop generating transactions." @bind-Value="Model.IsActive" />
+    }
+</FormShell>
+
+@code {
+    [Parameter, EditorRequired] public RecurringTransaction Model { get; set; } = default!;
+
+    [Parameter, EditorRequired] public IReadOnlyCollection<Category> Categories { get; set; } = [];
+
+    [Parameter, EditorRequired] public IReadOnlyCollection<Currency> Currencies { get; set; } = [];
+
+    [Parameter, EditorRequired] public string Title { get; set; } = "";
+
+    [Parameter] public string SubmitLabel { get; set; } = "Save";
+
+    /// <summary>Edit only: the active switch.</summary>
+    [Parameter] public bool ShowActive { get; set; }
+
+    /// <summary>Called after the start date has been applied; the page persists the rule.</summary>
+    [Parameter] public EventCallback OnSubmit { get; set; }
+
+    static readonly IReadOnlyList<Segment<TransactionTypeEnum>> types =
+    [
+        new(TransactionTypeEnum.Expense, "Expense"),
+        new(TransactionTypeEnum.Income, "Income"),
+        new(TransactionTypeEnum.Savings, "Savings")
+    ];
+
+    DateTime? startDate;
+
+    string CurrentSymbol => Currencies.FirstOrDefault(c => c.Id == Model.CurrencyId)?.Symbol ?? "£";
+
+    protected override void OnInitialized() => startDate = Model.StartDate;
+
+    void OnTypeChanged(TransactionTypeEnum type) => Model.TransactionType = type;
+
+    async Task OnValidSubmit(EditContext context)
+    {
+        Model.StartDate = startDate ?? DateTime.Today;
+        await OnSubmit.InvokeAsync();
+    }
+}
