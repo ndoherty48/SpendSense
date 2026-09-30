@@ -1,4 +1,5 @@
 @page "/goals/add"
+@layout FocusLayout
 @using SpendSense.Common.Data.Repositories
 @using SpendSense.Common.Models
 @using SpendSense.Common.Models.Enums
@@ -7,100 +8,12 @@
 @inject CurrencyRepository CurrencyRepo
 @inject NavigationManager Navigation
 
-<EditForm Model="@model" OnValidSubmit="OnValidSubmit">
-<MudGrid>
-    <MudItem xs="12" sm="7">
-        <MudCard>
-            <MudCardContent>
-                <MudTextField 
-                    Label="Name" 
-                    @bind-Value="model.Name" 
-                    For="@(() => model.Name)"
-                />
-                <MudTextField 
-                    Label="Description" 
-                    Class="mt-3"
-                    @bind-Value="model.Description"
-                    Lines="2"
-                />
-                <MudSelect 
-                    Label="Category (optional)" 
-                    Class="mt-3"
-                    @bind-Value="model.CategoryId"
-                    Clearable="true"
-                >
-                    @foreach (var cat in categories)
-                    {
-                        <MudSelectItem Value="@((int?)cat.Id)">@cat.Name</MudSelectItem>
-                    }
-                </MudSelect>
-                <MudNumericField 
-                    Label="Target Amount" 
-                    Class="mt-3"
-                    @bind-Value="model.TargetAmount" 
-                    For="@(() => model.TargetAmount)"
-                    Min="0.01"
-                />
-                <MudSelect 
-                    Label="Currency" 
-                    Class="mt-3"
-                    @bind-Value="model.CurrencyId"
-                >
-                    @foreach (var cur in currencies)
-                    {
-                        <MudSelectItem Value="cur.Id">@cur.Code - @cur.Name</MudSelectItem>
-                    }
-                </MudSelect>
-                <MudDatePicker 
-                    Label="Target Date (optional)" 
-                    Class="mt-3"
-                    @bind-Date="targetDate"
-                />
-                <MudSelect 
-                    Label="Priority" 
-                    Class="mt-3"
-                    @bind-Value="model.Priority"
-                >
-                    @foreach (var p in Enum.GetValues<PriorityEnum>())
-                    {
-                        <MudSelectItem Value="p">@p</MudSelectItem>
-                    }
-                </MudSelect>
-            </MudCardContent>
-            <MudCardActions>
-                <MudButton 
-                    ButtonType="ButtonType.Submit" 
-                    Variant="Variant.Filled" 
-                    Color="Color.Primary" 
-                    Class="ml-auto"
-                >Add</MudButton>
-            </MudCardActions>
-        </MudCard>
-    </MudItem>
-    <MudItem xs="12" sm="5">
-        <MudPaper Class="pa-4 mud-height-full">
-            <MudText Typo="Typo.subtitle2">Validation Summary</MudText>
-            @if (success)
-            {
-                <MudText Color="Color.Success">Success</MudText>
-            }
-            else
-            {
-                <MudText Color="@Color.Error">
-                    <ValidationSummary />
-                </MudText>
-            }
-        </MudPaper>
-    </MudItem>
-</MudGrid>
-</EditForm>
+<GoalForm Title="New goal" Model="model" Categories="categories" Currencies="currencies" SubmitLabel="Add goal" OnSubmit="Submit" />
 
 @code {
     Goal model = new() { Name = "", TargetAmount = 0 };
-    DateTime? targetDate;
     IReadOnlyCollection<Category> categories = [];
     IReadOnlyCollection<Currency> currencies = [];
-    bool success;
 
     protected override async Task OnInitializedAsync()
     {
@@ -111,12 +24,10 @@
             model.CurrencyId = defaultCurrency.Id;
     }
 
-    async Task OnValidSubmit(EditContext context)
+    async Task Submit()
     {
-        model.TargetDate = targetDate;
         model.Status = StatusEnum.Active;
         await GoalRepo.Add(model);
-        success = true;
         Navigation.NavigateTo("/goals");
     }
 }
