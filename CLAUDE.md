@@ -76,15 +76,38 @@ After `builder.Build()`, three extension methods run in sequence and each swallo
 
 ### UI layer
 
-- Blazor pages live under `Components/Pages/<Entity>/{Listing,Add,Edit}.razor`, following the same
-  three-file CRUD shape per entity (Transactions, Categories, Currencies, Goals, MonthlyBudgets,
-  RecurringTransactions). New CRUD entities should follow this shape.
-- MudBlazor (v9) is the component library — forms use `EditForm` + `MudTextField`/`MudSelect`/etc.,
-  injected repositories are called directly from `@code` blocks (no separate view-model/service layer
-  between pages and repositories).
-- `SettingsService` wraps MAUI `Preferences` (not the database) for device-local settings: dark mode,
-  active budget year/month, income-attribution toggle, hide-amounts privacy mode. Use this — not the
-  DB — for anything that's a per-device UI preference rather than budgeting data.
+The UI follows the **Ledger Noir** design system. Start with `docs/adr/0001-ledger-noir.md` (decisions)
+and `docs/design/tokens.md` (tokens, verified contrast). The rules that matter when editing UI:
+
+- **Pages** live under `Components/Pages/<Entity>/{Listing,Add,Edit}.razor`; repositories are injected
+  directly into `@code` (no view-model layer). Every page URL is stable — don't change `@page` routes.
+  Add and Edit share one `<Entity>Form.razor` (e.g. `Transactions/TransactionForm.razor`); the pages only
+  load data and persist. Currencies has Add only.
+- **MudBlazor (v9) is the behaviour layer**: selects, date pickers, numeric/text fields, dialogs, charts
+  and the theme provider stay. Its layout pieces (app bar, drawer, tables, cards) are replaced by our own
+  components, so don't reach for `MudTable`/`MudCard`/`MudGrid` for page layout.
+- **Shared components** are in `Components/Shared/`: display (`Money`, `HeroBalanceCard`, `StatTile`,
+  `ListRow`, `IconTile`, `ProgressBar`, `Badge`, `SegmentedControl<T>`, `PageHeader`, `SectionHeader`,
+  `EmptyState`) and form (`FormShell`, `FormSection`, `MoneyInput`, `CategorySelect`, `CurrencySelect`,
+  `EnumSelect<T>`, `DateField`, `ToggleRow`, `ColorSwatchPicker`). In debug builds `/dev/gallery` (linked
+  from More) shows them all in both themes.
+- **All money renders through `<Money/>`** (or `MoneyFormat` for text) so the privacy mode, mono digits and
+  sign glyph apply everywhere. Never format amounts with `ToString("F2")` or a hard-coded symbol in markup.
+- **Styling uses tokens only.** `wwwroot/css/tokens.css` defines `--ss-*` for dark and light; component
+  styles are scoped `.razor.css` files using `var(--ss-…)`; no raw hex outside category colours. The same
+  colours are mirrored in `Common/Theming/LedgerTheme.cs` (MudBlazor) and `ChartTheme.cs` (charts) —
+  change all of them together. Load order in `index.html` is tokens, fonts, MudBlazor, base, app, scoped.
+- **Layouts**: `MainLayout` holds providers only; `TabsLayout` (router default) adds the bottom nav /
+  side rail, FAB and section switch; `FocusLayout` has no nav and is used by add/edit pages (`FormShell`
+  brings its own back-bar). `Components/Layout/NavDestinations.cs` is the single table that maps routes to
+  tabs, add buttons and switches — change it, not the pages, to reshape navigation.
+- **Theme**: `SettingsService.ThemeMode` (System/Light/Dark, in `Preferences`) is authoritative.
+  `ThemeService` resolves it, sets `Application.UserAppTheme`, and `MainLayout` pushes `data-theme` to the
+  webview via `wwwroot/js/theme.js`. Applied live — never reload the page to change theme.
+- Every page keeps exactly one `<h1>` (`PageHeader` or `FormShell`); `Routes.razor` focuses it on navigation.
+- `SettingsService` wraps MAUI `Preferences` (not the database) for device-local settings: theme mode,
+  active budget year/month, income-attribution toggle, hide-amounts privacy mode. Use this — not the DB —
+  for anything that's a per-device UI preference rather than budgeting data.
 - `Home.razor` is the dashboard; `Trends.razor` is the separate spending-trends page.
 
 ### Cross-cutting services (`Common/Services/`)

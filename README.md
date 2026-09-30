@@ -8,8 +8,8 @@ A personal budgeting app built with .NET MAUI Blazor Hybrid and Aspire.
 - **Recurring Transactions** — auto-generates transactions on app launch (salary, subscriptions, rent)
 - **Monthly Budgets** — set spending limits per category per month, copy budgets to next month
 - **Goals** — savings targets with auto-calculated progress from linked category transactions
-- **Dashboard** — monthly summary with income/expenses/savings/balance cards, pie chart, spending by category table, overspend warnings
-- **Settings** — dark mode, income attribution toggle (income funds next month's budget)
+- **Dashboard** — monthly summary with balance, income/expenses/savings, a spending-by-category donut with budget progress, overspend warnings
+- **Preferences** — System/Light/Dark theme, income attribution toggle (income funds next month's budget), hide-amounts privacy mode
 - **Filtering** — search transactions by description/notes, filter by category or type
 - **Delete protection** — prevents deletion of categories/currencies that are in use
 
@@ -17,7 +17,7 @@ A personal budgeting app built with .NET MAUI Blazor Hybrid and Aspire.
 
 - **.NET 10** / C#
 - **MAUI Blazor Hybrid** — cross-platform (iOS, Android, Mac Catalyst, Windows)
-- **MudBlazor 9** — UI component library
+- **MudBlazor 9** — behaviour layer (inputs, dialogs, charts) under the Ledger Noir design system (`docs/`)
 - **Entity Framework Core** — SQLite local database with migrations
 - **Aspire** — orchestration for multi-device development (AppHost with dev tunnels)
 
@@ -32,10 +32,12 @@ SpendSense/
 │   │   ├── Interfaces/          # Shared interfaces
 │   │   └── Services/            # SettingsService, RecurringTransactionGenerator
 │   ├── Components/
-│   │   ├── Layout/              # MainLayout, NavMenu
-│   │   └── Pages/               # All page components (CRUD, Dashboard, Settings)
+│   │   ├── Layout/              # MainLayout, TabsLayout, FocusLayout, nav
+│   │   ├── Shared/              # Design-system components (Money, ListRow, FormShell, …)
+│   │   └── Pages/               # Page components (CRUD, Dashboard, Trends, Preferences)
 │   ├── Migrations/              # EF Core migrations
 │   └── MauiProgram.cs           # App startup and DI
+├── docs/                        # ADRs and the design-token contract
 ├── Infra/
 │   ├── SpendSense.AppHost/      # Aspire orchestration
 │   └── SpendSense.ServiceDefaults/ # Shared service configuration
