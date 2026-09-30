@@ -1,0 +1,16 @@
+<MudDatePicker Date="Value"
+               DateChanged="ValueChanged"
+               Label="@Label"
+               Clearable="Clearable"
+               Variant="Variant.Outlined" />
+
+@code {
+    /// <summary>The date. Nullable so optional dates (e.g. a goal's target date) work; callers of required dates default on submit.</summary>
+    [Parameter] public DateTime? Value { get; set; }
+
+    [Parameter] public EventCallback<DateTime?> ValueChanged { get; set; }
+
+    [Parameter] public string Label { get; set; } = "Date";
+
+    [Parameter] public bool Clearable { get; set; }
+}

@@ -1,0 +1,90 @@
+.form-shell {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ss-space-4);
+}
+
+.bar {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: var(--ss-space-2);
+    min-height: 56px;
+    background: var(--ss-bg);
+}
+
+.back {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: var(--ss-target);
+    height: var(--ss-target);
+    border-radius: var(--ss-radius-pill);
+    color: var(--ss-ink-muted);
+}
+
+.back svg {
+    width: 24px;
+    height: 24px;
+}
+
+.title {
+    flex: 1;
+    margin: 0;
+    font-family: var(--ss-font-display);
+    font-size: 16px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.title:focus {
+    outline: none;
+}
+
+.save {
+    min-width: var(--ss-target);
+    min-height: var(--ss-target);
+    padding: 0 var(--ss-space-2);
+    border: 0;
+    background: none;
+    color: var(--ss-accent);
+    cursor: pointer;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.save:disabled,
+.primary:disabled {
+    cursor: default;
+    opacity: 0.5;
+}
+
+.fields {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ss-space-4);
+}
+
+.footer {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ss-space-3);
+    padding-bottom: var(--ss-space-5);
+}
+
+.primary {
+    width: 100%;
+    min-height: 52px;
+    border: 0;
+    border-radius: var(--ss-radius-md);
+    background: var(--ss-accent);
+    color: var(--ss-on-accent);
+    cursor: pointer;
+    font: inherit;
+    font-size: 15px;
+    font-weight: 700;
+}

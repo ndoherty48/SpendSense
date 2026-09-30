@@ -1,0 +1,45 @@
+@* Back-bar form layout: back link, the page's single h1, Save, fields, and a full-width primary action. *@
+<EditForm Model="Model" OnValidSubmit="OnValidSubmit" class="form-shell">
+    <header class="bar">
+        <a class="back" href="@BackHref" aria-label="Back">
+            <svg viewBox="0 0 24 24" fill="currentColor" focusable="false" aria-hidden="true">@((MarkupString)Icons.Material.Filled.ChevronLeft)</svg>
+        </a>
+        <h1 class="title">@Title</h1>
+        <button type="submit" class="save" disabled="@Busy">@SubmitLabel</button>
+    </header>
+
+    <div class="fields">
+        @ChildContent
+    </div>
+
+    <div class="footer">
+        <button type="submit" class="primary" disabled="@Busy">@SubmitText</button>
+        @Footer
+    </div>
+</EditForm>
+
+@code {
+    [Parameter, EditorRequired] public string Title { get; set; } = "";
+
+    /// <summary>Where the back arrow goes. Explicit, so navigation never depends on webview history.</summary>
+    [Parameter, EditorRequired] public string BackHref { get; set; } = "/";
+
+    [Parameter, EditorRequired] public object Model { get; set; } = default!;
+
+    [Parameter] public EventCallback<EditContext> OnValidSubmit { get; set; }
+
+    /// <summary>Label for the top-bar button, e.g. "Save".</summary>
+    [Parameter] public string SubmitLabel { get; set; } = "Save";
+
+    /// <summary>Label for the full-width button; defaults to <see cref="SubmitLabel"/>.</summary>
+    [Parameter] public string? PrimaryLabel { get; set; }
+
+    [Parameter] public bool Busy { get; set; }
+
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>Extra actions under the primary button, e.g. a destructive Delete.</summary>
+    [Parameter] public RenderFragment? Footer { get; set; }
+
+    string SubmitText => PrimaryLabel ?? SubmitLabel;
+}
