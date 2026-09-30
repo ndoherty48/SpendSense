@@ -237,7 +237,8 @@
                 var projected = item.Spent / daysElapsed * daysInMonth;
                 if (projected > item.Budget * 1.1)
                 {
-                    overspendWarnings.Add($"{item.Category}: on track to spend £{projected:F0} (budget £{item.Budget:F0})");
+                    var hide = Settings.HideAmounts;
+                    overspendWarnings.Add($"{item.Category}: on track to spend {MoneyFormat.Format(projected, "£", hide, decimals: 0)} (budget {MoneyFormat.Format(item.Budget, "£", hide, decimals: 0)})");
                 }
             }
         }
