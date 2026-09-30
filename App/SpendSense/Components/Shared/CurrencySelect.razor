@@ -1,0 +1,26 @@
+@using System.Linq.Expressions
+@using SpendSense.Common.Models
+
+<MudSelect T="int"
+           Value="Value"
+           ValueChanged="ValueChanged"
+           For="ValueExpression"
+           Label="@Label"
+           Variant="Variant.Outlined">
+    @foreach (var currency in Currencies)
+    {
+        <MudSelectItem T="int" Value="currency.Id">@currency.Code - @currency.Name</MudSelectItem>
+    }
+</MudSelect>
+
+@code {
+    [Parameter, EditorRequired] public IEnumerable<Currency> Currencies { get; set; } = [];
+
+    [Parameter] public int Value { get; set; }
+
+    [Parameter] public EventCallback<int> ValueChanged { get; set; }
+
+    [Parameter] public Expression<Func<int>>? ValueExpression { get; set; }
+
+    [Parameter] public string Label { get; set; } = "Currency";
+}

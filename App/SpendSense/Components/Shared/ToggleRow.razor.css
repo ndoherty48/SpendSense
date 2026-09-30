@@ -1,0 +1,25 @@
+.toggle-row {
+    display: flex;
+    align-items: center;
+    gap: var(--ss-space-4);
+    min-height: var(--ss-target);
+    padding: var(--ss-space-2) 0;
+    cursor: pointer;
+}
+
+.text {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.label {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.description {
+    color: var(--ss-ink-muted);
+    font-size: 11.5px;
+}

@@ -1,0 +1,35 @@
+.swatches {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--ss-space-3);
+    margin-bottom: var(--ss-space-3);
+}
+
+.swatch {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--ss-target);
+    height: var(--ss-target);
+    padding: 0;
+    border: 2px solid transparent;
+    border-radius: var(--ss-radius-pill);
+    background: var(--swatch, var(--ss-surface-2));
+    color: var(--ss-bg);
+    cursor: pointer;
+}
+
+.swatch svg {
+    width: 20px;
+    height: 20px;
+}
+
+.swatch.is-selected {
+    box-shadow: 0 0 0 2px var(--ss-bg), 0 0 0 4px var(--ss-ink);
+}
+
+.swatch--custom {
+    border-color: var(--ss-border-strong);
+    background: var(--ss-surface-2);
+    color: var(--ss-ink-muted);
+}

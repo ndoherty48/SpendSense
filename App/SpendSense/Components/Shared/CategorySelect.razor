@@ -1,0 +1,29 @@
+@using System.Linq.Expressions
+@using SpendSense.Common.Models
+
+<MudSelect T="int?"
+           Value="Value"
+           ValueChanged="ValueChanged"
+           For="ValueExpression"
+           Label="@Label"
+           Clearable="Clearable"
+           Variant="Variant.Outlined">
+    @foreach (var category in Categories)
+    {
+        <MudSelectItem T="int?" Value="@((int?)category.Id)">@category.Name</MudSelectItem>
+    }
+</MudSelect>
+
+@code {
+    [Parameter, EditorRequired] public IEnumerable<Category> Categories { get; set; } = [];
+
+    [Parameter] public int? Value { get; set; }
+
+    [Parameter] public EventCallback<int?> ValueChanged { get; set; }
+
+    [Parameter] public Expression<Func<int?>>? ValueExpression { get; set; }
+
+    [Parameter] public string Label { get; set; } = "Category";
+
+    [Parameter] public bool Clearable { get; set; }
+}

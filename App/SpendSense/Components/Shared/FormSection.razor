@@ -1,0 +1,13 @@
+<fieldset class="section">
+    @if (!string.IsNullOrEmpty(Title))
+    {
+        <legend class="legend">@Title</legend>
+    }
+    @ChildContent
+</fieldset>
+
+@code {
+    [Parameter] public string? Title { get; set; }
+
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}

@@ -1,0 +1,28 @@
+@using System.Linq.Expressions
+
+@* Big mono amount field. Bind with @bind-Value like a MudNumericField. *@
+<MudNumericField T="double"
+                 Value="Value"
+                 ValueChanged="ValueChanged"
+                 For="ValueExpression"
+                 Label="@Label"
+                 Min="Min"
+                 Variant="Variant.Outlined"
+                 HideSpinButtons="true"
+                 Adornment="Adornment.Start"
+                 AdornmentText="@Symbol"
+                 Class="money-input" />
+
+@code {
+    [Parameter] public double Value { get; set; }
+
+    [Parameter] public EventCallback<double> ValueChanged { get; set; }
+
+    [Parameter] public Expression<Func<double>>? ValueExpression { get; set; }
+
+    [Parameter] public string Label { get; set; } = "Amount";
+
+    [Parameter] public string Symbol { get; set; } = "£";
+
+    [Parameter] public double Min { get; set; } = 0;
+}
