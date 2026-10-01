@@ -1,0 +1,26 @@
+.hero {
+    padding: var(--ss-space-4) var(--ss-space-5);
+    border: 1px solid var(--ss-border);
+    border-radius: var(--ss-radius-lg);
+    background: var(--ss-surface);
+}
+
+.label {
+    color: var(--ss-ink-muted);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+}
+
+.amount {
+    margin-top: 6px;
+}
+
+.stats {
+    display: flex;
+    gap: var(--ss-space-4);
+    margin-top: var(--ss-space-3);
+    padding-top: var(--ss-space-3);
+    border-top: 1px solid var(--ss-border);
+}

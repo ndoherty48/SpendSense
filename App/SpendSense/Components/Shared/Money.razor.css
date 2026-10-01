@@ -1,0 +1,30 @@
+.money {
+    font-family: var(--ss-font-mono);
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    font-size: 13.5px;
+    line-height: 1.2;
+    white-space: nowrap;
+    color: var(--ss-ink);
+}
+
+.money--small {
+    font-size: 11px;
+}
+
+.money--large {
+    font-size: 36px;
+    line-height: 1.15;
+}
+
+.money--income {
+    color: var(--ss-accent);
+}
+
+.money--error {
+    color: var(--ss-error);
+}
+
+.money--muted {
+    color: var(--ss-ink-muted);
+}

@@ -1,0 +1,14 @@
+@* The page's single <h1>: Routes.razor focuses it on navigation. *@
+<header class="page-header">
+    <h1 class="title">@Title</h1>
+    @if (Actions is not null)
+    {
+        <div class="actions">@Actions</div>
+    }
+</header>
+
+@code {
+    [Parameter, EditorRequired] public string Title { get; set; } = "";
+
+    [Parameter] public RenderFragment? Actions { get; set; }
+}

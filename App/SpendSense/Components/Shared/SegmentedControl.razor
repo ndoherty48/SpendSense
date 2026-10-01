@@ -1,0 +1,42 @@
+@typeparam T
+
+@if (IsLinkMode)
+{
+    @* Route-bound: each segment is a link and the current one carries aria-current. *@
+    <nav class="segmented" aria-label="@AriaLabel">
+        @foreach (var segment in Segments)
+        {
+            var selected = IsSelected(segment);
+            <a class="segment @(selected ? "is-selected" : null)" href="@segment.Href" aria-current="@(selected ? "page" : null)">@segment.Label</a>
+        }
+    </nav>
+}
+else
+{
+    @* State-bound: toggle buttons. *@
+    <div class="segmented" role="group" aria-label="@AriaLabel">
+        @foreach (var segment in Segments)
+        {
+            var selected = IsSelected(segment);
+            var value = segment.Value;
+            <button type="button" class="segment @(selected ? "is-selected" : null)" aria-pressed="@(selected ? "true" : "false")" @onclick="() => ValueChanged.InvokeAsync(value)">@segment.Label</button>
+        }
+    </div>
+}
+
+@code {
+    /// <summary>The options. If every segment has an Href the control renders as route links.</summary>
+    [Parameter, EditorRequired] public IReadOnlyList<Segment<T>> Segments { get; set; } = [];
+
+    /// <summary>The selected segment's value.</summary>
+    [Parameter] public T? Value { get; set; }
+
+    [Parameter] public EventCallback<T> ValueChanged { get; set; }
+
+    /// <summary>Accessible name for the group, e.g. "Transaction view".</summary>
+    [Parameter] public string? AriaLabel { get; set; }
+
+    bool IsLinkMode => Segments.Count > 0 && Segments.All(s => s.Href is not null);
+
+    bool IsSelected(Segment<T> segment) => EqualityComparer<T>.Default.Equals(segment.Value, Value);
+}

@@ -1,0 +1,26 @@
+.page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--ss-space-3);
+    min-height: var(--ss-target);
+    margin-bottom: var(--ss-space-4);
+}
+
+.title {
+    margin: 0;
+    font-family: var(--ss-font-display);
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.title:focus {
+    outline: none;
+}
+
+.actions {
+    display: flex;
+    align-items: center;
+    gap: var(--ss-space-2);
+}
