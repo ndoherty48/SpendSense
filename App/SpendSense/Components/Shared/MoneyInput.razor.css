@@ -1,0 +1,12 @@
+.money-input ::deep input {
+    font-family: var(--ss-font-mono);
+    font-size: 24px;
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+}
+
+.money-input ::deep .mud-input-adornment-start {
+    color: var(--ss-ink-muted);
+    font-family: var(--ss-font-mono);
+    font-size: 20px;
+}

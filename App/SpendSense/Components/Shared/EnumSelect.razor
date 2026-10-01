@@ -1,0 +1,24 @@
+@typeparam TEnum where TEnum : struct, Enum
+@using System.Linq.Expressions
+
+<MudSelect T="TEnum"
+           Value="Value"
+           ValueChanged="ValueChanged"
+           For="ValueExpression"
+           Label="@Label"
+           Variant="Variant.Outlined">
+    @foreach (var option in Enum.GetValues<TEnum>())
+    {
+        <MudSelectItem T="TEnum" Value="option">@option</MudSelectItem>
+    }
+</MudSelect>
+
+@code {
+    [Parameter] public TEnum Value { get; set; }
+
+    [Parameter] public EventCallback<TEnum> ValueChanged { get; set; }
+
+    [Parameter] public Expression<Func<TEnum>>? ValueExpression { get; set; }
+
+    [Parameter, EditorRequired] public string Label { get; set; } = "";
+}

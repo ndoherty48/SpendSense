@@ -1,0 +1,21 @@
+@* The whole row is a <label>, so the text names the switch and is clickable. *@
+<label class="toggle-row">
+    <span class="text">
+        <span class="label">@Label</span>
+        @if (!string.IsNullOrEmpty(Description))
+        {
+            <span class="description">@Description</span>
+        }
+    </span>
+    <MudSwitch T="bool" Value="Value" ValueChanged="ValueChanged" Color="Color.Primary" />
+</label>
+
+@code {
+    [Parameter, EditorRequired] public string Label { get; set; } = "";
+
+    [Parameter] public string? Description { get; set; }
+
+    [Parameter] public bool Value { get; set; }
+
+    [Parameter] public EventCallback<bool> ValueChanged { get; set; }
+}

@@ -1,4 +1,6 @@
 @page "/dev/gallery"
+@using SpendSense.Common.Models
+@using SpendSense.Common.Models.Enums
 @using SpendSense.Common.Services
 @inject SettingsService Settings
 
@@ -80,6 +82,23 @@ else
     <EmptyState Icon="@Icons.Material.Filled.Receipt" Title="No transactions yet" Message="Add your first transaction to see it here.">
         <Actions><MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/dev/gallery">Add transaction</MudButton></Actions>
     </EmptyState>
+
+    <SectionHeader Title="Form controls" />
+    <div class="gallery-stack">
+        <MoneyInput @bind-Value="amount" />
+        <CategorySelect Categories="sampleCategories" @bind-Value="categoryId" Clearable="true" />
+        <CurrencySelect Currencies="sampleCurrencies" @bind-Value="currencyId" />
+        <EnumSelect TEnum="TransactionTypeEnum" Label="Type" @bind-Value="transactionType" />
+        <DateField @bind-Value="date" />
+        <ToggleRow Label="Income applies to next month" Description="Count income toward the following month's budget." @bind-Value="toggled" />
+        <ColorSwatchPicker @bind-Value="colour" />
+    </div>
+
+    <SectionHeader Title="Form shell" />
+    <FormShell Title="Transaction" BackHref="/dev/gallery" Model="sampleCategories[0]" OnValidSubmit="OnSubmit" SubmitLabel="Save" PrimaryLabel="Save transaction">
+        <MudTextField T="string" Label="Description" Variant="Variant.Outlined" />
+        <MoneyInput @bind-Value="amount" />
+    </FormShell>
 }
 
 @code {
@@ -90,6 +109,29 @@ else
 #endif
 
     string selected = "all";
+
+    double amount = 34.2;
+    int? categoryId = 2;
+    int currencyId = 1;
+    TransactionTypeEnum transactionType = TransactionTypeEnum.Expense;
+    DateTime? date = DateTime.Today;
+    bool toggled;
+    string? colour = "#FF9A6E";
+
+    static readonly Category[] sampleCategories =
+    [
+        new() { Id = 1, Name = "Groceries", Type = TransactionTypeEnum.Expense },
+        new() { Id = 2, Name = "Dining", Type = TransactionTypeEnum.Expense },
+        new() { Id = 3, Name = "Salary", Type = TransactionTypeEnum.Income }
+    ];
+
+    static readonly Currency[] sampleCurrencies =
+    [
+        new() { Id = 1, Code = "GBP", Name = "British Pound", Symbol = "£" },
+        new() { Id = 2, Code = "USD", Name = "US Dollar", Symbol = "$" }
+    ];
+
+    Task OnSubmit(EditContext context) => Task.CompletedTask;
 
     static readonly IReadOnlyList<Segment<string>> segments =
     [

@@ -1,0 +1,66 @@
+@using System.Text.RegularExpressions
+
+<div class="swatches" role="group" aria-label="@Label">
+    @foreach (var preset in Presets)
+    {
+        var selected = IsSelected(preset);
+        <button type="button"
+                class="swatch @(selected ? "is-selected" : null)"
+                style="--swatch: @preset"
+                aria-label="@preset"
+                aria-pressed="@(selected ? "true" : "false")"
+                @onclick="() => Pick(preset)">
+            @if (selected)
+            {
+                <svg viewBox="0 0 24 24" fill="currentColor" focusable="false" aria-hidden="true">@((MarkupString)Icons.Material.Filled.Check)</svg>
+            }
+        </button>
+    }
+    <button type="button"
+            class="swatch swatch--custom @(CustomActive ? "is-selected" : null)"
+            aria-label="Custom colour"
+            aria-pressed="@(CustomActive ? "true" : "false")"
+            @onclick="() => showCustom = !showCustom">
+        <svg viewBox="0 0 24 24" fill="currentColor" focusable="false" aria-hidden="true">@((MarkupString)Icons.Material.Filled.Add)</svg>
+    </button>
+</div>
+
+@if (showCustom || CustomActive)
+{
+    <MudColorPicker Text="@Value"
+                    TextChanged="OnCustomChanged"
+                    Label="Custom colour"
+                    ColorPickerMode="ColorPickerMode.HEX"
+                    ShowAlpha="false"
+                    Variant="Variant.Outlined" />
+}
+
+@code {
+    // Category colours are user data, so these are the only raw hex values outside tokens.css.
+    static readonly string[] DefaultPresets =
+    [
+        "#33D6A6", "#FF9A6E", "#6EA8FF", "#B08CFF", "#F0B94E", "#4FD1D9", "#7FDB8F", "#FF6B5E"
+    ];
+
+    static readonly Regex HexColor = new("^#[0-9A-Fa-f]{3,8}$", RegexOptions.Compiled);
+
+    bool showCustom;
+
+    /// <summary>The selected colour as hex, or null.</summary>
+    [Parameter] public string? Value { get; set; }
+
+    [Parameter] public EventCallback<string?> ValueChanged { get; set; }
+
+    [Parameter] public IReadOnlyList<string> Presets { get; set; } = DefaultPresets;
+
+    [Parameter] public string Label { get; set; } = "Colour";
+
+    bool IsSelected(string preset) => string.Equals(Value, preset, StringComparison.OrdinalIgnoreCase);
+
+    bool CustomActive => !string.IsNullOrEmpty(Value) && !Presets.Any(IsSelected);
+
+    Task Pick(string colour) => ValueChanged.InvokeAsync(colour);
+
+    Task OnCustomChanged(string text) =>
+        HexColor.IsMatch(text ?? "") ? ValueChanged.InvokeAsync(text) : Task.CompletedTask;
+}
