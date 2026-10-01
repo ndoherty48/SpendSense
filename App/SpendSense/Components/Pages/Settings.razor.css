@@ -1,0 +1,6 @@
+.group {
+    padding: var(--ss-space-1) var(--ss-space-4);
+    border: 1px solid var(--ss-border);
+    border-radius: var(--ss-radius-md);
+    background: var(--ss-surface);
+}
