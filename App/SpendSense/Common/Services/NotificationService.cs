@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 
 using Plugin.LocalNotification;
+using Plugin.LocalNotification.Core.Models;
 
 using SpendSense.Common.Data;
 using SpendSense.Common.Models.Enums;
