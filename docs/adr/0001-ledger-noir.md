@@ -77,8 +77,9 @@ inside `MainLayout`, so providers never remount when moving between them.
 
 ### 7. Forms
 
-Each entity PR first extracts a shared `XxxForm.razor` (pure move, behaviour neutral) and then
-restyles it onto the shared form primitives in a second commit. The "Validation Summary" side panel
+Add and Edit share one `<Entity>Form.razor` on the shared form primitives. For the largest form
+(transactions) the extraction was its own pure-move commit followed by the restyle, so the visual diff
+reads cleanly; the smaller forms were extracted and restyled together. The "Validation Summary" side panel
 on the Add pages is dropped: its success branch never rendered, and inline field messages replace it.
 
 ### 8. Money and privacy mode
