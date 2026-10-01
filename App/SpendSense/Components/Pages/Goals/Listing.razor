@@ -8,37 +8,66 @@
 @inject SpendSenseDbContext Db
 @inject IDialogService Dialog
 
-<h1>Goals</h1>
+<PageHeader Title="Goals" />
 
-<MudTable Items="@Elements" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@_loading" LoadingProgressColor="Color.Info">
-    <HeaderContent>
-        <MudTh>Name</MudTh>
-        <MudTh>Category</MudTh>
-        <MudTh>Progress</MudTh>
-        <MudTh>Target Date</MudTh>
-        <MudTh>Priority</MudTh>
-        <MudTh>Status</MudTh>
-        <MudTh></MudTh>
-    </HeaderContent>
-    <RowTemplate>
-        <MudTd DataLabel="Name">@context.Goal.Name</MudTd>
-        <MudTd DataLabel="Category">@context.Goal.Category?.Name</MudTd>
-        <MudTd DataLabel="Progress">
-            @context.Goal.Currency?.Symbol@context.Saved.ToString("F2") / @context.Goal.Currency?.Symbol@context.Goal.TargetAmount.ToString("F2")
-            <MudProgressLinear Value="@context.Percentage" Color="Color.Success" Class="mt-1" />
-        </MudTd>
-        <MudTd DataLabel="Target Date">@context.Goal.TargetDate?.ToString("dd MMM yyyy")</MudTd>
-        <MudTd DataLabel="Priority">@context.Goal.Priority</MudTd>
-        <MudTd DataLabel="Status">
-            <MudChip T="string" Size="Size.Small" Color="@(context.Goal.Status == StatusEnum.Completed ? Color.Success : context.Goal.Status == StatusEnum.Abandoned ? Color.Error : Color.Info)">
-                @context.Goal.Status
-            </MudChip>
-        </MudTd>
-        <MudTd><MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Href="@($"/goals/edit/{context.Goal.Id}")" /> <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => Delete(context.Goal)" /></MudTd>
-    </RowTemplate>
-</MudTable>
+@if (_loading)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" aria-label="Loading goals" />
+}
+else if (!Elements!.Any())
+{
+    <EmptyState Icon="@Icons.Material.Filled.Flag"
+                Title="No goals yet"
+                Message="Tap + to set a savings goal and track your progress." />
+}
+else
+{
+    <ul class="goals">
+        @foreach (var item in Elements!)
+        {
+            var goal = item.Goal;
+            var symbol = goal.Currency?.Symbol ?? "£";
+            <li class="goal">
+                <div class="goal-head">
+                    <a class="goal-name" href="@($"/goals/edit/{goal.Id}")">@goal.Name</a>
+                    <span class="badges">
+                        <Badge Tone="PriorityTone(goal.Priority)">@goal.Priority</Badge>
+                        <Badge Tone="StatusTone(goal.Status)">@goal.Status</Badge>
+                    </span>
+                    <MudIconButton Icon="@Icons.Material.Filled.DeleteOutline" OnClick="() => Delete(goal)" aria-label="@($"Delete {goal.Name}")" />
+                </div>
+                <div class="goal-amounts">
+                    <span>
+                        <Money Amount="item.Saved" Symbol="@symbol" />
+                        <span class="of">of</span>
+                        <Money Amount="goal.TargetAmount" Symbol="@symbol" Tone="MoneyTone.Muted" />
+                    </span>
+                    <span class="percent">@($"{item.Percentage:0}%")</span>
+                </div>
+                <ProgressBar Percent="item.Percentage" Label="@goal.Name" ValueText="@($"{item.Percentage:0}% saved")" />
+                <div class="goal-meta">
+                    @(goal.Category?.Name ?? "No category")@(goal.TargetDate is { } due ? $" · Target {due:MMMM yyyy}" : "")
+                </div>
+            </li>
+        }
+    </ul>
+}
 
 @code {
+    static BadgeTone PriorityTone(PriorityEnum priority) => priority switch
+    {
+        PriorityEnum.High => BadgeTone.Error,
+        PriorityEnum.Medium => BadgeTone.Warn,
+        _ => BadgeTone.Neutral
+    };
+
+    static BadgeTone StatusTone(StatusEnum status) => status switch
+    {
+        StatusEnum.Completed => BadgeTone.Accent,
+        StatusEnum.Abandoned => BadgeTone.Error,
+        _ => BadgeTone.Neutral
+    };
+
     List<GoalProgress>? Elements;
     bool _loading => Elements is null;
 
