@@ -1,0 +1,44 @@
+@page "/more"
+
+<PageHeader Title="More" />
+
+<SectionHeader Title="Manage" />
+<div class="group">
+    <ListRow Title="Categories" Href="/categories">
+        <Leading><IconTile Icon="@Icons.Material.Filled.Label" Tone="IconTone.Brand" /></Leading>
+        <Trailing><svg class="chevron" viewBox="0 0 24 24" fill="currentColor" focusable="false" aria-hidden="true">@((MarkupString)Icons.Material.Filled.ChevronRight)</svg></Trailing>
+    </ListRow>
+    <ListRow Title="Currencies" Href="/currencies">
+        <Leading><IconTile Icon="@Icons.Material.Filled.CurrencyExchange" Tone="IconTone.Brand" /></Leading>
+        <Trailing><svg class="chevron" viewBox="0 0 24 24" fill="currentColor" focusable="false" aria-hidden="true">@((MarkupString)Icons.Material.Filled.ChevronRight)</svg></Trailing>
+    </ListRow>
+</div>
+
+<SectionHeader Title="Preferences" />
+<div class="group">
+    <ListRow Title="Preferences" Subtitle="Theme, budget and privacy" Href="/settings">
+        <Leading><IconTile Icon="@Icons.Material.Filled.Settings" Tone="IconTone.Brand" /></Leading>
+        <Trailing><svg class="chevron" viewBox="0 0 24 24" fill="currentColor" focusable="false" aria-hidden="true">@((MarkupString)Icons.Material.Filled.ChevronRight)</svg></Trailing>
+    </ListRow>
+</div>
+
+@if (IsDebug)
+{
+    <SectionHeader Title="Developer" />
+    <div class="group">
+        <ListRow Title="Design gallery" Subtitle="Debug builds only" Href="/dev/gallery">
+            <Leading><IconTile Icon="@Icons.Material.Filled.Palette" /></Leading>
+            <Trailing><svg class="chevron" viewBox="0 0 24 24" fill="currentColor" focusable="false" aria-hidden="true">@((MarkupString)Icons.Material.Filled.ChevronRight)</svg></Trailing>
+        </ListRow>
+    </div>
+}
+
+<p class="footnote">SpendSense keeps your data on this device.</p>
+
+@code {
+#if DEBUG
+    static readonly bool IsDebug = true;
+#else
+    static readonly bool IsDebug = false;
+#endif
+}

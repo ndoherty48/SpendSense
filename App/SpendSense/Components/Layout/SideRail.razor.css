@@ -1,0 +1,50 @@
+/* Slim left rail for wide windows (Mac Catalyst, Windows, iPad, landscape). */
+.side-rail {
+    display: none;
+}
+
+@media (min-width: 768px) {
+    .side-rail {
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 10;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: var(--ss-space-2);
+        width: var(--ss-rail-width);
+        padding: var(--ss-space-6) 0;
+        border-right: 1px solid var(--ss-border);
+        background: var(--ss-surface);
+    }
+
+    .item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 3px;
+        width: 72px;
+        min-height: 56px;
+        border-radius: var(--ss-radius-md);
+        color: var(--ss-ink-muted);
+        text-decoration: none;
+    }
+
+    .item.is-active {
+        background: var(--ss-surface-2);
+        color: var(--ss-accent);
+    }
+
+    .item svg {
+        width: 22px;
+        height: 22px;
+    }
+
+    .label {
+        font-size: 10px;
+        font-weight: 600;
+    }
+}

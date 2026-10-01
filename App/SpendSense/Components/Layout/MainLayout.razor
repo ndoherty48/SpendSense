@@ -10,21 +10,9 @@
 <MudDialogProvider />
 <MudSnackbarProvider />
 
-<MudLayout>
-    <MudAppBar Color="Color.Primary">
-        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
-        SpendSense
-    </MudAppBar>
-    <MudDrawer @bind-Open="@_drawerOpen">
-        <NavMenu/>
-    </MudDrawer>
-    <MudMainContent Class="pa-4 mt-16">
-        @Body
-    </MudMainContent>
-</MudLayout>
+@Body
 
 @code {
-    bool _drawerOpen = true;
     private readonly MudTheme _theme = LedgerTheme.Theme;
     private bool _isDarkMode;
 
@@ -58,11 +46,6 @@
         {
             // The boot script is missing or the webview is shutting down; the CSS falls back to the OS theme.
         }
-    }
-
-    void DrawerToggle()
-    {
-        _drawerOpen = !_drawerOpen;
     }
 
     public void Dispose() => Theme.Changed -= OnThemeChanged;

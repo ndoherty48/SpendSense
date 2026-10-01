@@ -1,0 +1,21 @@
+.tabs-shell {
+    min-height: 100vh;
+    box-sizing: border-box;
+    /* Leave room for the floating pill and FAB on phones. */
+    padding: var(--ss-space-4) var(--ss-space-4) calc(var(--ss-nav-height) + var(--ss-nav-gap) + 80px);
+}
+
+.column {
+    max-width: var(--ss-content-max);
+    margin: 0 auto;
+}
+
+.switch {
+    margin-bottom: var(--ss-space-4);
+}
+
+@media (min-width: 768px) {
+    .tabs-shell {
+        padding: var(--ss-space-6) var(--ss-space-6) 96px calc(var(--ss-rail-width) + var(--ss-space-6));
+    }
+}
