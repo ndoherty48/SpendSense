@@ -22,11 +22,7 @@
 
 @code {
     bool _drawerOpen = true;
-    private MudTheme _theme = new()
-    {
-        PaletteLight = { Primary = Colors.Teal.Darken3 },
-        PaletteDark = { Primary = Colors.Teal.Darken3 }
-    };
+    private readonly MudTheme _theme = SpendSense.Common.Theming.LedgerTheme.Theme;
     private bool _isDarkMode;
 
     protected override void OnParametersSet()
