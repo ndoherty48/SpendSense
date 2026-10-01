@@ -5,54 +5,61 @@
 @inject TransactionRepository Repository
 @inject CategoryRepository CategoryRepo
 @inject IDialogService Dialog
-@inject SpendSense.Common.Services.SettingsService Settings
 
-<h1>Transactions</h1>
+<PageHeader Title="Transactions" />
 
-<MudGrid Class="mt-4 mb-2">
-    <MudItem xs="12" sm="4">
-        <MudTextField Value="searchText" Placeholder="Search description or notes..." Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" Immediate="true" ValueChanged="OnSearchChanged" T="string" />
-    </MudItem>
-    <MudItem xs="6" sm="3">
-        <MudSelect Value="filterCategory" Placeholder="Category" Clearable="true" ValueChanged="OnCategoryChanged" T="int?">
-            @foreach (var cat in categories)
-            {
-                <MudSelectItem Value="@((int?)cat.Id)">@cat.Name</MudSelectItem>
-            }
-        </MudSelect>
-    </MudItem>
-    <MudItem xs="6" sm="3">
-        <MudSelect Value="filterType" Placeholder="Type" Clearable="true" ValueChanged="OnTypeChanged" T="TransactionTypeEnum?">
-            <MudSelectItem Value="@((TransactionTypeEnum?)TransactionTypeEnum.Income)">Income</MudSelectItem>
-            <MudSelectItem Value="@((TransactionTypeEnum?)TransactionTypeEnum.Expense)">Expense</MudSelectItem>
-        </MudSelect>
-    </MudItem>
-</MudGrid>
+<div class="filters">
+    <MudTextField Value="searchText" ValueChanged="OnSearchChanged" T="string" Immediate="true" Label="Search" Placeholder="Description or notes"
+                  Variant="Variant.Outlined" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" Class="search" />
+    <CategorySelect Categories="categories" Value="filterCategory" ValueChanged="OnCategoryChanged" Clearable="true" />
+    <MudSelect Value="filterType" ValueChanged="OnTypeChanged" T="TransactionTypeEnum?" Label="Type" Clearable="true" Variant="Variant.Outlined">
+        <MudSelectItem Value="@((TransactionTypeEnum?)TransactionTypeEnum.Income)">Income</MudSelectItem>
+        <MudSelectItem Value="@((TransactionTypeEnum?)TransactionTypeEnum.Expense)">Expense</MudSelectItem>
+    </MudSelect>
+</div>
 
-<MudTable Items="@FilteredElements" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@_loading" LoadingProgressColor="Color.Info">
-    <HeaderContent>
-        <MudTh>Date</MudTh>
-        <MudTh>Description</MudTh>
-        <MudTh>Category</MudTh>
-        <MudTh>Type</MudTh>
-        <MudTh>Amount</MudTh>
-        <MudTh></MudTh>
-    </HeaderContent>
-    <RowTemplate>
-        <MudTd DataLabel="Date">@context.TransactionDate.ToString("dd MMM yyyy")</MudTd>
-        <MudTd DataLabel="Description">@context.Description</MudTd>
-        <MudTd DataLabel="Category">@context.Category?.Name</MudTd>
-        <MudTd DataLabel="Type">
-            <MudChip T="string" Color="@(context.TransactionType == TransactionTypeEnum.Income ? Color.Success : Color.Error)" Size="Size.Small">
-                @context.TransactionType
-            </MudChip>
-        </MudTd>
-        <MudTd DataLabel="Amount">@Settings.FormatAmount(context.Currency?.Symbol ?? "£", context.Amount)</MudTd>
-        <MudTd><MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Href="@($"/transactions/edit/{context.Id}")" /> <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => Delete(context)" /></MudTd>
-    </RowTemplate>
-</MudTable>
+@if (_loading)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" Class="mt-4" aria-label="Loading transactions" />
+}
+else if (!Groups.Any())
+{
+    var filtering = !string.IsNullOrWhiteSpace(searchText) || filterCategory.HasValue || filterType.HasValue;
+    <EmptyState Icon="@Icons.Material.Filled.Receipt"
+                Title="@(filtering ? "No matching transactions" : "No transactions yet")"
+                Message="@(filtering ? "Try a different search or clear a filter." : "Tap + to add your first transaction.")" />
+}
+else
+{
+    @foreach (var group in Groups)
+    {
+        <h2 class="day">@DayLabel(group.Key)</h2>
+        @foreach (var t in group)
+        {
+            var income = t.TransactionType == TransactionTypeEnum.Income;
+            <div class="item">
+                <ListRow Title="@t.Description" Subtitle="@(t.Category?.Name ?? "Uncategorised")" Href="@($"/transactions/edit/{t.Id}")">
+                    <Leading><IconTile Icon="@TransactionVisuals.Icon(t.TransactionType)" Tone="@TransactionVisuals.Tone(t.TransactionType)" Circle="true" /></Leading>
+                    <Trailing><Money Amount="@(income ? t.Amount : -t.Amount)" Symbol="@(t.Currency?.Symbol ?? "£")" Signed="true" Tone="@(income ? MoneyTone.Income : MoneyTone.Neutral)" /></Trailing>
+                </ListRow>
+                <MudIconButton Icon="@Icons.Material.Filled.DeleteOutline" OnClick="() => Delete(t)" aria-label="@($"Delete {t.Description}")" />
+            </div>
+        }
+    }
+}
 
 @code {
+    IEnumerable<IGrouping<DateTime, Transaction>> Groups =>
+        (FilteredElements ?? [])
+            .OrderByDescending(t => t.TransactionDate)
+            .ThenByDescending(t => t.Id)
+            .GroupBy(t => t.TransactionDate.Date);
+
+    static string DayLabel(DateTime day) =>
+        day == DateTime.Today ? "Today"
+        : day == DateTime.Today.AddDays(-1) ? "Yesterday"
+        : day.ToString("ddd d MMM yyyy");
+
     IReadOnlyCollection<Transaction>? allElements;
     IEnumerable<Transaction>? FilteredElements;
     IReadOnlyCollection<Category> categories = [];

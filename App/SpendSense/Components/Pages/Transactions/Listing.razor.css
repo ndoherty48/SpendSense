@@ -1,0 +1,25 @@
+.filters {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--ss-space-3);
+}
+
+.filters ::deep .search {
+    grid-column: 1 / -1;
+}
+
+.day {
+    margin: var(--ss-space-5) 0 var(--ss-space-1);
+    color: var(--ss-ink-muted);
+    font-family: var(--ss-font-body);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.item {
+    display: flex;
+    align-items: center;
+    gap: var(--ss-space-1);
+}
