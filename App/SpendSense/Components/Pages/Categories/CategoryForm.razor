@@ -1,0 +1,27 @@
+@using SpendSense.Common.Models
+@using SpendSense.Common.Models.Enums
+
+<FormShell Title="@Title" BackHref="/categories" Model="Model" OnValidSubmit="OnValidSubmit" SubmitLabel="Save" PrimaryLabel="@SubmitLabel">
+    <MudTextField Label="Name" @bind-Value="Model.Name" For="@(() => Model.Name)" Variant="Variant.Outlined" />
+
+    <EnumSelect TEnum="TransactionTypeEnum" Label="Type" @bind-Value="Model.Type" />
+
+    <FormSection Title="Colour">
+        <ColorSwatchPicker @bind-Value="Model.Color" />
+    </FormSection>
+
+    <MudTextField Label="Icon" @bind-Value="Model.Icon" For="@(() => Model.Icon)" Variant="Variant.Outlined" />
+</FormShell>
+
+@code {
+    [Parameter, EditorRequired] public Category Model { get; set; } = default!;
+
+    [Parameter, EditorRequired] public string Title { get; set; } = "";
+
+    [Parameter] public string SubmitLabel { get; set; } = "Save";
+
+    /// <summary>The page persists the category.</summary>
+    [Parameter] public EventCallback OnSubmit { get; set; }
+
+    Task OnValidSubmit(EditContext context) => OnSubmit.InvokeAsync();
+}

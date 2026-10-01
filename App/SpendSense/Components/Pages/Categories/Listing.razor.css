@@ -1,0 +1,14 @@
+.item {
+    display: flex;
+    align-items: center;
+    gap: var(--ss-space-1);
+}
+
+.swatch {
+    display: inline-block;
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--ss-border-strong);
+    border-radius: var(--ss-radius-pill);
+    background: var(--swatch, var(--ss-surface-2));
+}
