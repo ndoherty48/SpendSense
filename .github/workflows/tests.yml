@@ -1,0 +1,32 @@
+name: Tests
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    # macOS: restoring the app restores every target framework, including iOS and Mac Catalyst, so the
+    # MAUI workload must be installed. The tests themselves run against the plain net10.0 build.
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+
+      - name: Install the MAUI workload
+        run: dotnet workload install maui
+
+      - name: Test
+        run: dotnet test --project Tests/SpendSense.Tests

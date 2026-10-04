@@ -18,7 +18,8 @@ dotnet test --project Tests/SpendSense.Tests
 
 `Tests/SpendSense.Tests` (xUnit v3 on Microsoft.Testing.Platform, set in `global.json`) references the app's
 plain `net10.0` build, so it still needs the MAUI workloads installed but no device. UI on a device is
-still verified by hand. Code under test must not call MAUI statics directly: inject `IPreferences`
+still verified by hand. `.github/workflows/tests.yml` runs the same command on every pull request (macOS
+runner with the MAUI workload). Code under test must not call MAUI statics directly: inject `IPreferences`
 (registered as `Preferences.Default`) and `INotifier` (`LocalNotifier` in the app; doubles in
 `Tests/SpendSense.Tests/TestDoubles`).
 
