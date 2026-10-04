@@ -12,6 +12,7 @@ A personal budgeting app built with .NET MAUI Blazor Hybrid and Aspire.
 - **Dashboard** — monthly summary with balance, income/expenses/savings, an accounts strip with the total available, a spending-by-category donut with budget progress, overspend warnings
 - **Preferences** — System/Light/Dark theme, income attribution toggle (income funds next month's budget), hide-amounts privacy mode
 - **Filtering** — search transactions by description/notes, filter by category, type or account
+- **Backup & export** — back up the whole database to Files/iCloud/Drive via the share sheet, restore it (checked, upgraded, with a safety copy of current data), export transactions as CSV; a dashboard reminder after 30 days without a backup
 - **Delete protection** — prevents deletion of categories, currencies and accounts that are in use (accounts can be archived instead)
 
 ## Tech Stack

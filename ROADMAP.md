@@ -25,6 +25,11 @@
 - Only after day 5 of the month (avoids noisy early projections)
 - Recalculates on every dashboard load — adjusts as spending pace changes
 
+### Backup, Restore & CSV Export ✅
+- Whole-database backup via the share sheet; checked restore with a safety copy and automatic upgrade
+- Transactions CSV export (spreadsheet-safe); last-backup date in Preferences and a 30-day dashboard reminder
+- Design: [ADR 0003](docs/adr/0003-backup-and-export.md)
+
 ### Accounts ✅
 - Current accounts, savings, credit cards and cash, each with a computed balance
 - Every transaction is paid from (or into) an account; transfers move money between accounts without touching budgets
@@ -95,6 +100,9 @@
 - View-only dashboard accessible from desktop browser
 - Requires backend (above)
 
-### Data Export
-- CSV export of transactions for a date range
-- Filter by category, type, or date range before export
+### Automatic Backups
+- Back up on a schedule to a folder chosen once (Files/iCloud), keeping the last N
+- Builds on the manual backup/restore (ADR 0003)
+
+### Filtered CSV Export
+- Export a date range, or filter by category, type or account before exporting
