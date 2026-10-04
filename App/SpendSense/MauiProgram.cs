@@ -27,6 +27,7 @@ public static class MauiProgram
 		builder.Services.AddSingleton<ThemeService>();
 		builder.Services.AddTransient<RecurringTransactionGenerator>();
 		builder.Services.AddTransient<NotificationService>();
+		builder.Services.AddTransient<AccountBalanceService>();
 
 		builder.AddServiceDefaults();
 

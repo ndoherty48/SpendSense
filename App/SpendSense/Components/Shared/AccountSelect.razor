@@ -1,0 +1,69 @@
+@using SpendSense.Common.Services
+
+@* Account picker for forms: a scrolling row of pills showing each account's balance. *@
+<div class="account-select">
+    <span class="label" id="@labelId">@Label</span>
+    <div class="pills" role="group" aria-labelledby="@labelId">
+        @if (AllowNone)
+        {
+            var none = Value is null;
+            <button type="button" class="pill @(none ? "is-selected" : null)" aria-pressed="@(none ? "true" : "false")" @onclick="() => Pick(null)">
+                <span class="text"><span class="name">@NoneLabel</span></span>
+            </button>
+        }
+        @foreach (var item in Accounts)
+        {
+            var selected = Value == item.Account.Id;
+            var id = item.Account.Id;
+            <button type="button" class="pill @(selected ? "is-selected" : null)" aria-pressed="@(selected ? "true" : "false")" @onclick="() => Pick(id)">
+                <IconTile Icon="@AccountVisuals.Icon(item.Account.Type)" Color="@item.Account.Color" Size="26" />
+                <span class="text">
+                    <span class="name">@item.Account.Name</span>
+                    <span class="balance">
+                        @if (item.IsCard)
+                        {
+                            <Money Amount="item.Owed" Symbol="@item.Symbol" Size="MoneySize.Small" Tone="MoneyTone.Muted" /> <span>owed</span>
+                        }
+                        else
+                        {
+                            <Money Amount="item.Balance" Symbol="@item.Symbol" Size="MoneySize.Small" Tone="MoneyTone.Muted" />
+                        }
+                    </span>
+                </span>
+                @if (selected)
+                {
+                    <svg class="check" viewBox="0 0 24 24" fill="currentColor" focusable="false" aria-hidden="true">@((MarkupString)Icons.Material.Filled.Check)</svg>
+                }
+            </button>
+        }
+    </div>
+    @if (!string.IsNullOrEmpty(Error))
+    {
+        <span class="error" role="alert">@Error</span>
+    }
+</div>
+
+@code {
+    readonly string labelId = $"account-select-{Guid.NewGuid():N}";
+
+    /// <summary>Accounts to offer (usually the open ones), with balances.</summary>
+    [Parameter, EditorRequired] public IReadOnlyList<AccountBalance> Accounts { get; set; } = [];
+
+    /// <summary>The selected account Id, or null.</summary>
+    [Parameter] public int? Value { get; set; }
+
+    [Parameter] public EventCallback<int?> ValueChanged { get; set; }
+
+    /// <summary>Visible label, e.g. "Paid from".</summary>
+    [Parameter] public string Label { get; set; } = "Account";
+
+    /// <summary>Offer a "no account" option first (e.g. an optional savings destination).</summary>
+    [Parameter] public bool AllowNone { get; set; }
+
+    [Parameter] public string NoneLabel { get; set; } = "None";
+
+    /// <summary>A validation message shown under the pills.</summary>
+    [Parameter] public string? Error { get; set; }
+
+    Task Pick(int? id) => ValueChanged.InvokeAsync(id);
+}

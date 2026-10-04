@@ -83,6 +83,16 @@ else
         <Actions><MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/dev/gallery">Add transaction</MudButton></Actions>
     </EmptyState>
 
+    <SectionHeader Title="Accounts" />
+    <div class="gallery-row">
+        @foreach (var item in sampleAccounts)
+        {
+            <AccountCard Item="item" />
+        }
+    </div>
+    <AccountSelect Accounts="sampleAccounts" @bind-Value="accountId" Label="Paid from" />
+    <AccountSelect Accounts="sampleAccounts" @bind-Value="toAccountId" Label="Into (optional)" AllowNone="true" Error="Choose a different account to move money into." />
+
     <SectionHeader Title="Form controls" />
     <div class="gallery-stack">
         <MoneyInput @bind-Value="amount" />
@@ -123,6 +133,19 @@ else
         new() { Id = 1, Name = "Groceries", Type = TransactionTypeEnum.Expense },
         new() { Id = 2, Name = "Dining", Type = TransactionTypeEnum.Expense },
         new() { Id = 3, Name = "Salary", Type = TransactionTypeEnum.Income }
+    ];
+
+    int? accountId = 1;
+    int? toAccountId;
+
+    static readonly Currency gbp = new() { Id = 1, Code = "GBP", Name = "British Pound", Symbol = "£" };
+
+    static readonly AccountBalance[] sampleAccounts =
+    [
+        new(new Account { Id = 1, Name = "Everyday", Type = AccountTypeEnum.Current, Color = "#6EA8FF", Currency = gbp }, 1482.40),
+        new(new Account { Id = 2, Name = "Visa card", Type = AccountTypeEnum.CreditCard, Color = "#FF9A6E", CreditLimit = 2000, Currency = gbp }, -612.30),
+        new(new Account { Id = 3, Name = "Cash wallet", Type = AccountTypeEnum.Cash, Color = "#F0B94E", Currency = gbp }, 45),
+        new(new Account { Id = 4, Name = "Rainy day fund", Type = AccountTypeEnum.Savings, Color = "#33D6A6", Currency = gbp }, 3250)
     ];
 
     static readonly Currency[] sampleCurrencies =
