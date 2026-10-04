@@ -65,4 +65,11 @@ public class SettingsService
         get => Preferences.Get(nameof(IncludeCreditInAvailable), false);
         set => Preferences.Set(nameof(IncludeCreditInAvailable), value);
     }
+
+    /// <summary>The dashboard's "check your account balances" banner was dismissed on this device.</summary>
+    public bool BalanceCheckDismissed
+    {
+        get => Preferences.Get(nameof(BalanceCheckDismissed), false);
+        set => Preferences.Set(nameof(BalanceCheckDismissed), value);
+    }
 }

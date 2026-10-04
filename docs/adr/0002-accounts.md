@@ -37,6 +37,10 @@ Directional, like the Ledger Noir storyboard: the real fields and behaviour win 
 |---|---|---|
 | ![Accounts list with Monzo pots nested](../design/storyboard/accounts/10-pots-accounts.png) | ![Dashboard strip with one combined Monzo card](../design/storyboard/accounts/11-pots-dashboard.png) | ![Monzo detail with its pots](../design/storyboard/accounts/12-pots-detail.png) |
 
+| Balance check |
+|---|
+| ![Dashboard banner asking to check account balances](../design/storyboard/accounts/13-balance-check.png) |
+
 ## Decisions
 
 ### 1. An account is required on every transaction
@@ -77,6 +81,12 @@ For a card, `owed = max(0, −balance)` and, when a limit is set, `availableCred
 
 **Set balance** reconciles an account with the bank: it recalculates `OpeningBalance` so the balance
 matches the figure entered. It never inserts an adjusting transaction, so budgets stay clean.
+
+Because the migration starts Main account at £0 with all of the user's history on it, its first balance
+is the net of everything ever recorded, which is usually far from the bank's figure (income tends to be
+recorded more completely than spending). The dashboard therefore shows a **balance check banner** for any
+open account that has transactions but still has a £0 opening balance, with Set balance next to each.
+It disappears once each one is set, or when dismissed (`SettingsService.BalanceCheckDismissed`).
 
 ### 4. The currency follows the account
 
