@@ -35,6 +35,7 @@ public static class MauiProgram
 		builder.Services.AddTransient<NotificationService>();
 		builder.Services.AddTransient<AccountBalanceService>();
 		builder.Services.AddTransient<BackupService>();
+		builder.Services.AddTransient<SpendSense.Components.Pages.Data.BackupFlow>();
 
 		builder.AddServiceDefaults();
 

@@ -55,7 +55,16 @@ public abstract class ComponentTest : BunitContext
         Services.AddTransient<CurrencyRepository>();
         Services.AddTransient<AccountBalanceService>();
         Services.AddTransient<NotificationService>();
+
+        Services.AddSingleton<IFileSystem>(Files);
+        Services.AddSingleton<IFileExchange>(FileExchange);
+        Services.AddTransient<BackupService>();
+        Services.AddTransient<SpendSense.Components.Pages.Data.BackupFlow>();
     }
+
+    protected TempFileSystem Files { get; } = new();
+
+    protected FakeFileExchange FileExchange { get; } = new();
 
     protected InMemoryPreferences Preferences { get; } = new();
 
@@ -94,6 +103,7 @@ public abstract class ComponentTest : BunitContext
             disposed = true;
             Db.Dispose();
             connection.Dispose();
+            Files.Dispose();
             CultureInfo.CurrentCulture = previousCulture;
         }
         base.Dispose(disposing);

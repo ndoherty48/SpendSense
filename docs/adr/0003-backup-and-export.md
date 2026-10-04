@@ -9,6 +9,12 @@ SpendSense is local-first: everything lives in one SQLite file on the device, an
 the roadmap. Losing or resetting the phone loses every transaction, account and budget. Users also want
 their transactions in a spreadsheet.
 
+## Storyboard
+
+| Preferences → Data | Restore confirmation | Dashboard reminder |
+|---|---|---|
+| ![Preferences with the Data section](../design/storyboard/data/01-preferences.png) | ![Restore backup dialog](../design/storyboard/data/02-restore.png) | ![Back up your data reminder](../design/storyboard/data/03-reminder.png) |
+
 ## Decisions
 
 ### 1. A backup is the SQLite database itself

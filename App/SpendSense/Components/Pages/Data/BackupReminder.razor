@@ -1,0 +1,46 @@
+@using SpendSense.Common.Services
+@inject BackupFlow Flow
+@inject BackupService Backups
+@inject SettingsService Settings
+
+@* Dashboard nudge when there's data and no backup in the last 30 days (ADR 0003, decision 4). *@
+<section class="banner" aria-labelledby="backup-reminder-title">
+    <div class="head">
+        <svg class="icon" viewBox="0 0 24 24" fill="currentColor" focusable="false" aria-hidden="true">@((MarkupString)Icons.Material.Filled.CloudUpload)</svg>
+        <h2 class="title" id="backup-reminder-title">Back up your data</h2>
+    </div>
+    <p class="text">
+        SpendSense keeps everything on this device. @LastBackupText Save a backup to Files, iCloud or Drive in
+        case it's lost or reset.
+    </p>
+    <div class="actions">
+        <button type="button" class="primary" disabled="@busy" @onclick="BackUp">Back up now</button>
+        <button type="button" class="secondary" disabled="@busy" @onclick="NotNow">Not now</button>
+    </div>
+</section>
+
+@code {
+    /// <summary>Raised when the reminder should disappear (backed up or snoozed).</summary>
+    [Parameter] public EventCallback OnDone { get; set; }
+
+    bool busy;
+
+    string LastBackupText => Settings.LastBackupAt is { } last
+        ? $"Your last backup was {(DateTime.Now - last).Days} days ago."
+        : "You haven't backed up yet.";
+
+    async Task BackUp()
+    {
+        busy = true;
+        var done = await Flow.BackUp();
+        busy = false;
+        if (done)
+            await OnDone.InvokeAsync();
+    }
+
+    async Task NotNow()
+    {
+        Backups.SnoozeReminder();
+        await OnDone.InvokeAsync();
+    }
+}
