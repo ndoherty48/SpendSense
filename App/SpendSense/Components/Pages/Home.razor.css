@@ -115,3 +115,45 @@
 .recent {
     padding: 0 var(--ss-space-1);
 }
+
+.available {
+    display: flex;
+    align-items: baseline;
+    gap: var(--ss-space-2);
+}
+
+.available-label {
+    color: var(--ss-ink-muted);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.available ::deep .money {
+    font-size: 20px;
+}
+
+.available-note {
+    margin: 2px 0 0;
+    color: var(--ss-ink-muted);
+    font-size: 11px;
+}
+
+.strip {
+    display: flex;
+    gap: var(--ss-space-3);
+    overflow-x: auto;
+    margin-top: var(--ss-space-3);
+    padding-bottom: var(--ss-space-1);
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+}
+
+.strip::-webkit-scrollbar {
+    display: none;
+}
+
+.strip > div {
+    display: flex;
+}
