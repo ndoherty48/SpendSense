@@ -1,0 +1,32 @@
+@using SpendSense.Common.Services
+
+@* Compact account tile for the dashboard strip. A card shows what it owes and the credit left. *@
+<a class="account-card" href="@Href">
+    <span class="head">
+        <IconTile Icon="@AccountVisuals.Icon(Item.Account.Type)" Color="@Item.Account.Color" Size="28" />
+        <span class="name">@Item.Account.Name</span>
+    </span>
+    @if (Item.IsCard)
+    {
+        <Money Amount="Item.Owed" Symbol="@Item.Symbol" />
+        <span class="caption">owed</span>
+        @if (Item.CreditUsedPercent is { } used)
+        {
+            <div class="usage">
+                <ProgressBar Percent="used" Over="false" Label="@($"{Item.Account.Name} credit used")" ValueText="@($"{used:0}% of limit used")" />
+            </div>
+            <span class="caption"><Money Amount="Item.AvailableCredit ?? 0" Symbol="@Item.Symbol" Size="MoneySize.Small" /> left</span>
+        }
+    }
+    else
+    {
+        <Money Amount="Item.Balance" Symbol="@Item.Symbol" Tone="@(Item.Balance < 0 ? MoneyTone.Error : MoneyTone.Neutral)" />
+        <span class="caption">@AccountVisuals.Label(Item.Account.Type)</span>
+    }
+</a>
+
+@code {
+    [Parameter, EditorRequired] public AccountBalance Item { get; set; } = default!;
+
+    string Href => $"/accounts/{Item.Account.Id}";
+}

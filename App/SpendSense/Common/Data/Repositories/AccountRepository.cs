@@ -1,21 +1,20 @@
 using Microsoft.EntityFrameworkCore;
 
 using SpendSense.Common.Models;
+using SpendSense.Common.Models.Enums;
 
 namespace SpendSense.Common.Data.Repositories;
 
 public sealed class AccountRepository(SpendSenseDbContext dbContext)
 {
-    /// <summary>All accounts in display order: by type, then the user's order, then name.</summary>
+    /// <summary>All accounts in display order (see <see cref="AccountOrdering"/>).</summary>
     public async Task<IReadOnlyCollection<Account>> GetAll(bool includeArchived = true)
     {
-        return await dbContext.Accounts
+        var accounts = await dbContext.Accounts
             .Include(a => a.Currency)
             .Where(a => includeArchived || !a.IsArchived)
-            .OrderBy(a => a.Type)
-            .ThenBy(a => a.SortOrder)
-            .ThenBy(a => a.Name)
             .ToListAsync();
+        return accounts.InDisplayOrder().ToList();
     }
 
     public async Task<Account?> GetById(int id)
@@ -67,4 +66,26 @@ public sealed class AccountRepository(SpendSenseDbContext dbContext)
         foreach (var account in current)
             account.IsDefault = false;
     }
+}
+
+public static class AccountOrdering
+{
+    /// <summary>
+    /// Default account first, then everyday money (current, cash), cards, savings; then the user's order and
+    /// name. Done in memory: the type is stored as text, so SQL would sort it alphabetically.
+    /// </summary>
+    public static IEnumerable<Account> InDisplayOrder(this IEnumerable<Account> accounts) =>
+        accounts
+            .OrderByDescending(a => a.IsDefault)
+            .ThenBy(a => Rank(a.Type))
+            .ThenBy(a => a.SortOrder)
+            .ThenBy(a => a.Name, StringComparer.CurrentCultureIgnoreCase);
+
+    static int Rank(AccountTypeEnum type) => type switch
+    {
+        AccountTypeEnum.Current => 0,
+        AccountTypeEnum.Cash => 1,
+        AccountTypeEnum.CreditCard => 2,
+        _ => 3
+    };
 }

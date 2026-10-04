@@ -58,4 +58,11 @@ public class SettingsService
         get => Preferences.Get(nameof(HideAmounts), false);
         set => Preferences.Set(nameof(HideAmounts), value);
     }
+
+    /// <summary>Add the credit left on cards to the dashboard's Available total.</summary>
+    public bool IncludeCreditInAvailable
+    {
+        get => Preferences.Get(nameof(IncludeCreditInAvailable), false);
+        set => Preferences.Set(nameof(IncludeCreditInAvailable), value);
+    }
 }

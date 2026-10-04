@@ -118,6 +118,9 @@ glyph as well as colour (WCAG 1.4.1).
 | `BottomNav` / `SideRail` | `surface`, `border`, `shadow-nav`, active `accent`, inactive `ink-muted` |
 | `Fab` | `accent` fill, `on-accent` icon, `shadow-fab` |
 | Form inputs | `surface-2` fill, `border-strong` outline, `ink` text |
+| `IconTile` with `Color` | the account's own colour for the icon on a 16% tint of it (`#RRGGBB29`); other hex forms keep `surface-2`. Account colours are user data, like category colours |
+| `AccountCard` | `surface`, `border`, `radius-md`, mono balance, `ink-muted` caption; cards add a `ProgressBar` for credit used |
+| `AccountSelect` | pills on `surface-2` with `border`; selected pill `accent-soft` with an `accent` ring and check |
 
 ## Chart palette
 

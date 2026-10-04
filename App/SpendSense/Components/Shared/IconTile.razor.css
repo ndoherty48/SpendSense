@@ -32,3 +32,8 @@
     background: var(--ss-error-soft);
     color: var(--ss-error);
 }
+
+.icon-tile--custom {
+    background: var(--tile-tint, var(--ss-surface-2));
+    color: var(--tile-color);
+}

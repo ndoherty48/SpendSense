@@ -1,4 +1,4 @@
-<span class="icon-tile @ToneClass @ShapeClass" style="--tile-size: @(Size)px" aria-hidden="true">
+<span class="icon-tile @ToneClass @ShapeClass" style="@Style" aria-hidden="true">
     <svg viewBox="0 0 24 24" fill="currentColor" focusable="false">@((MarkupString)Icon)</svg>
 </span>
 
@@ -13,7 +13,15 @@
 
     [Parameter] public int Size { get; set; } = 36;
 
-    string ToneClass => Tone switch
+    /// <summary>
+    /// A user-chosen hex colour (accounts) that overrides <see cref="Tone"/>: the icon in that colour on a
+    /// faint tint of it. Invalid values fall back to the tone.
+    /// </summary>
+    [Parameter] public string? Color { get; set; }
+
+    string? SafeColor => AccountVisuals.SafeColor(Color);
+
+    string ToneClass => SafeColor is not null ? "icon-tile--custom" : Tone switch
     {
         IconTone.Brand => "icon-tile--brand",
         IconTone.Accent => "icon-tile--accent",
@@ -22,4 +30,21 @@
     };
 
     string ShapeClass => Circle ? "icon-tile--circle" : "";
+
+    // A 6-digit hex gets a 16% alpha tint behind it; other forms keep the neutral surface. Hex only, no
+    // color-mix(): older Android WebViews don't support it.
+    string Style
+    {
+        get
+        {
+            var style = $"--tile-size: {Size}px";
+            if (SafeColor is { } c)
+            {
+                style += $"; --tile-color: {c}";
+                if (c.Length == 7)
+                    style += $"; --tile-tint: {c}29";
+            }
+            return style;
+        }
+    }
 }
