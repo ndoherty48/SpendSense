@@ -1,0 +1,98 @@
+@using SpendSense.Common.Interfaces
+@using SpendSense.Common.Models.Enums
+@using SpendSense.Common.Services
+
+@* The account pickers for a transaction or recurring rule; which ones show depends on the type. *@
+@switch (Model.TransactionType)
+{
+    case TransactionTypeEnum.Transfer:
+        <div class="pair">
+            <AccountSelect Accounts="Accounts" Value="Model.AccountId" ValueChanged="SetFrom" Label="From" />
+            <button type="button" class="swap" aria-label="Swap accounts" @onclick="Swap">
+                <svg viewBox="0 0 24 24" fill="currentColor" focusable="false" aria-hidden="true">@((MarkupString)Icons.Material.Filled.SwapVert)</svg>
+            </button>
+            <AccountSelect Accounts="Destinations" Value="Model.ToAccountId" ValueChanged="SetTo" Label="To" Error="@Error" />
+        </div>
+        break;
+    case TransactionTypeEnum.Savings:
+        <AccountSelect Accounts="Accounts" Value="Model.AccountId" ValueChanged="SetFrom" Label="From" />
+        <AccountSelect Accounts="Destinations" Value="Model.ToAccountId" ValueChanged="SetTo" Label="Into (optional)" AllowNone="true" NoneLabel="Not tracked" Error="@Error" />
+        break;
+    default:
+        <AccountSelect Accounts="Accounts" Value="Model.AccountId" ValueChanged="SetFrom" Label="@(Model.TransactionType == TransactionTypeEnum.Income ? "Paid into" : "Paid from")" Error="@Error" />
+        break;
+}
+
+@code {
+    [Parameter, EditorRequired] public IAccountMovement Model { get; set; } = default!;
+
+    /// <summary>Accounts to offer, with balances.</summary>
+    [Parameter, EditorRequired] public IReadOnlyList<AccountBalance> Accounts { get; set; } = [];
+
+    /// <summary>A message from <see cref="Validate"/>, shown under the last picker.</summary>
+    [Parameter] public string? Error { get; set; }
+
+    /// <summary>Raised after any account change, e.g. so the parent can clear <see cref="Error"/>.</summary>
+    [Parameter] public EventCallback OnChanged { get; set; }
+
+    IReadOnlyList<AccountBalance> Destinations => DestinationsFor(Model, Accounts);
+
+    async Task SetFrom(int? id)
+    {
+        Model.AccountId = id ?? 0;
+        // Keep the destination valid for the new source.
+        if (Model.ToAccountId is { } to && Destinations.All(a => a.Account.Id != to))
+            Model.ToAccountId = null;
+        await OnChanged.InvokeAsync();
+    }
+
+    async Task SetTo(int? id)
+    {
+        Model.ToAccountId = id;
+        await OnChanged.InvokeAsync();
+    }
+
+    async Task Swap()
+    {
+        if (Model.ToAccountId is not { } to)
+            return;
+        (Model.AccountId, Model.ToAccountId) = (to, Model.AccountId);
+        await OnChanged.InvokeAsync();
+    }
+
+    public static AccountBalance? Find(IReadOnlyList<AccountBalance> accounts, int? id) =>
+        id is null ? null : accounts.FirstOrDefault(a => a.Account.Id == id);
+
+    /// <summary>Where money can go: any other account in the source's currency.</summary>
+    public static IReadOnlyList<AccountBalance> DestinationsFor(IAccountMovement model, IReadOnlyList<AccountBalance> accounts)
+    {
+        var from = Find(accounts, model.AccountId);
+        return accounts
+            .Where(a => a.Account.Id != model.AccountId && (from is null || a.Account.CurrencyId == from.Account.CurrencyId))
+            .ToList();
+    }
+
+    /// <summary>A message if the accounts don't make sense for the type, otherwise null.</summary>
+    public static string? Validate(IAccountMovement model, IReadOnlyList<AccountBalance> accounts)
+    {
+        var from = Find(accounts, model.AccountId);
+        if (from is null)
+            return "Choose an account.";
+        if (model.TransactionType is not (TransactionTypeEnum.Transfer or TransactionTypeEnum.Savings))
+            return null;
+        if (model.ToAccountId is null)
+            return model.TransactionType == TransactionTypeEnum.Transfer ? "Choose the account to move money into." : null;
+        if (model.ToAccountId == model.AccountId)
+            return "Choose a different account to move money into.";
+        if (Find(accounts, model.ToAccountId) is not { } to || to.Account.CurrencyId != from.Account.CurrencyId)
+            return "Both accounts must use the same currency.";
+        return null;
+    }
+
+    /// <summary>Only transfers and savings keep a destination.</summary>
+    public static void Normalise(IAccountMovement model)
+    {
+        if (model.TransactionType is not (TransactionTypeEnum.Transfer or TransactionTypeEnum.Savings))
+            model.ToAccountId = null;
+    }
+}

@@ -6,7 +6,7 @@ using SpendSense.Common.Models.Enums;
 
 namespace SpendSense.Common.Models;
 
-public class Transaction : ITimestamped
+public class Transaction : ITimestamped, IAccountMovement
 {
     [Key]
     public int Id { get; set; }

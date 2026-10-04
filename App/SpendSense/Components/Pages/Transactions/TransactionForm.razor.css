@@ -1,28 +1,3 @@
-.pair {
-    display: flex;
-    flex-direction: column;
-    gap: var(--ss-space-2);
-}
-
-.swap {
-    display: inline-flex;
-    align-items: center;
-    align-self: center;
-    justify-content: center;
-    width: var(--ss-target);
-    height: var(--ss-target);
-    border: 1px solid var(--ss-border-strong);
-    border-radius: var(--ss-radius-pill);
-    background: var(--ss-surface);
-    color: var(--ss-ink);
-    cursor: pointer;
-}
-
-.swap svg {
-    width: 20px;
-    height: 20px;
-}
-
 .preview,
 .note {
     margin: 0;

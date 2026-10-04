@@ -10,28 +10,10 @@
 
     <MoneyInput @bind-Value="Model.Amount" Symbol="@CurrentSymbol" Min="0.01" />
 
-    @switch (Model.TransactionType)
+    <AccountFields Model="Model" Accounts="Accounts" Error="@accountError" OnChanged="() => accountError = null" />
+    @if (Preview is { } preview)
     {
-        case TransactionTypeEnum.Transfer:
-            <div class="pair">
-                <AccountSelect Accounts="Accounts" Value="Model.AccountId" ValueChanged="SetFrom" Label="From" />
-                <button type="button" class="swap" aria-label="Swap accounts" @onclick="Swap">
-                    <svg viewBox="0 0 24 24" fill="currentColor" focusable="false" aria-hidden="true">@((MarkupString)Icons.Material.Filled.SwapVert)</svg>
-                </button>
-                <AccountSelect Accounts="Destinations" Value="Model.ToAccountId" ValueChanged="SetTo" Label="To" Error="@accountError" />
-            </div>
-            @if (Preview is { } preview)
-            {
-                <p class="preview">@preview</p>
-            }
-            break;
-        case TransactionTypeEnum.Savings:
-            <AccountSelect Accounts="Accounts" Value="Model.AccountId" ValueChanged="SetFrom" Label="From" />
-            <AccountSelect Accounts="Destinations" Value="Model.ToAccountId" ValueChanged="SetTo" Label="Into (optional)" AllowNone="true" NoneLabel="Not tracked" Error="@accountError" />
-            break;
-        default:
-            <AccountSelect Accounts="Accounts" Value="Model.AccountId" ValueChanged="SetFrom" Label="@(Model.TransactionType == TransactionTypeEnum.Income ? "Paid into" : "Paid from")" Error="@accountError" />
-            break;
+        <p class="preview">@preview</p>
     }
 
     <MudTextField Label="@(Model.TransactionType == TransactionTypeEnum.Transfer ? "Description (optional)" : "Description")"
@@ -92,13 +74,9 @@
     DateTime? transactionDate;
     string? accountError;
 
-    AccountBalance? From => Accounts.FirstOrDefault(a => a.Account.Id == Model.AccountId);
+    AccountBalance? From => AccountFields.Find(Accounts, Model.AccountId);
 
-    AccountBalance? To => Accounts.FirstOrDefault(a => a.Account.Id == Model.ToAccountId);
-
-    // A destination must differ from the source and share its currency.
-    IReadOnlyList<AccountBalance> Destinations =>
-        Accounts.Where(a => a.Account.Id != Model.AccountId && (From is null || a.Account.CurrencyId == From.Account.CurrencyId)).ToList();
+    AccountBalance? To => AccountFields.Find(Accounts, Model.ToAccountId);
 
     // The currency follows the account.
     string CurrentSymbol => From?.Symbol ?? "£";
@@ -109,7 +87,7 @@
     {
         get
         {
-            if (!ShowPreview || From is not { } from || To is not { } to || Model.Amount <= 0)
+            if (!ShowPreview || Model.TransactionType != TransactionTypeEnum.Transfer || From is not { } from || To is not { } to || Model.Amount <= 0)
                 return null;
             return $"After: {Describe(from, from.Balance - Model.Amount)} · {Describe(to, to.Balance + Model.Amount)}";
         }
@@ -131,66 +109,22 @@
         accountError = null;
     }
 
-    void SetFrom(int? id)
-    {
-        Model.AccountId = id ?? 0;
-        // Keep the destination valid for the new source.
-        if (Model.ToAccountId is { } to && Destinations.All(a => a.Account.Id != to))
-            Model.ToAccountId = null;
-        accountError = null;
-    }
-
-    void SetTo(int? id)
-    {
-        Model.ToAccountId = id;
-        accountError = null;
-    }
-
-    void Swap()
-    {
-        if (Model.ToAccountId is not { } to)
-            return;
-        (Model.AccountId, Model.ToAccountId) = (to, Model.AccountId);
-        accountError = null;
-    }
-
     async Task OnValidSubmit(EditContext context)
     {
-        accountError = Validate();
+        accountError = AccountFields.Validate(Model, Accounts);
         if (accountError is not null)
             return;
 
         Model.TransactionDate = transactionDate ?? DateTime.Today;
         Model.CurrencyId = From!.Account.CurrencyId;
-        switch (Model.TransactionType)
+        AccountFields.Normalise(Model);
+        if (Model.TransactionType == TransactionTypeEnum.Transfer)
         {
-            case TransactionTypeEnum.Transfer:
-                Model.CategoryId = null;
-                if (string.IsNullOrWhiteSpace(Model.Description))
-                    Model.Description = $"Transfer to {To!.Account.Name}";
-                break;
-            case TransactionTypeEnum.Savings:
-                break;
-            default:
-                Model.ToAccountId = null;
-                break;
+            Model.CategoryId = null;
+            if (string.IsNullOrWhiteSpace(Model.Description))
+                Model.Description = $"Transfer to {To!.Account.Name}";
         }
         await OnSubmit.InvokeAsync();
-    }
-
-    string? Validate()
-    {
-        if (From is null)
-            return "Choose an account.";
-        if (Model.TransactionType is not (TransactionTypeEnum.Transfer or TransactionTypeEnum.Savings))
-            return null;
-        if (Model.ToAccountId is null)
-            return Model.TransactionType == TransactionTypeEnum.Transfer ? "Choose the account to move money into." : null;
-        if (Model.ToAccountId == Model.AccountId)
-            return "Choose a different account to move money into.";
-        if (To is null || To.Account.CurrencyId != From.Account.CurrencyId)
-            return "Both accounts must use the same currency.";
-        return null;
     }
 
     async Task OnDescriptionChanged(string value)

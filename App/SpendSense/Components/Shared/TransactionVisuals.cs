@@ -1,6 +1,6 @@
 using MudBlazor;
 
-using SpendSense.Common.Models;
+using SpendSense.Common.Interfaces;
 using SpendSense.Common.Models.Enums;
 
 namespace SpendSense.Components.Shared;
@@ -23,24 +23,24 @@ public static class TransactionVisuals
     /// Money moved between your own accounts: a transfer, or savings paid into a savings account. Shown
     /// without a sign, because the money stayed yours.
     /// </summary>
-    public static bool IsMove(Transaction t) =>
+    public static bool IsMove(IAccountMovement t) =>
         t.TransactionType == TransactionTypeEnum.Transfer
         || (t.TransactionType == TransactionTypeEnum.Savings && t.ToAccountId is not null);
 
     /// <summary>The amount as a list shows it: income positive, a move unsigned, everything else negative.</summary>
-    public static double Amount(Transaction t) =>
+    public static double Amount(IAccountMovement t) =>
         t.TransactionType == TransactionTypeEnum.Income || IsMove(t) ? t.Amount : -t.Amount;
 
     /// <summary>Whether to print a + or − (never for a move).</summary>
-    public static bool Signed(Transaction t) => !IsMove(t);
+    public static bool Signed(IAccountMovement t) => !IsMove(t);
 
-    public static MoneyTone AmountTone(Transaction t) =>
+    public static MoneyTone AmountTone(IAccountMovement t) =>
         t.TransactionType == TransactionTypeEnum.Income ? MoneyTone.Income
         : IsMove(t) ? MoneyTone.Muted
         : MoneyTone.Neutral;
 
     /// <summary>"Groceries · Everyday", or "Everyday → Visa card" for a move.</summary>
-    public static string Subtitle(Transaction t)
+    public static string Subtitle(IAccountMovement t)
     {
         if (IsMove(t))
         {
