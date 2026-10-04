@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <!-- xUnit v3 on Microsoft.Testing.Platform (global.json): the test project is an executable. -->
+        <OutputType>Exe</OutputType>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <RootNamespace>SpendSense.Tests</RootNamespace>
+        <IsPackable>false</IsPackable>
+        <IsTestProject>true</IsTestProject>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="xunit.v3.mtp-v2" Version="4.0.1" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <!-- Resolves to the app's plain net10.0 build: no device, no platform code. -->
+        <ProjectReference Include="../../App/SpendSense/SpendSense.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Using Include="Xunit" />
+    </ItemGroup>
+
+</Project>
