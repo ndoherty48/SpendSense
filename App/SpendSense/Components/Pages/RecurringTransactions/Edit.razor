@@ -4,7 +4,7 @@
 @using SpendSense.Common.Models
 @inject RecurringTransactionRepository RecurringRepo
 @inject CategoryRepository CategoryRepo
-@inject CurrencyRepository CurrencyRepo
+@inject SpendSense.Common.Services.AccountBalanceService Balances
 @inject NavigationManager Navigation
 
 @if (model is null)
@@ -13,20 +13,24 @@
 }
 else
 {
-    <RecurringForm Title="Edit recurring transaction" Model="model" Categories="categories" Currencies="currencies" ShowActive="true" OnSubmit="Submit" />
+    <RecurringForm Title="Edit recurring transaction" Model="model" Categories="categories" Accounts="accounts" ShowActive="true" OnSubmit="Submit" />
 }
 
 @code {
     [Parameter] public int Id { get; set; }
     RecurringTransaction? model;
     IReadOnlyCollection<Category> categories = [];
-    IReadOnlyCollection<Currency> currencies = [];
+    IReadOnlyList<SpendSense.Common.Services.AccountBalance> accounts = [];
 
     protected override async Task OnInitializedAsync()
     {
         model = await RecurringRepo.GetById(Id);
         categories = await CategoryRepo.GetAll();
-        currencies = await CurrencyRepo.GetAll();
+        // Open accounts, plus an archived one this rule already uses so it still shows as selected.
+        var all = await Balances.GetBalances(includeArchived: true);
+        accounts = all
+            .Where(a => !a.Account.IsArchived || a.Account.Id == model?.AccountId || a.Account.Id == model?.ToAccountId)
+            .ToList();
     }
 
     async Task Submit()
