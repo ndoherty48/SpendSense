@@ -1,0 +1,52 @@
+@using SpendSense.Common.Services
+@inject AccountBalanceService Balances
+@inject IDialogService Dialog
+
+@* One-time nudge after accounts arrive: balances start from recorded history, not from the bank. *@
+<section class="banner" aria-labelledby="balance-check-title">
+    <div class="head">
+        <svg class="icon" viewBox="0 0 24 24" fill="currentColor" focusable="false" aria-hidden="true">@((MarkupString)Icons.Material.Filled.Balance)</svg>
+        <h2 class="title" id="balance-check-title">Check your account balances</h2>
+        <button type="button" class="dismiss" aria-label="Dismiss" @onclick="() => OnDismiss.InvokeAsync()">
+            <svg viewBox="0 0 24 24" fill="currentColor" focusable="false" aria-hidden="true">@((MarkupString)Icons.Material.Filled.Close)</svg>
+        </button>
+    </div>
+    <p class="text">
+        @(Accounts.Count == 1 ? "This account starts" : "These accounts start") from everything you've recorded,
+        not from your bank, so the balance may be off. Set each one to what your banking app shows; your
+        transactions and budgets don't change.
+    </p>
+    <ul class="accounts">
+        @foreach (var item in Accounts)
+        {
+            <li class="account">
+                <IconTile Icon="@AccountVisuals.Icon(item.Account.Type)" Color="@item.Account.Color" Size="28" />
+                <span class="name">@item.Account.Name</span>
+                <Money Amount="@(item.IsCard ? item.Owed : item.Balance)" Symbol="@item.Symbol" Size="MoneySize.Small" Tone="MoneyTone.Muted" />
+                <button type="button" class="set" @onclick="() => SetBalance(item)" aria-label="@($"Set balance for {item.Account.Name}")">Set balance</button>
+            </li>
+        }
+    </ul>
+</section>
+
+@code {
+    /// <summary>Accounts to check, from <see cref="AccountBalanceService.NeedingBalanceCheck"/>.</summary>
+    [Parameter, EditorRequired] public IReadOnlyList<AccountBalance> Accounts { get; set; } = [];
+
+    /// <summary>Raised after a balance is set, so the page reloads balances (and this list).</summary>
+    [Parameter] public EventCallback OnChanged { get; set; }
+
+    [Parameter] public EventCallback OnDismiss { get; set; }
+
+    async Task SetBalance(AccountBalance item)
+    {
+        var parameters = new DialogParameters<SetBalanceDialog> { { x => x.Item, item } };
+        var dialog = await Dialog.ShowAsync<SetBalanceDialog>("Set balance", parameters);
+        var result = await dialog.Result;
+        if (result is { Canceled: false, Data: double target })
+        {
+            await Balances.SetBalance(item.Account, target);
+            await OnChanged.InvokeAsync();
+        }
+    }
+}

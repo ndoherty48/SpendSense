@@ -6,6 +6,7 @@
 @using SpendSense.Common.Models.Enums
 @using SpendSense.Common.Services
 @using SpendSense.Common.Theming
+@using SpendSense.Components.Pages.Accounts
 @inject SpendSenseDbContext Db
 @inject SettingsService Settings
 @inject ThemeService Theme
@@ -60,6 +61,11 @@
             <div role="listitem"><AccountCard Item="group.Account" Pots="group.Pots" /></div>
         }
     </div>
+
+    @if (needsBalanceCheck.Any())
+    {
+        <BalanceCheckBanner Accounts="needsBalanceCheck" OnChanged="LoadAccounts" OnDismiss="DismissBalanceCheck" />
+    }
 }
 
 @if (overspendWarnings.Any())
@@ -172,14 +178,27 @@
     // Balances are as of today, so they don't change with the month being viewed.
     IReadOnlyList<AccountBalance> accounts = [];
     AvailableSummary? summary;
+    IReadOnlyList<AccountBalance> needsBalanceCheck = [];
 
     protected override async Task OnInitializedAsync()
     {
         year = Settings.ActiveBudgetYear;
         month = Settings.ActiveBudgetMonth;
+        await LoadAccounts();
+        await LoadData();
+    }
+
+    async Task LoadAccounts()
+    {
         accounts = await Balances.GetBalances();
         summary = await Balances.GetSummary(accounts);
-        await LoadData();
+        needsBalanceCheck = Settings.BalanceCheckDismissed ? [] : await Balances.NeedingBalanceCheck(accounts);
+    }
+
+    void DismissBalanceCheck()
+    {
+        Settings.BalanceCheckDismissed = true;
+        needsBalanceCheck = [];
     }
 
     async Task PreviousMonth()

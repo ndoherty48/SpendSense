@@ -103,6 +103,28 @@ public class AccountBalanceService(SpendSenseDbContext db, SettingsService setti
             .ToList();
     }
 
+    /// <summary>
+    /// Accounts whose balance has probably never been checked against the bank: they have transactions but
+    /// still start from £0. That's every account the AddAccounts migration filled with history, so their
+    /// balance is just the net of everything recorded. Set balance clears it (the opening balance changes).
+    /// </summary>
+    public async Task<IReadOnlyList<AccountBalance>> NeedingBalanceCheck(IReadOnlyList<AccountBalance> balances)
+    {
+        var candidates = balances.Where(b => !b.Account.IsArchived && b.Account.OpeningBalance == 0).Select(b => b.Account.Id).ToList();
+        if (candidates.Count == 0)
+            return [];
+
+        var used = await db.Transactions
+            .Where(t => candidates.Contains(t.AccountId) || (t.ToAccountId != null && candidates.Contains(t.ToAccountId.Value)))
+            .Select(t => new { t.AccountId, t.ToAccountId })
+            .Distinct()
+            .ToListAsync();
+        var ids = used.Select(u => u.AccountId)
+            .Concat(used.Where(u => u.ToAccountId != null).Select(u => u.ToAccountId!.Value))
+            .ToHashSet();
+        return balances.Where(b => candidates.Contains(b.Account.Id) && ids.Contains(b.Account.Id)).ToList();
+    }
+
     /// <summary>Totals for the dashboard and the accounts list.</summary>
     public async Task<AvailableSummary> GetSummary(IReadOnlyList<AccountBalance> balances)
     {
