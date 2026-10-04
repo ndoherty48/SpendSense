@@ -84,7 +84,10 @@ After `builder.Build()`, three extension methods run in sequence and each swallo
   `OpeningBalance`; never inserts a transaction). A card's balance is negative when it owes money. Use
   `AccountBalanceService.Delta` for a transaction's effect on one account.
 - Account types are stored as text, so sort accounts in memory with `InDisplayOrder()`
-  (`AccountRepository.cs`), not `OrderBy(a => a.Type)`.
+  (`AccountRepository.cs`), not `OrderBy(a => a.Type)`. It also puts pots straight after their parent.
+- **Pots**: `Account.ParentAccountId` nests an account inside another (one level; same currency; never a
+  card). Pots are ordinary accounts for balances and Available; only the UI groups them, via
+  `AccountBalanceService.Group` (list, dashboard strip) and the parent's detail page.
 
 ### UI layer
 

@@ -54,9 +54,10 @@
         }
     </p>
     <div class="strip" role="list" aria-label="Accounts">
-        @foreach (var item in accounts)
+        @* One card per top-level account; pots are folded into their parent's total. *@
+        @foreach (var group in AccountBalanceService.Group(accounts))
         {
-            <div role="listitem"><AccountCard Item="item" /></div>
+            <div role="listitem"><AccountCard Item="group.Account" Pots="group.Pots" /></div>
         }
     </div>
 }

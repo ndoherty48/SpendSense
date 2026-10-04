@@ -28,6 +28,10 @@
                         {
                             <Money Amount="item.Balance" Symbol="@item.Symbol" Size="MoneySize.Small" Tone="MoneyTone.Muted" />
                         }
+                        @if (item.Account.ParentAccount is { } parent)
+                        {
+                            <span>· @parent.Name</span>
+                        }
                     </span>
                 </span>
                 @if (selected)

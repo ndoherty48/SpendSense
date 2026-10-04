@@ -10,7 +10,7 @@
 
 @if (ready)
 {
-    <AccountForm Title="New account" Model="model" Currencies="currencies" BackHref="/accounts" ShowBalance="true" SubmitLabel="Add account" OnSubmit="Submit" />
+    <AccountForm Title="New account" Model="model" Currencies="currencies" ParentOptions="parents" BackHref="/accounts" ShowBalance="true" SubmitLabel="Add account" OnSubmit="Submit" />
 }
 
 @code {
@@ -22,13 +22,27 @@
         IncludeInAvailable = true
     };
     IReadOnlyCollection<Currency> currencies = [];
+    IReadOnlyList<Account> parents = [];
     bool ready;
+
+    /// <summary>Start as a pot inside this account (an account page's "Add pot").</summary>
+    [SupplyParameterFromQuery(Name = "parent")] public int? ParentParam { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
         currencies = await CurrencyRepo.GetAll();
+        parents = await AccountRepo.GetParentOptions();
         if (currencies.FirstOrDefault(c => c.IsDefault) is { } defaultCurrency)
             model.CurrencyId = defaultCurrency.Id;
+        if (parents.FirstOrDefault(p => p.Id == ParentParam) is { } parent)
+        {
+            // A new pot: savings by default, in the parent's currency.
+            model.ParentAccountId = parent.Id;
+            model.CurrencyId = parent.CurrencyId;
+            model.Type = AccountTypeEnum.Savings;
+            model.Color = AccountVisuals.DefaultColor(AccountTypeEnum.Savings);
+            model.IncludeInAvailable = false;
+        }
         // The first open account becomes the default automatically.
         model.IsDefault = await AccountRepo.GetDefault() is null;
         ready = true;
@@ -42,6 +56,6 @@
             return;
         }
         await AccountRepo.Add(model);
-        Navigation.NavigateTo("/accounts");
+        Navigation.NavigateTo(model.ParentAccountId is { } parentId ? $"/accounts/{parentId}" : "/accounts");
     }
 }

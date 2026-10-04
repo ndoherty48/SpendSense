@@ -33,6 +33,10 @@ else
     <p class="meta">
         <IconTile Icon="@AccountVisuals.Icon(account.Type)" Color="@account.Color" Size="24" />
         @AccountVisuals.Label(account.Type) · @account.Currency?.Code
+        @if (account.ParentAccount is { } parent)
+        {
+            <span>· pot in <a href="@($"/accounts/{parent.Id}")">@parent.Name</a></span>
+        }
         @if (account.IsDefault)
         {
             <Badge Tone="BadgeTone.Accent">Default</Badge>
@@ -75,11 +79,33 @@ else
                 Transfer
             </a>
         }
+        @if (!item.IsCard && account.ParentAccountId is null && !pots.Any())
+        {
+            <a class="action" href="@($"/accounts/add?parent={account.Id}")">
+                <svg viewBox="0 0 24 24" fill="currentColor" focusable="false" aria-hidden="true">@((MarkupString)Icons.Material.Filled.Add)</svg>
+                Add pot
+            </a>
+        }
         <button type="button" class="action" @onclick="SetBalance">
             <svg viewBox="0 0 24 24" fill="currentColor" focusable="false" aria-hidden="true">@((MarkupString)Icons.Material.Filled.Balance)</svg>
             Set balance
         </button>
     </div>
+
+    @if (pots.Any())
+    {
+        <SectionHeader Title="Pots">
+            <Actions><a href="@($"/accounts/add?parent={account.Id}")">Add pot</a></Actions>
+        </SectionHeader>
+        <p class="pots-total">
+            <span>@account.Name with pots</span>
+            <Money Amount="@(item.Balance + pots.Sum(p => p.Balance))" Symbol="@item.Symbol" />
+        </p>
+        @foreach (var pot in pots)
+        {
+            <AccountRow Item="pot" Nested="false" />
+        }
+    }
 
     @if (!rows.Any())
     {
@@ -117,6 +143,7 @@ else
     AccountBalance? item;
     bool notFound;
     List<Row> rows = [];
+    IReadOnlyList<AccountBalance> pots = [];
     bool truncated;
     double monthIn;
     double monthOut;
@@ -135,6 +162,8 @@ else
         notFound = item is null;
         if (item is null)
             return;
+
+        pots = (await Balances.GetBalances()).Where(b => b.Account.ParentAccountId == Id).ToList();
 
         var transactions = await Db.Transactions
             .Include(t => t.Category)

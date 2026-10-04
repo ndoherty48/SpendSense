@@ -87,3 +87,15 @@
     font-size: 12px;
     text-align: center;
 }
+
+.meta a {
+    color: var(--ss-accent);
+}
+
+.pots-total {
+    display: flex;
+    justify-content: space-between;
+    margin: 0 0 var(--ss-space-1);
+    color: var(--ss-ink-muted);
+    font-size: 12px;
+}

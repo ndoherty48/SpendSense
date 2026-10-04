@@ -14,11 +14,15 @@
 }
 else
 {
-    <AccountForm Title="Edit account" Model="model" Currencies="currencies" BackHref="@($"/accounts/{Id}")" CurrencyLocked="inUse" OnSubmit="Submit">
+    <AccountForm Title="Edit account" Model="model" Currencies="currencies" ParentOptions="parents" HasPots="hasPots" BackHref="@($"/accounts/{Id}")" CurrencyLocked="inUse" OnSubmit="Submit">
         <Footer>
             @if (model.IsDefault)
             {
                 <p class="note">This is your default account, so it can't be archived. Make another account the default first.</p>
+            }
+            else if (hasOpenPots && !model.IsArchived)
+            {
+                <p class="note">This account has pots. Archive them first.</p>
             }
             else
             {
@@ -41,12 +45,18 @@ else
     Account? model;
     IReadOnlyCollection<Currency> currencies = [];
     bool inUse;
+    bool hasPots;
+    bool hasOpenPots;
+    IReadOnlyList<Account> parents = [];
 
     protected override async Task OnInitializedAsync()
     {
         model = await AccountRepo.GetById(Id);
         currencies = await CurrencyRepo.GetAll();
         inUse = await AccountRepo.HasDependencies(Id);
+        hasOpenPots = await AccountRepo.HasOpenPots(Id);
+        hasPots = await AccountRepo.HasPots(Id);
+        parents = await AccountRepo.GetParentOptions(exceptId: Id);
     }
 
     async Task Submit()

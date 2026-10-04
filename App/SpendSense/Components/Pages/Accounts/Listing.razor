@@ -34,15 +34,20 @@ else
         <EmptyState Icon="@Icons.Material.Filled.AccountBalance" Title="No accounts" Message="Tap + to add a current account, savings, credit card or cash." />
     }
 
-    @foreach (var group in groups)
+    @foreach (var section in sections)
     {
-        var items = open.Where(b => group.Types.Contains(b.Account.Type)).ToList();
+        // Pots sit under their parent, whatever their own type.
+        var items = AccountBalanceService.Group(open.ToList()).Where(g => section.Types.Contains(g.Account.Account.Type)).ToList();
         if (items.Count == 0)
             continue;
-        <h2 class="group-title">@group.Title</h2>
-        @foreach (var item in items)
+        <h2 class="group-title">@section.Title</h2>
+        @foreach (var group in items)
         {
-            <AccountRow Item="item" />
+            <AccountRow Item="group.Account" TotalWithPots="@(group.HasPots ? group.Total : null)" />
+            @foreach (var pot in group.Pots)
+            {
+                <AccountRow Item="pot" Nested="true" />
+            }
         }
     }
 
@@ -64,7 +69,7 @@ else
 }
 
 @code {
-    static readonly (string Title, AccountTypeEnum[] Types)[] groups =
+    static readonly (string Title, AccountTypeEnum[] Types)[] sections =
     [
         ("Everyday", [AccountTypeEnum.Current, AccountTypeEnum.Cash]),
         ("Savings", [AccountTypeEnum.Savings]),

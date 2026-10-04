@@ -12,7 +12,19 @@
     }
     else
     {
-        <CurrencySelect Currencies="Currencies" @bind-Value="Model.CurrencyId" />
+        <CurrencySelect Currencies="Currencies" Value="Model.CurrencyId" ValueChanged="OnCurrencyChanged" />
+    }
+
+    @if (CanBePot)
+    {
+        <MudSelect T="int?" Value="Model.ParentAccountId" ValueChanged="v => Model.ParentAccountId = v"
+                   Label="Inside another account (optional)" Clearable="true" Variant="Variant.Outlined"
+                   HelperText="For pots or spaces inside a bank account, like a Monzo pot.">
+            @foreach (var parent in Parents)
+            {
+                <MudSelectItem T="int?" Value="@((int?)parent.Id)">@parent.Name</MudSelectItem>
+            }
+        </MudSelect>
     }
 
     @if (ShowBalance)
@@ -60,6 +72,12 @@
     /// <summary>Edit of an account in use: the currency is shown, not editable.</summary>
     [Parameter] public bool CurrencyLocked { get; set; }
 
+    /// <summary>Accounts this one could sit inside (open, top-level, not cards); filtered here to its currency.</summary>
+    [Parameter] public IReadOnlyList<Account> ParentOptions { get; set; } = [];
+
+    /// <summary>The account has pots of its own, so it can't become one.</summary>
+    [Parameter] public bool HasPots { get; set; }
+
     /// <summary>Extra actions under the primary button (archive, delete).</summary>
     [Parameter] public RenderFragment? Footer { get; set; }
 
@@ -78,6 +96,11 @@
     double creditLimit;
 
     bool IsCard => Model.Type == AccountTypeEnum.CreditCard;
+
+    // A pot shares its parent's currency; cards and accounts with pots can't be pots.
+    IReadOnlyList<Account> Parents => ParentOptions.Where(p => p.CurrencyId == Model.CurrencyId && p.Id != Model.Id).ToList();
+
+    bool CanBePot => !IsCard && !HasPots && Parents.Count > 0;
 
     string Symbol => Currencies.FirstOrDefault(c => c.Id == Model.CurrencyId)?.Symbol ?? Model.Currency?.Symbol ?? "£";
 
@@ -99,6 +122,8 @@
     {
         var previous = Model.Type;
         Model.Type = type;
+        if (type == AccountTypeEnum.CreditCard)
+            Model.ParentAccountId = null;
 
         // Follow the type's defaults unless the user already picked something else.
         if (string.Equals(Model.Color, AccountVisuals.DefaultColor(previous), StringComparison.OrdinalIgnoreCase))
@@ -107,8 +132,17 @@
             Model.IncludeInAvailable = type != AccountTypeEnum.Savings;
     }
 
+    void OnCurrencyChanged(int currencyId)
+    {
+        Model.CurrencyId = currencyId;
+        if (Model.ParentAccountId is { } parent && Parents.All(p => p.Id != parent))
+            Model.ParentAccountId = null;
+    }
+
     async Task OnValidSubmit(EditContext context)
     {
+        if (!CanBePot || Parents.All(p => p.Id != Model.ParentAccountId))
+            Model.ParentAccountId = null;
         Model.Name = Model.Name.Trim();
         if (ShowBalance)
             Model.OpeningBalance = IsCard ? -Math.Abs(balance) : balance;

@@ -14,3 +14,7 @@
     height: 20px;
     color: var(--ss-ink-muted);
 }
+
+.nested {
+    padding-left: var(--ss-space-6);
+}

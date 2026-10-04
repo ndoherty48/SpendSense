@@ -18,6 +18,12 @@
             <span class="caption"><Money Amount="Item.AvailableCredit ?? 0" Symbol="@Item.Symbol" Size="MoneySize.Small" /> left</span>
         }
     }
+    else if (Pots.Count > 0)
+    {
+        @* One card for the account and its pots, e.g. everything in Monzo. *@
+        <Money Amount="Total" Symbol="@Item.Symbol" Tone="@(Total < 0 ? MoneyTone.Error : MoneyTone.Neutral)" />
+        <span class="caption">Incl. @Pots.Count @(Pots.Count == 1 ? "pot" : "pots")</span>
+    }
     else
     {
         <Money Amount="Item.Balance" Symbol="@Item.Symbol" Tone="@(Item.Balance < 0 ? MoneyTone.Error : MoneyTone.Neutral)" />
@@ -27,6 +33,11 @@
 
 @code {
     [Parameter, EditorRequired] public AccountBalance Item { get; set; } = default!;
+
+    /// <summary>Pots inside the account: the card then shows the combined balance.</summary>
+    [Parameter] public IReadOnlyList<AccountBalance> Pots { get; set; } = [];
+
+    double Total => Item.Balance + Pots.Sum(p => p.Balance);
 
     string Href => $"/accounts/{Item.Account.Id}";
 }
