@@ -31,16 +31,25 @@ public class Account : ITimestamped
     public bool IsDefault { get; set; }
     public bool IsArchived { get; set; }
     public int SortOrder { get; set; }
+    /// <summary>
+    /// The account this one sits inside, e.g. a Monzo pot inside the Monzo current account. One level only;
+    /// a pot shares its parent's currency, and cards are never pots or parents.
+    /// </summary>
+    public int? ParentAccountId { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 
 
     [ForeignKey(nameof(CurrencyId))]
     public Currency? Currency { get; set; }
+    [ForeignKey(nameof(ParentAccountId))]
+    public Account? ParentAccount { get; set; }
 
     // Navigation Properties
     /// <summary>Transactions paid from (or, for income, into) this account.</summary>
     public ICollection<Transaction> Transactions { get; set; } = [];
     /// <summary>Transfers and savings whose destination is this account.</summary>
     public ICollection<Transaction> IncomingTransfers { get; set; } = [];
+    /// <summary>Pots inside this account.</summary>
+    public ICollection<Account> Pots { get; set; } = [];
 }

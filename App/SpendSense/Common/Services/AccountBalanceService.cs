@@ -24,6 +24,15 @@ public sealed record AccountBalance(Account Account, double Balance)
     public string Symbol => Account.Currency?.Symbol ?? "£";
 }
 
+/// <summary>A top-level account and the pots inside it.</summary>
+public sealed record AccountGroup(AccountBalance Account, IReadOnlyList<AccountBalance> Pots)
+{
+    /// <summary>The account plus its pots, e.g. everything in Monzo.</summary>
+    public double Total => Account.Balance + Pots.Sum(p => p.Balance);
+
+    public bool HasPots => Pots.Count > 0;
+}
+
 /// <summary>A total in a currency other than the default one.</summary>
 public sealed record CurrencyTotal(string Symbol, double Amount);
 
@@ -57,6 +66,7 @@ public class AccountBalanceService(SpendSenseDbContext db, SettingsService setti
     {
         var accounts = await db.Accounts
             .Include(a => a.Currency)
+            .Include(a => a.ParentAccount)
             .Where(a => includeArchived || !a.IsArchived)
             .ToListAsync();
 
@@ -69,12 +79,28 @@ public class AccountBalanceService(SpendSenseDbContext db, SettingsService setti
 
     public async Task<AccountBalance?> GetBalance(int accountId)
     {
-        var account = await db.Accounts.Include(a => a.Currency).FirstOrDefaultAsync(a => a.Id == accountId);
+        var account = await db.Accounts
+            .Include(a => a.Currency)
+            .Include(a => a.ParentAccount)
+            .FirstOrDefaultAsync(a => a.Id == accountId);
         if (account is null)
             return null;
 
         var movements = await GetMovements(accountId);
         return new AccountBalance(account, account.OpeningBalance + movements.GetValueOrDefault(account.Id));
+    }
+
+    /// <summary>
+    /// Groups balances (already in display order) into top-level accounts with their pots. A pot whose parent
+    /// isn't in <paramref name="balances"/> (e.g. the parent is archived) stands on its own.
+    /// </summary>
+    public static IReadOnlyList<AccountGroup> Group(IReadOnlyList<AccountBalance> balances)
+    {
+        var ids = balances.Select(b => b.Account.Id).ToHashSet();
+        return balances
+            .Where(b => AccountOrdering.IsTopLevel(b.Account, ids))
+            .Select(top => new AccountGroup(top, balances.Where(b => b.Account.ParentAccountId == top.Account.Id).ToList()))
+            .ToList();
     }
 
     /// <summary>Totals for the dashboard and the accounts list.</summary>
