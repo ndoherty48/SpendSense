@@ -69,6 +69,22 @@ public class SettingsService(IPreferences preferences)
         set => preferences.Set(nameof(IncludeCreditInAvailable), value);
     }
 
+    /// <summary>When a backup was last shared from this device, or null if never.</summary>
+    public DateTime? LastBackupAt
+    {
+        get => Nullable(preferences.Get(nameof(LastBackupAt), DateTime.MinValue));
+        set => preferences.Set(nameof(LastBackupAt), value ?? DateTime.MinValue);
+    }
+
+    /// <summary>The backup reminder stays hidden until this time ("Not now").</summary>
+    public DateTime? BackupReminderSnoozedUntil
+    {
+        get => Nullable(preferences.Get(nameof(BackupReminderSnoozedUntil), DateTime.MinValue));
+        set => preferences.Set(nameof(BackupReminderSnoozedUntil), value ?? DateTime.MinValue);
+    }
+
+    static DateTime? Nullable(DateTime value) => value == DateTime.MinValue ? null : value;
+
     /// <summary>The dashboard's "check your account balances" banner was dismissed on this device.</summary>
     public bool BalanceCheckDismissed
     {

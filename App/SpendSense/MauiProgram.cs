@@ -25,11 +25,16 @@ public static class MauiProgram
 		builder.Services.AddSpendSenseDb();
 		builder.Services.AddSingleton(Preferences.Default);
 		builder.Services.AddSingleton<INotifier, LocalNotifier>();
+		builder.Services.AddSingleton(FileSystem.Current);
+		builder.Services.AddSingleton(Share.Default);
+		builder.Services.AddSingleton(FilePicker.Default);
+		builder.Services.AddSingleton<IFileExchange, MauiFileExchange>();
 		builder.Services.AddSingleton<SettingsService>();
 		builder.Services.AddSingleton<ThemeService>();
 		builder.Services.AddTransient<RecurringTransactionGenerator>();
 		builder.Services.AddTransient<NotificationService>();
 		builder.Services.AddTransient<AccountBalanceService>();
+		builder.Services.AddTransient<BackupService>();
 
 		builder.AddServiceDefaults();
 
