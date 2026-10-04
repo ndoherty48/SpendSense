@@ -73,6 +73,18 @@ After `builder.Build()`, three extension methods run in sequence and each swallo
   `Year+Month+CategoryId+CurrencyId`, `Category.Name`, `Currency.Code`, `Tag.Name`) — check there before
   adding a field that should be unique.
 - Default currency (GBP) is seeded via `HasData` in `OnModelCreating`.
+- **Accounts** (`docs/adr/0002-accounts.md`): every `Transaction` and `RecurringTransaction` has a required
+  `AccountId` and an optional `ToAccountId` (FKs are `Restrict`; a used account is archived, not deleted).
+  `ToAccountId` is required for `TransactionTypeEnum.Transfer`, optional for `Savings`, null otherwise, and
+  the transaction's currency is its account's currency. **Transfers never count toward budgets**: code that
+  totals spending, income or savings must match a type positively (`== Expense`), never "not Income". A
+  default "Main account" (Id 1) is seeded via `HasData`.
+- **Balances are computed, never stored**: `AccountBalanceService` (`Common/Services/`) sums opening balance +
+  transactions dated up to today, builds the Available summary, and reconciles via `SetBalance` (adjusts
+  `OpeningBalance`; never inserts a transaction). A card's balance is negative when it owes money. Use
+  `AccountBalanceService.Delta` for a transaction's effect on one account.
+- Account types are stored as text, so sort accounts in memory with `InDisplayOrder()`
+  (`AccountRepository.cs`), not `OrderBy(a => a.Type)`.
 
 ### UI layer
 
@@ -88,8 +100,11 @@ and `docs/design/tokens.md` (tokens, verified contrast). The rules that matter w
   components, so don't reach for `MudTable`/`MudCard`/`MudGrid` for page layout.
 - **Shared components** are in `Components/Shared/`: display (`Money`, `HeroBalanceCard`, `StatTile`,
   `ListRow`, `IconTile`, `ProgressBar`, `Badge`, `SegmentedControl<T>`, `PageHeader`, `SectionHeader`,
-  `EmptyState`) and form (`FormShell`, `FormSection`, `MoneyInput`, `CategorySelect`, `CurrencySelect`,
-  `EnumSelect<T>`, `DateField`, `ToggleRow`, `ColorSwatchPicker`). In debug builds `/dev/gallery` (linked
+  `EmptyState`, `AccountCard`) and form (`FormShell`, `FormSection`, `MoneyInput`, `CategorySelect`,
+  `CurrencySelect`, `EnumSelect<T>`, `DateField`, `ToggleRow`, `ColorSwatchPicker`, `AccountSelect`,
+  `AccountFields`). `AccountFields` holds the account pickers and validation for both transaction and
+  recurring forms (via `IAccountMovement`); `TransactionVisuals` decides a row's icon, sign and subtitle
+  (a transfer is shown "From → To" without a sign). In debug builds `/dev/gallery` (linked
   from More) shows them all in both themes.
 - **All money renders through `<Money/>`** (or `MoneyFormat` for text) so the privacy mode, mono digits and
   sign glyph apply everywhere. Never format amounts with `ToString("F2")` or a hard-coded symbol in markup.
@@ -100,17 +115,23 @@ and `docs/design/tokens.md` (tokens, verified contrast). The rules that matter w
 - **Layouts**: `MainLayout` holds providers only; `TabsLayout` (router default) adds the bottom nav /
   side rail, FAB and section switch; `FocusLayout` has no nav and is used by add/edit pages (`FormShell`
   brings its own back-bar). `Components/Layout/NavDestinations.cs` is the single table that maps routes to
-  tabs, add buttons and switches — change it, not the pages, to reshape navigation.
+  tabs, add buttons and switches — change it, not the pages, to reshape navigation. `/accounts` and its
+  detail/add/edit pages belong to the Home tab; an account's detail page gets an add button that opens
+  `/transactions/add?account={id}` (the Add page also takes `?type=`, `?from=` and `?to=`).
 - **Theme**: `SettingsService.ThemeMode` (System/Light/Dark, in `Preferences`) is authoritative.
   `ThemeService` resolves it, sets `Application.UserAppTheme`, and `MainLayout` pushes `data-theme` to the
   webview via `wwwroot/js/theme.js`. Applied live — never reload the page to change theme.
 - Every page keeps exactly one `<h1>` (`PageHeader` or `FormShell`); `Routes.razor` focuses it on navigation.
 - `SettingsService` wraps MAUI `Preferences` (not the database) for device-local settings: theme mode,
-  active budget year/month, income-attribution toggle, hide-amounts privacy mode. Use this — not the DB —
+  active budget year/month, income-attribution toggle, hide-amounts privacy mode, whether card credit
+  counts toward Available. Use this — not the DB —
   for anything that's a per-device UI preference rather than budgeting data.
-- `Home.razor` is the dashboard; `Trends.razor` is the separate spending-trends page.
+- `Home.razor` is the dashboard (the monthly budget hero plus the accounts strip); `Trends.razor` is the
+  separate spending-trends page.
 
 ### Cross-cutting services (`Common/Services/`)
+
+- `AccountBalanceService` — account balances, the Available summary and Set balance (see Data layer).
 
 - `RecurringTransactionGenerator` — generates due transactions from `RecurringTransaction` records on
   every app launch; also invoked manually where recurring transactions are edited.

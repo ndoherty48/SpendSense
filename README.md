@@ -4,14 +4,15 @@ A personal budgeting app built with .NET MAUI Blazor Hybrid and Aspire.
 
 ## Features
 
-- **Transactions** — record income, expenses, and savings with categories, currencies, and notes
+- **Accounts** — current accounts, savings, credit cards and cash, each with a live balance; every transaction is paid from (or into) an account, cards show what's owed and the credit left, and Set balance reconciles with your bank
+- **Transactions** — record income, expenses, savings and transfers between your accounts, with categories and notes
 - **Recurring Transactions** — auto-generates transactions on app launch (salary, subscriptions, rent)
 - **Monthly Budgets** — set spending limits per category per month, copy budgets to next month
 - **Goals** — savings targets with auto-calculated progress from linked category transactions
-- **Dashboard** — monthly summary with balance, income/expenses/savings, a spending-by-category donut with budget progress, overspend warnings
+- **Dashboard** — monthly summary with balance, income/expenses/savings, an accounts strip with the total available, a spending-by-category donut with budget progress, overspend warnings
 - **Preferences** — System/Light/Dark theme, income attribution toggle (income funds next month's budget), hide-amounts privacy mode
-- **Filtering** — search transactions by description/notes, filter by category or type
-- **Delete protection** — prevents deletion of categories/currencies that are in use
+- **Filtering** — search transactions by description/notes, filter by category, type or account
+- **Delete protection** — prevents deletion of categories, currencies and accounts that are in use (accounts can be archived instead)
 
 ## Tech Stack
 
@@ -84,6 +85,7 @@ dotnet ef migrations add <MigrationName> --framework net10.0
 - **Preferences API** — persists settings (theme, active budget period) via platform-native storage
 - **Recurring transaction generation** — runs synchronously on app startup after migrations
 - **Enum-to-string storage** — enums stored as readable strings in SQLite for debuggability
+- **Computed account balances** — opening balance plus transactions, never stored, so edits can't leave a balance out of sync; transfers never count toward budgets ([ADR 0002](docs/adr/0002-accounts.md))
 
 ## Roadmap
 
