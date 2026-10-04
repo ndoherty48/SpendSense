@@ -1,24 +1,21 @@
 using Microsoft.EntityFrameworkCore;
 
-using Plugin.LocalNotification;
-using Plugin.LocalNotification.Core.Models;
-
 using SpendSense.Common.Data;
 using SpendSense.Common.Models.Enums;
 
 namespace SpendSense.Common.Services;
 
-public class NotificationService(SpendSenseDbContext db)
+public class NotificationService(SpendSenseDbContext db, IPreferences preferences, INotifier notifier)
 {
     // Track what we've already notified using Preferences for persistence
-    static bool HasNotified(string key)
+    bool HasNotified(string key)
     {
-        return Preferences.Get(key, false);
+        return preferences.Get(key, false);
     }
 
-    static void MarkNotified(string key)
+    void MarkNotified(string key)
     {
-        Preferences.Set(key, true);
+        preferences.Set(key, true);
     }
 
     public async Task CheckBudgetThresholds()
@@ -94,14 +91,5 @@ public class NotificationService(SpendSenseDbContext db)
         }
     }
 
-    static async Task ShowNotification(string title, string description)
-    {
-        var request = new NotificationRequest
-        {
-            NotificationId = title.GetHashCode(),
-            Title = title,
-            Description = description
-        };
-        await LocalNotificationCenter.Current.Show(request);
-    }
+    Task ShowNotification(string title, string description) => notifier.Show(title, description);
 }
