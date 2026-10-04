@@ -24,4 +24,29 @@
         <Using Include="Xunit" />
     </ItemGroup>
 
+    <!--
+        Referencing the app brings in MAUI's implicit global usings (Microsoft.Maui.Controls.Globs.props). Tests
+        target the Blazor and data code, and MAUI's UI types clash with ours (e.g. ProgressBar), so import MAUI
+        namespaces explicitly where needed instead.
+    -->
+    <ItemGroup>
+        <Using Remove="Microsoft.Maui" />
+        <Using Remove="Microsoft.Maui.Controls" />
+        <Using Remove="Microsoft.Maui.Controls.Hosting" />
+        <Using Remove="Microsoft.Maui.Controls.Xaml" />
+        <Using Remove="Microsoft.Maui.Dispatching" />
+        <Using Remove="Microsoft.Maui.Hosting" />
+        <Using Remove="Microsoft.Maui.Graphics" />
+        <Using Remove="Microsoft.Maui.Accessibility" />
+        <Using Remove="Microsoft.Maui.ApplicationModel" />
+        <Using Remove="Microsoft.Maui.ApplicationModel.Communication" />
+        <Using Remove="Microsoft.Maui.ApplicationModel.DataTransfer" />
+        <Using Remove="Microsoft.Maui.Authentication" />
+        <Using Remove="Microsoft.Maui.Devices" />
+        <Using Remove="Microsoft.Maui.Devices.Sensors" />
+        <Using Remove="Microsoft.Maui.Media" />
+        <Using Remove="Microsoft.Maui.Networking" />
+        <Using Remove="Microsoft.Maui.Storage" />
+    </ItemGroup>
+
 </Project>
