@@ -1,6 +1,8 @@
 @page "/settings"
 @using SpendSense.Common.Services
+@using SpendSense.Components.Pages.Data
 @inject SettingsService SettingsSvc
+@inject BackupFlow Backup
 
 <PageHeader Title="Preferences" />
 
@@ -22,6 +24,20 @@
                Value="includeCredit"
                ValueChanged="OnIncludeCreditChanged" />
 </div>
+
+<SectionHeader Title="Data" />
+<div class="group">
+    <ListRow Title="Back up now" Subtitle="@LastBackupText" OnClick="BackUp">
+        <Leading><IconTile Icon="@Icons.Material.Filled.CloudUpload" Tone="IconTone.Brand" /></Leading>
+    </ListRow>
+    <ListRow Title="Restore from backup" Subtitle="Replace this device's data with a backup file" OnClick="Restore">
+        <Leading><IconTile Icon="@Icons.Material.Filled.SettingsBackupRestore" Tone="IconTone.Brand" /></Leading>
+    </ListRow>
+    <ListRow Title="Export transactions (CSV)" Subtitle="For spreadsheets; can't be restored" OnClick="ExportCsv">
+        <Leading><IconTile Icon="@Icons.Material.Filled.TableView" Tone="IconTone.Brand" /></Leading>
+    </ListRow>
+</div>
+<p class="note">Everything stays on this device. Save a backup somewhere safe, like Files, iCloud or Drive.</p>
 
 <SectionHeader Title="Privacy" />
 <div class="group">
@@ -69,6 +85,27 @@
         includeCredit = value;
         SettingsSvc.IncludeCreditInAvailable = value;
     }
+
+    bool busy;
+
+    string LastBackupText => busy ? "Working…"
+        : SettingsSvc.LastBackupAt is { } last ? $"Last backup: {last:d MMM yyyy}"
+        : "Never backed up";
+
+    // One action at a time: a second tap while the share sheet is opening is ignored.
+    async Task Run(Func<Task<bool>> action)
+    {
+        if (busy) return;
+        busy = true;
+        try { await action(); }
+        finally { busy = false; }
+    }
+
+    Task BackUp() => Run(Backup.BackUp);
+
+    Task Restore() => Run(Backup.Restore);
+
+    Task ExportCsv() => Run(Backup.ExportCsv);
 
     void OnHideAmountsChanged(bool value)
     {

@@ -1,0 +1,36 @@
+@using SpendSense.Common.Services
+
+@* Confirms a restore: what's in the backup, and that it replaces what's on this device. *@
+<MudDialog>
+    <DialogContent>
+        <p class="file">@FileName</p>
+        <ul class="facts">
+            <li><span>Transactions</span><strong>@Info.Transactions.ToString("N0")</strong></li>
+            <li><span>Accounts</span><strong>@(Info.Accounts > 0 ? Info.Accounts.ToString("N0") : "None yet")</strong></li>
+            <li><span>Latest transaction</span><strong>@(Info.LatestTransaction?.ToString("d MMM yyyy") ?? "None")</strong></li>
+        </ul>
+        @if (Info.NeedsUpgrade)
+        {
+            <p class="note">Made by an older version of SpendSense; it'll be upgraded as it's restored.</p>
+        }
+        <p class="warning" role="alert">
+            This replaces everything on this device. A safety copy of your current data is kept.
+        </p>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Error" OnClick="Confirm">Restore</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter, EditorRequired] public BackupInfo Info { get; set; } = default!;
+
+    [Parameter, EditorRequired] public string FileName { get; set; } = "";
+
+    void Cancel() => MudDialog.Cancel();
+
+    void Confirm() => MudDialog.Close(DialogResult.Ok(true));
+}

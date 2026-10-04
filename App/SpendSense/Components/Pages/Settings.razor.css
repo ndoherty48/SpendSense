@@ -4,3 +4,9 @@
     border-radius: var(--ss-radius-md);
     background: var(--ss-surface);
 }
+
+.note {
+    margin: var(--ss-space-2) 0 0;
+    color: var(--ss-ink-muted);
+    font-size: 11px;
+}
