@@ -9,6 +9,7 @@
 @inject SpendSenseDbContext Db
 @inject SettingsService Settings
 @inject ThemeService Theme
+@inject AccountBalanceService Balances
 
 <PageHeader Title="Dashboard" />
 
@@ -27,6 +28,37 @@
 @if (comparisonText is not null)
 {
     <p class="comparison @ComparisonClass">@comparisonText</p>
+}
+
+@if (accounts.Any() && summary is not null)
+{
+    <SectionHeader Title="Accounts">
+        <Actions><a href="/accounts">Manage</a></Actions>
+    </SectionHeader>
+    <div class="available">
+        <span class="available-label">Available</span>
+        <Money Amount="summary.Available" Symbol="@summary.Symbol" Tone="@(summary.Available < 0 ? MoneyTone.Error : MoneyTone.Neutral)" />
+    </div>
+    <p class="available-note">
+        @(Settings.IncludeCreditInAvailable ? "Your accounts, plus the credit left on cards." : "Your accounts, minus what's owed on cards.")
+        @if (summary.OtherCurrencies.Any())
+        {
+            <span>
+                Plus
+                @foreach (var (total, i) in summary.OtherCurrencies.Select((t, i) => (t, i)))
+                {
+                    @(i > 0 ? ", " : " ")<Money Amount="total.Amount" Symbol="@total.Symbol" Size="MoneySize.Small" />
+                }
+                in other currencies.
+            </span>
+        }
+    </p>
+    <div class="strip" role="list" aria-label="Accounts">
+        @foreach (var item in accounts)
+        {
+            <div role="listitem"><AccountCard Item="item" /></div>
+        }
+    </div>
 }
 
 @if (overspendWarnings.Any())
@@ -136,11 +168,16 @@
     string? comparisonText;
     Color comparisonColor = Color.Default;
     List<string> overspendWarnings = [];
+    // Balances are as of today, so they don't change with the month being viewed.
+    IReadOnlyList<AccountBalance> accounts = [];
+    AvailableSummary? summary;
 
     protected override async Task OnInitializedAsync()
     {
         year = Settings.ActiveBudgetYear;
         month = Settings.ActiveBudgetMonth;
+        accounts = await Balances.GetBalances();
+        summary = await Balances.GetSummary(accounts);
         await LoadData();
     }
 

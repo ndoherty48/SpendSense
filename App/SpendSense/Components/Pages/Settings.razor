@@ -15,6 +15,14 @@
                ValueChanged="OnIncomeSettingChanged" />
 </div>
 
+<SectionHeader Title="Accounts" />
+<div class="group">
+    <ToggleRow Label="Count available credit"
+               Description="Add the credit left on your cards to Available on the dashboard."
+               Value="includeCredit"
+               ValueChanged="OnIncludeCreditChanged" />
+</div>
+
 <SectionHeader Title="Privacy" />
 <div class="group">
     <ToggleRow Label="Hide amounts"
@@ -34,12 +42,14 @@
     ThemeMode themeMode;
     bool incomeAppliesNextMonth;
     bool hideAmounts;
+    bool includeCredit;
 
     protected override void OnInitialized()
     {
         themeMode = SettingsSvc.ThemeMode;
         incomeAppliesNextMonth = SettingsSvc.IncomeAppliesNextMonth;
         hideAmounts = SettingsSvc.HideAmounts;
+        includeCredit = SettingsSvc.IncludeCreditInAvailable;
     }
 
     void OnThemeChanged(ThemeMode value)
@@ -52,6 +62,12 @@
     {
         incomeAppliesNextMonth = value;
         SettingsSvc.IncomeAppliesNextMonth = value;
+    }
+
+    void OnIncludeCreditChanged(bool value)
+    {
+        includeCredit = value;
+        SettingsSvc.IncludeCreditInAvailable = value;
     }
 
     void OnHideAmountsChanged(bool value)
