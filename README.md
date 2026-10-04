@@ -4,7 +4,7 @@ A personal budgeting app built with .NET MAUI Blazor Hybrid and Aspire.
 
 ## Features
 
-- **Accounts** — current accounts, savings, credit cards and cash, each with a live balance; every transaction is paid from (or into) an account, cards show what's owed and the credit left, and Set balance reconciles with your bank
+- **Accounts** — current accounts, savings, credit cards and cash, each with a live balance; every transaction is paid from (or into) an account, cards show what's owed and the credit left, and Set balance reconciles with your bank; pots (e.g. Monzo pots) nest inside their account
 - **Transactions** — record income, expenses, savings and transfers between your accounts, with categories and notes
 - **Recurring Transactions** — auto-generates transactions on app launch (salary, subscriptions, rent)
 - **Monthly Budgets** — set spending limits per category per month, copy budgets to next month

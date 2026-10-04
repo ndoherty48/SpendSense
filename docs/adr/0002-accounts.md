@@ -33,6 +33,10 @@ Directional, like the Ledger Noir storyboard: the real fields and behaviour win 
 |---|---|---|
 | ![Transfer form](../design/storyboard/accounts/07-transfer.png) | ![Activity with accounts](../design/storyboard/accounts/08-activity.png) | ![Accounts list in light mode](../design/storyboard/accounts/09-accounts-light.png) |
 
+| Pots: accounts | Pots: dashboard | Pots: account detail |
+|---|---|---|
+| ![Accounts list with Monzo pots nested](../design/storyboard/accounts/10-pots-accounts.png) | ![Dashboard strip with one combined Monzo card](../design/storyboard/accounts/11-pots-dashboard.png) | ![Monzo detail with its pots](../design/storyboard/accounts/12-pots-detail.png) |
+
 ## Decisions
 
 ### 1. An account is required on every transaction
@@ -97,6 +101,22 @@ off for savings. Available credit is opt-in (`SettingsService.IncludeCreditInAva
 The five tabs stay. `/accounts` (list), `/accounts/{id}` (detail), `/accounts/add` and
 `/accounts/edit/{id}` belong to the Home tab; the dashboard's accounts strip and the More hub link to
 them. All routes are added to `NavDestinations`; no existing route changes.
+
+### 7. Pots
+
+An account can sit inside another (`Account.ParentAccountId`), e.g. Monzo pots inside the Monzo current
+account. A pot is a full account with its own balance, type and "Count towards Available" switch;
+moving money into it is a transfer (or savings with an Into account). Rules:
+
+- One level only: a pot can't have pots, and an account with pots can't become one.
+- A pot shares its parent's currency, so transfers between them always work.
+- Cards are never pots or parents.
+- The parent can't be deleted while it has pots (FK `Restrict`) or archived while any pot is open. If a
+  parent is archived later, its pots stand on their own.
+
+Pots only change presentation: the accounts list nests them under the parent, the parent's detail page
+lists them with the combined total, and the dashboard strip shows one card per parent with that total.
+Available is unchanged; it still sums each account by its own switch.
 
 ## Consequences
 
