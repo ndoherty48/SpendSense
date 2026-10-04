@@ -25,6 +25,13 @@
 - Only after day 5 of the month (avoids noisy early projections)
 - Recalculates on every dashboard load — adjusts as spending pace changes
 
+### Accounts ✅
+- Current accounts, savings, credit cards and cash, each with a computed balance
+- Every transaction is paid from (or into) an account; transfers move money between accounts without touching budgets
+- Credit cards show what's owed and the credit left against an optional limit
+- Dashboard accounts strip with an Available total; Set balance reconciles an account with the bank
+- Design: [ADR 0002](docs/adr/0002-accounts.md)
+
 ## Near Term
 
 ### Bank Statement CSV Import
@@ -32,6 +39,7 @@
 - Map CSV columns to transaction fields (date, description, amount)
 - Auto-categorize based on description pattern matching against existing categories
 - Review & confirm screen before committing imported transactions
+- Import into a chosen account (the statement's account), then reconcile with Set balance
 
 ### Bank Statement PDF Import
 - Extract transaction data from PDF bank statements using text extraction (PdfPig)
@@ -70,6 +78,11 @@
 - Household entity with invitation/join flow
 - Requires backend and careful sync/permissions design
 - Not planned for near/medium term
+
+### Accounts follow-ups
+- Link a goal to a savings account so its progress is the account balance (instead of a manual current amount)
+- Cross-currency transfers (an amount on each side) and converted totals using `ExchangeRate`
+- Credit card statement cycles and payment-due reminders
 
 ## Nice to Have
 
