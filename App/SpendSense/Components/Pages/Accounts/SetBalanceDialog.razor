@@ -1,0 +1,39 @@
+@using SpendSense.Common.Services
+
+@* Reconcile with the bank. Returns the new balance; the caller adjusts the opening balance. *@
+<MudDialog>
+    <DialogContent>
+        <p class="prompt">What does your banking app show for @Item.Account.Name right now?</p>
+        <MoneyInput @bind-Value="amount" Label="@(Item.IsCard ? "Currently owed" : "Actual balance")" Symbol="@Item.Symbol" Min="@(Item.IsCard ? 0 : double.MinValue)" />
+        <p class="hint">
+            @if (Math.Abs(Change) >= 0.005)
+            {
+                <span>Changes the starting balance by <Money Amount="Change" Symbol="@Item.Symbol" Signed="true" Size="MoneySize.Small" />.</span>
+            }
+            No transaction is added, so budgets aren't affected.
+        </p>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Submit">Set balance</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter, EditorRequired] public AccountBalance Item { get; set; } = default!;
+
+    double amount;
+
+    // The new balance; a card's owed amount is stored as a negative balance.
+    double Target => Item.IsCard ? -Math.Abs(amount) : amount;
+
+    double Change => Target - Item.Balance;
+
+    protected override void OnInitialized() => amount = Item.IsCard ? Item.Owed : Item.Balance;
+
+    void Cancel() => MudDialog.Cancel();
+
+    void Submit() => MudDialog.Close(DialogResult.Ok(Target));
+}

@@ -1,0 +1,78 @@
+@page "/accounts/edit/{Id:int}"
+@layout FocusLayout
+@using SpendSense.Common.Data.Repositories
+@using SpendSense.Common.Models
+@inject AccountRepository AccountRepo
+@inject CurrencyRepository CurrencyRepo
+@inject IDialogService Dialog
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+
+@if (model is null)
+{
+    <MudText>Loading...</MudText>
+}
+else
+{
+    <AccountForm Title="Edit account" Model="model" Currencies="currencies" BackHref="@($"/accounts/{Id}")" CurrencyLocked="inUse" OnSubmit="Submit">
+        <Footer>
+            @if (model.IsDefault)
+            {
+                <p class="note">This is your default account, so it can't be archived. Make another account the default first.</p>
+            }
+            else
+            {
+                <MudButton Variant="Variant.Outlined" FullWidth="true" Size="Size.Large" OnClick="ToggleArchived"
+                           StartIcon="@(model.IsArchived ? Icons.Material.Filled.Unarchive : Icons.Material.Filled.Archive)">
+                    @(model.IsArchived ? "Restore account" : "Archive account")
+                </MudButton>
+            }
+            @if (!inUse && !model.IsDefault)
+            {
+                <MudButton Variant="Variant.Text" Color="Color.Error" FullWidth="true" Size="Size.Large" OnClick="Delete"
+                           StartIcon="@Icons.Material.Filled.DeleteOutline">Delete account</MudButton>
+            }
+        </Footer>
+    </AccountForm>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+    Account? model;
+    IReadOnlyCollection<Currency> currencies = [];
+    bool inUse;
+
+    protected override async Task OnInitializedAsync()
+    {
+        model = await AccountRepo.GetById(Id);
+        currencies = await CurrencyRepo.GetAll();
+        inUse = await AccountRepo.HasDependencies(Id);
+    }
+
+    async Task Submit()
+    {
+        if (await AccountRepo.NameExists(model!.Name, model.Id))
+        {
+            Snackbar.Add($"An account called '{model.Name}' already exists.", Severity.Error);
+            return;
+        }
+        await AccountRepo.Update(model);
+        Navigation.NavigateTo($"/accounts/{Id}");
+    }
+
+    // Archiving hides the account from pickers and totals but keeps its history.
+    async Task ToggleArchived()
+    {
+        model!.IsArchived = !model.IsArchived;
+        await AccountRepo.Update(model);
+        Navigation.NavigateTo("/accounts");
+    }
+
+    async Task Delete()
+    {
+        var result = await Dialog.ShowMessageBoxAsync("Delete", $"Delete account '{model!.Name}'?", "Yes", "Cancel");
+        if (result != true) return;
+        await AccountRepo.Delete(model);
+        Navigation.NavigateTo("/accounts");
+    }
+}

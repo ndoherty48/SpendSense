@@ -1,0 +1,18 @@
+.note {
+    margin: calc(var(--ss-space-2) * -1) 0 0;
+    color: var(--ss-ink-muted);
+    font-size: 12px;
+}
+
+.locked {
+    margin: 0;
+    color: var(--ss-ink-muted);
+    font-size: 12px;
+}
+
+.toggles {
+    padding: var(--ss-space-1) var(--ss-space-4);
+    border: 1px solid var(--ss-border);
+    border-radius: var(--ss-radius-md);
+    background: var(--ss-surface);
+}

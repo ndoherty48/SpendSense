@@ -1,0 +1,42 @@
+@using SpendSense.Common.Models.Enums
+@using SpendSense.Common.Services
+@inject SettingsService Settings
+
+<ListRow Title="@Item.Account.Name" Subtitle="@Subtitle" Href="@($"/accounts/{Item.Account.Id}")">
+    <Leading><IconTile Icon="@AccountVisuals.Icon(Item.Account.Type)" Color="@Item.Account.Color" /></Leading>
+    <Trailing>
+        @if (Item.IsCard)
+        {
+            <span class="owed"><Money Amount="Item.Owed" Symbol="@Item.Symbol" /><span class="caption">owed</span></span>
+        }
+        else
+        {
+            <Money Amount="Item.Balance" Symbol="@Item.Symbol" Tone="@(Item.Balance < 0 ? MoneyTone.Error : MoneyTone.Neutral)" />
+        }
+        <svg class="chevron" viewBox="0 0 24 24" fill="currentColor" focusable="false" aria-hidden="true">@((MarkupString)Icons.Material.Filled.ChevronRight)</svg>
+    </Trailing>
+</ListRow>
+
+@code {
+    [Parameter, EditorRequired] public AccountBalance Item { get; set; } = default!;
+
+    string Subtitle
+    {
+        get
+        {
+            var account = Item.Account;
+            if (Item.AvailableCredit is { } left)
+            {
+                var hide = Settings.HideAmounts;
+                return $"{MoneyFormat.Format(left, Item.Symbol, hide)} of {MoneyFormat.Format(account.CreditLimit ?? 0, Item.Symbol, hide, decimals: 0)} left";
+            }
+
+            var parts = new List<string> { AccountVisuals.Label(account.Type) };
+            if (account.IsDefault)
+                parts.Add("Default");
+            if (!account.IncludeInAvailable)
+                parts.Add("Not counted in Available");
+            return string.Join(" · ", parts);
+        }
+    }
+}

@@ -1,0 +1,6 @@
+.note {
+    margin: 0;
+    color: var(--ss-ink-muted);
+    font-size: 12px;
+    text-align: center;
+}

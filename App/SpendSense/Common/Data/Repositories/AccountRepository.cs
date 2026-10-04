@@ -31,6 +31,13 @@ public sealed class AccountRepository(SpendSenseDbContext dbContext)
             ?? await dbContext.Accounts.Where(a => !a.IsArchived).OrderBy(a => a.Id).FirstOrDefaultAsync();
     }
 
+    /// <summary>Account names are unique (case-insensitively, so "Visa" and "visa" don't both exist).</summary>
+    public async Task<bool> NameExists(string name, int? exceptId = null)
+    {
+        var trimmed = name.Trim().ToLower();
+        return await dbContext.Accounts.AnyAsync(a => a.Name.ToLower() == trimmed && a.Id != exceptId);
+    }
+
     public async Task<int> Add(Account account)
     {
         if (account.IsDefault)
