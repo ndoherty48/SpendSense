@@ -13,7 +13,7 @@ database via EF Core; there is no backend (yet — see `ROADMAP.md` for planned 
 ### Tests
 
 ```bash
-dotnet test Tests/SpendSense.Tests
+dotnet test --project Tests/SpendSense.Tests
 ```
 
 `Tests/SpendSense.Tests` (xUnit v3 on Microsoft.Testing.Platform, set in `global.json`) references the app's
