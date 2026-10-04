@@ -11,6 +11,8 @@ public sealed class TransactionRepository(SpendSenseDbContext dbContext)
         return await dbContext.Transactions
             .Include(t => t.Category)
             .Include(t => t.Currency)
+            .Include(t => t.Account)
+            .Include(t => t.ToAccount)
             .OrderByDescending(t => t.TransactionDate)
             .ToListAsync();
     }

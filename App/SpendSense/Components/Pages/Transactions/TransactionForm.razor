@@ -1,14 +1,40 @@
 @using Microsoft.EntityFrameworkCore
 @using SpendSense.Common.Models
 @using SpendSense.Common.Models.Enums
+@using SpendSense.Common.Services
 @inject SpendSense.Common.Data.SpendSenseDbContext Db
+@inject SettingsService Settings
 
-<FormShell Title="@Title" BackHref="/transactions" Model="Model" OnValidSubmit="OnValidSubmit" SubmitLabel="Save" PrimaryLabel="@SubmitLabel">
+<FormShell Title="@Title" BackHref="@BackHref" Model="Model" OnValidSubmit="OnValidSubmit" SubmitLabel="Save" PrimaryLabel="@PrimaryText">
     <SegmentedControl T="TransactionTypeEnum" Segments="types" Value="Model.TransactionType" ValueChanged="OnTypeChanged" AriaLabel="Transaction type" />
 
     <MoneyInput @bind-Value="Model.Amount" Symbol="@CurrentSymbol" Min="0.01" />
 
-    <MudTextField Label="Description"
+    @switch (Model.TransactionType)
+    {
+        case TransactionTypeEnum.Transfer:
+            <div class="pair">
+                <AccountSelect Accounts="Accounts" Value="Model.AccountId" ValueChanged="SetFrom" Label="From" />
+                <button type="button" class="swap" aria-label="Swap accounts" @onclick="Swap">
+                    <svg viewBox="0 0 24 24" fill="currentColor" focusable="false" aria-hidden="true">@((MarkupString)Icons.Material.Filled.SwapVert)</svg>
+                </button>
+                <AccountSelect Accounts="Destinations" Value="Model.ToAccountId" ValueChanged="SetTo" Label="To" Error="@accountError" />
+            </div>
+            @if (Preview is { } preview)
+            {
+                <p class="preview">@preview</p>
+            }
+            break;
+        case TransactionTypeEnum.Savings:
+            <AccountSelect Accounts="Accounts" Value="Model.AccountId" ValueChanged="SetFrom" Label="From" />
+            <AccountSelect Accounts="Destinations" Value="Model.ToAccountId" ValueChanged="SetTo" Label="Into (optional)" AllowNone="true" NoneLabel="Not tracked" Error="@accountError" />
+            break;
+        default:
+            <AccountSelect Accounts="Accounts" Value="Model.AccountId" ValueChanged="SetFrom" Label="@(Model.TransactionType == TransactionTypeEnum.Income ? "Paid into" : "Paid from")" Error="@accountError" />
+            break;
+    }
+
+    <MudTextField Label="@(Model.TransactionType == TransactionTypeEnum.Transfer ? "Description (optional)" : "Description")"
                   Value="Model.Description"
                   ValueChanged="OnDescriptionChanged"
                   T="string"
@@ -16,13 +42,19 @@
                   Immediate="true"
                   Variant="Variant.Outlined" />
 
-    <CategorySelect Categories="Categories" @bind-Value="Model.CategoryId" />
-
-    <CurrencySelect Currencies="Currencies" @bind-Value="Model.CurrencyId" />
+    @if (Model.TransactionType != TransactionTypeEnum.Transfer)
+    {
+        <CategorySelect Categories="Categories" @bind-Value="Model.CategoryId" />
+    }
 
     <DateField @bind-Value="transactionDate" />
 
     <MudTextField Label="Notes" @bind-Value="Model.Notes" Lines="3" Variant="Variant.Outlined" />
+
+    @if (Model.TransactionType == TransactionTypeEnum.Transfer)
+    {
+        <p class="note">Transfers move money between your own accounts. They don't count as income, spending or savings, so budgets and trends aren't affected.</p>
+    }
 </FormShell>
 
 @code {
@@ -30,44 +62,141 @@
 
     [Parameter, EditorRequired] public IReadOnlyCollection<Category> Categories { get; set; } = [];
 
-    [Parameter, EditorRequired] public IReadOnlyCollection<Currency> Currencies { get; set; } = [];
+    /// <summary>Accounts to offer, with balances: open accounts plus any archived one the transaction already uses.</summary>
+    [Parameter, EditorRequired] public IReadOnlyList<AccountBalance> Accounts { get; set; } = [];
 
     [Parameter, EditorRequired] public string Title { get; set; } = "";
+
+    [Parameter] public string BackHref { get; set; } = "/transactions";
 
     /// <summary>Pre-select the category most used for similar descriptions (Add only).</summary>
     [Parameter] public bool SuggestCategory { get; set; }
 
+    /// <summary>Show what a transfer leaves in each account (Add only; on Edit the balances already include it).</summary>
+    [Parameter] public bool ShowPreview { get; set; }
+
     /// <summary>Label for the full-width button, e.g. "Add transaction".</summary>
     [Parameter] public string SubmitLabel { get; set; } = "Save";
 
-    /// <summary>Called after the model's date has been applied; the page persists the transaction.</summary>
+    /// <summary>Called after the date, currency and accounts have been applied; the page persists the transaction.</summary>
     [Parameter] public EventCallback OnSubmit { get; set; }
 
     static readonly IReadOnlyList<Segment<TransactionTypeEnum>> types =
     [
         new(TransactionTypeEnum.Expense, "Expense"),
         new(TransactionTypeEnum.Income, "Income"),
-        new(TransactionTypeEnum.Savings, "Savings")
+        new(TransactionTypeEnum.Savings, "Savings"),
+        new(TransactionTypeEnum.Transfer, "Transfer")
     ];
 
     DateTime? transactionDate;
+    string? accountError;
 
-    string CurrentSymbol => Currencies.FirstOrDefault(c => c.Id == Model.CurrencyId)?.Symbol ?? "£";
+    AccountBalance? From => Accounts.FirstOrDefault(a => a.Account.Id == Model.AccountId);
+
+    AccountBalance? To => Accounts.FirstOrDefault(a => a.Account.Id == Model.ToAccountId);
+
+    // A destination must differ from the source and share its currency.
+    IReadOnlyList<AccountBalance> Destinations =>
+        Accounts.Where(a => a.Account.Id != Model.AccountId && (From is null || a.Account.CurrencyId == From.Account.CurrencyId)).ToList();
+
+    // The currency follows the account.
+    string CurrentSymbol => From?.Symbol ?? "£";
+
+    string PrimaryText => Model.TransactionType == TransactionTypeEnum.Transfer && SubmitLabel != "Save" ? "Transfer" : SubmitLabel;
+
+    string? Preview
+    {
+        get
+        {
+            if (!ShowPreview || From is not { } from || To is not { } to || Model.Amount <= 0)
+                return null;
+            return $"After: {Describe(from, from.Balance - Model.Amount)} · {Describe(to, to.Balance + Model.Amount)}";
+        }
+    }
+
+    string Describe(AccountBalance item, double balance)
+    {
+        var hide = Settings.HideAmounts;
+        return item.IsCard
+            ? $"{item.Account.Name} owes {MoneyFormat.Format(Math.Max(0, -balance), item.Symbol, hide)}"
+            : $"{item.Account.Name} {MoneyFormat.Format(balance, item.Symbol, hide)}";
+    }
 
     protected override void OnInitialized() => transactionDate = Model.TransactionDate;
 
-    void OnTypeChanged(TransactionTypeEnum type) => Model.TransactionType = type;
+    void OnTypeChanged(TransactionTypeEnum type)
+    {
+        Model.TransactionType = type;
+        accountError = null;
+    }
+
+    void SetFrom(int? id)
+    {
+        Model.AccountId = id ?? 0;
+        // Keep the destination valid for the new source.
+        if (Model.ToAccountId is { } to && Destinations.All(a => a.Account.Id != to))
+            Model.ToAccountId = null;
+        accountError = null;
+    }
+
+    void SetTo(int? id)
+    {
+        Model.ToAccountId = id;
+        accountError = null;
+    }
+
+    void Swap()
+    {
+        if (Model.ToAccountId is not { } to)
+            return;
+        (Model.AccountId, Model.ToAccountId) = (to, Model.AccountId);
+        accountError = null;
+    }
 
     async Task OnValidSubmit(EditContext context)
     {
+        accountError = Validate();
+        if (accountError is not null)
+            return;
+
         Model.TransactionDate = transactionDate ?? DateTime.Today;
+        Model.CurrencyId = From!.Account.CurrencyId;
+        switch (Model.TransactionType)
+        {
+            case TransactionTypeEnum.Transfer:
+                Model.CategoryId = null;
+                if (string.IsNullOrWhiteSpace(Model.Description))
+                    Model.Description = $"Transfer to {To!.Account.Name}";
+                break;
+            case TransactionTypeEnum.Savings:
+                break;
+            default:
+                Model.ToAccountId = null;
+                break;
+        }
         await OnSubmit.InvokeAsync();
+    }
+
+    string? Validate()
+    {
+        if (From is null)
+            return "Choose an account.";
+        if (Model.TransactionType is not (TransactionTypeEnum.Transfer or TransactionTypeEnum.Savings))
+            return null;
+        if (Model.ToAccountId is null)
+            return Model.TransactionType == TransactionTypeEnum.Transfer ? "Choose the account to move money into." : null;
+        if (Model.ToAccountId == Model.AccountId)
+            return "Choose a different account to move money into.";
+        if (To is null || To.Account.CurrencyId != From.Account.CurrencyId)
+            return "Both accounts must use the same currency.";
+        return null;
     }
 
     async Task OnDescriptionChanged(string value)
     {
         Model.Description = value;
-        if (!SuggestCategory || string.IsNullOrWhiteSpace(value) || value.Length < 3) return;
+        if (!SuggestCategory || Model.TransactionType == TransactionTypeEnum.Transfer || string.IsNullOrWhiteSpace(value) || value.Length < 3) return;
 
         var suggestion = await Db.Transactions
             .Where(t => t.Description.Contains(value) && t.CategoryId != null)

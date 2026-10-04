@@ -3,16 +3,32 @@
 @using SpendSense.Common.Data.Repositories
 @using SpendSense.Common.Models
 @using SpendSense.Common.Models.Enums
+@using SpendSense.Common.Services
 @inject TransactionRepository TransactionRepo
 @inject CategoryRepository CategoryRepo
-@inject CurrencyRepository CurrencyRepo
 @inject AccountRepository AccountRepo
+@inject AccountBalanceService Balances
 @inject SpendSense.Common.Services.NotificationService NotificationSvc
 @inject NavigationManager Navigation
 
-<TransactionForm Title="New transaction" Model="model" Categories="categories" Currencies="currencies" SuggestCategory="true" SubmitLabel="Add transaction" OnSubmit="Submit" />
+@if (ready)
+{
+    <TransactionForm Title="New transaction" Model="model" Categories="categories" Accounts="accounts" BackHref="@ReturnHref" SuggestCategory="true" ShowPreview="true" SubmitLabel="Add transaction" OnSubmit="Submit" />
+}
 
 @code {
+    /// <summary>Pre-select this account (the FAB on an account's page).</summary>
+    [SupplyParameterFromQuery(Name = "account")] public int? AccountParam { get; set; }
+
+    /// <summary>Start on this type, e.g. <c>Transfer</c>.</summary>
+    [SupplyParameterFromQuery(Name = "type")] public string? TypeParam { get; set; }
+
+    /// <summary>Transfer source (an account's Transfer button).</summary>
+    [SupplyParameterFromQuery(Name = "from")] public int? FromParam { get; set; }
+
+    /// <summary>Transfer destination (a card's Pay off button).</summary>
+    [SupplyParameterFromQuery(Name = "to")] public int? ToParam { get; set; }
+
     Transaction model = new()
     {
         Description = "",
@@ -21,24 +37,46 @@
         TransactionDate = DateTime.Today
     };
     IReadOnlyCollection<Category> categories = [];
-    IReadOnlyCollection<Currency> currencies = [];
+    IReadOnlyList<AccountBalance> accounts = [];
+    bool ready;
+
+    // Opened from an account's page: go back there.
+    int? OriginAccount => AccountParam ?? FromParam ?? ToParam;
+
+    string ReturnHref => OriginAccount is { } id ? $"/accounts/{id}" : "/transactions";
 
     protected override async Task OnInitializedAsync()
     {
         categories = await CategoryRepo.GetAll();
-        currencies = await CurrencyRepo.GetAll();
-        var defaultCurrency = currencies.FirstOrDefault(c => c.IsDefault);
-        if (defaultCurrency is not null)
-            model.CurrencyId = defaultCurrency.Id;
+        accounts = await Balances.GetBalances();
+
+        if (Enum.TryParse<TransactionTypeEnum>(TypeParam, ignoreCase: true, out var type))
+            model.TransactionType = type;
+
         if (await AccountRepo.GetDefault() is { } defaultAccount)
             model.AccountId = defaultAccount.Id;
+        if (Find(AccountParam ?? FromParam) is { } source)
+            model.AccountId = source.Account.Id;
+
+        if (Find(ToParam) is { } destination)
+        {
+            model.ToAccountId = destination.Account.Id;
+            // Paying off a card: take the money from another account in the same currency.
+            if (model.AccountId == destination.Account.Id || Find(model.AccountId)?.Account.CurrencyId != destination.Account.CurrencyId)
+                model.AccountId = accounts.FirstOrDefault(a => a.Account.Id != destination.Account.Id && !a.IsCard && a.Account.CurrencyId == destination.Account.CurrencyId)?.Account.Id
+                    ?? model.AccountId;
+        }
+
+        ready = true;
     }
+
+    AccountBalance? Find(int? id) => id is null ? null : accounts.FirstOrDefault(a => a.Account.Id == id);
 
     async Task Submit()
     {
         await TransactionRepo.Add(model);
         await NotificationSvc.CheckBudgetThresholds();
         await NotificationSvc.CheckGoalMilestones();
-        Navigation.NavigateTo("/transactions");
+        Navigation.NavigateTo(ReturnHref);
     }
 }
