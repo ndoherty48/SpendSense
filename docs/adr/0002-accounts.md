@@ -17,6 +17,22 @@ actually available. The storyboard is the "Accounts" page of the Ledger Noir des
 The work ships as a stack of pull requests (`accounts/00-…` to `accounts/07-…`, created with
 `gh stack`). Unlike the Ledger Noir stack this one changes the schema.
 
+## Storyboard
+
+Directional, like the Ledger Noir storyboard: the real fields and behaviour win where they differ.
+
+| Dashboard strip | Accounts | Account detail (card) |
+|---|---|---|
+| ![Dashboard with the accounts strip](../design/storyboard/accounts/01-dashboard.png) | ![Accounts list](../design/storyboard/accounts/02-accounts.png) | ![Credit card detail](../design/storyboard/accounts/03-account-detail.png) |
+
+| Set balance | Add / edit account | Transaction: Paid from |
+|---|---|---|
+| ![Set balance dialog](../design/storyboard/accounts/04-set-balance.png) | ![Account form](../design/storyboard/accounts/05-account-form.png) | ![Transaction form with account pickers](../design/storyboard/accounts/06-transaction-form.png) |
+
+| Transfer | Activity | Accounts (light) |
+|---|---|---|
+| ![Transfer form](../design/storyboard/accounts/07-transfer.png) | ![Activity with accounts](../design/storyboard/accounts/08-activity.png) | ![Accounts list in light mode](../design/storyboard/accounts/09-accounts-light.png) |
+
 ## Decisions
 
 ### 1. An account is required on every transaction
