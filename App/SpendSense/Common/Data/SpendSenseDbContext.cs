@@ -65,6 +65,13 @@ public class SpendSenseDbContext(DbContextOptions options) : DbContext(options)
             .HasForeignKey(a => a.CurrencyId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        // Pots: an account inside another. Restrict, so a parent with pots can't be deleted.
+        modelBuilder.Entity<Account>()
+            .HasOne(a => a.ParentAccount)
+            .WithMany(a => a.Pots)
+            .HasForeignKey(a => a.ParentAccountId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         // Two relationships between Transaction and Account: the source and the destination.
         // Restrict, so an account in use can't be deleted (archive it instead).
         modelBuilder.Entity<Transaction>()

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SpendSense.Common.Data;
 
@@ -10,9 +11,11 @@ using SpendSense.Common.Data;
 namespace SpendSense.Migrations
 {
     [DbContext(typeof(SpendSenseDbContext))]
-    partial class SpendSenseDbContextModelSnapshot : ModelSnapshot
+    [Migration("20261004100958_AddAccountPots")]
+    partial class AddAccountPots
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.8");

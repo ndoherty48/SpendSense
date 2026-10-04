@@ -12,6 +12,7 @@ public sealed class AccountRepository(SpendSenseDbContext dbContext)
     {
         var accounts = await dbContext.Accounts
             .Include(a => a.Currency)
+            .Include(a => a.ParentAccount)
             .Where(a => includeArchived || !a.IsArchived)
             .ToListAsync();
         return accounts.InDisplayOrder().ToList();
@@ -21,6 +22,7 @@ public sealed class AccountRepository(SpendSenseDbContext dbContext)
     {
         return await dbContext.Accounts
             .Include(a => a.Currency)
+            .Include(a => a.ParentAccount)
             .FirstOrDefaultAsync(a => a.Id == id);
     }
 
@@ -54,11 +56,36 @@ public sealed class AccountRepository(SpendSenseDbContext dbContext)
         return await dbContext.SaveChangesAsync();
     }
 
-    /// <summary>True when transactions or recurring rules reference the account, as source or destination.</summary>
+    /// <summary>True when transactions, recurring rules (as source or destination) or pots reference the account.</summary>
     public async Task<bool> HasDependencies(int accountId)
     {
         return await dbContext.Transactions.AnyAsync(t => t.AccountId == accountId || t.ToAccountId == accountId)
-            || await dbContext.RecurringTransactions.AnyAsync(r => r.AccountId == accountId || r.ToAccountId == accountId);
+            || await dbContext.RecurringTransactions.AnyAsync(r => r.AccountId == accountId || r.ToAccountId == accountId)
+            || await dbContext.Accounts.AnyAsync(a => a.ParentAccountId == accountId);
+    }
+
+    /// <summary>Any pots inside the account, archived or not (it then can't become a pot itself).</summary>
+    public async Task<bool> HasPots(int accountId)
+    {
+        return await dbContext.Accounts.AnyAsync(a => a.ParentAccountId == accountId);
+    }
+
+    /// <summary>Open pots inside the account (it then can't be archived).</summary>
+    public async Task<bool> HasOpenPots(int accountId)
+    {
+        return await dbContext.Accounts.AnyAsync(a => a.ParentAccountId == accountId && !a.IsArchived);
+    }
+
+    /// <summary>
+    /// Accounts that can hold pots: open, top-level, not a card, and not <paramref name="exceptId"/>. The form
+    /// further limits them to the pot's currency.
+    /// </summary>
+    public async Task<IReadOnlyList<Account>> GetParentOptions(int? exceptId = null)
+    {
+        var accounts = await dbContext.Accounts
+            .Where(a => !a.IsArchived && a.ParentAccountId == null && a.Type != AccountTypeEnum.CreditCard && a.Id != exceptId)
+            .ToListAsync();
+        return accounts.InDisplayOrder().ToList();
     }
 
     public async Task<int> Delete(Account account)
@@ -79,9 +106,29 @@ public static class AccountOrdering
 {
     /// <summary>
     /// Default account first, then everyday money (current, cash), cards, savings; then the user's order and
-    /// name. Done in memory: the type is stored as text, so SQL would sort it alphabetically.
+    /// name. Pots follow straight after their parent. Done in memory: the type is stored as text, so SQL
+    /// would sort it alphabetically.
     /// </summary>
-    public static IEnumerable<Account> InDisplayOrder(this IEnumerable<Account> accounts) =>
+    public static IEnumerable<Account> InDisplayOrder(this IEnumerable<Account> accounts)
+    {
+        var list = accounts.ToList();
+        var ids = list.Select(a => a.Id).ToHashSet();
+        foreach (var top in Sort(list.Where(a => IsTopLevel(a, ids))))
+        {
+            yield return top;
+            foreach (var pot in Sort(list.Where(a => a.ParentAccountId == top.Id)))
+                yield return pot;
+        }
+    }
+
+    /// <summary>
+    /// Top-level within <paramref name="ids"/>: no parent, or a parent that isn't in the set (e.g. archived),
+    /// in which case the pot stands on its own.
+    /// </summary>
+    public static bool IsTopLevel(Account account, IReadOnlySet<int> ids) =>
+        account.ParentAccountId is not { } parent || !ids.Contains(parent);
+
+    static IOrderedEnumerable<Account> Sort(IEnumerable<Account> accounts) =>
         accounts
             .OrderByDescending(a => a.IsDefault)
             .ThenBy(a => Rank(a.Type))
