@@ -2,9 +2,10 @@
 @layout FocusLayout
 @using SpendSense.Common.Data.Repositories
 @using SpendSense.Common.Models
+@using SpendSense.Common.Services
 @inject TransactionRepository TransactionRepo
 @inject CategoryRepository CategoryRepo
-@inject CurrencyRepository CurrencyRepo
+@inject AccountBalanceService Balances
 @inject NavigationManager Navigation
 
 @if (model is null)
@@ -13,20 +14,24 @@
 }
 else
 {
-    <TransactionForm Title="Edit transaction" Model="model" Categories="categories" Currencies="currencies" OnSubmit="Submit" />
+    <TransactionForm Title="Edit transaction" Model="model" Categories="categories" Accounts="accounts" OnSubmit="Submit" />
 }
 
 @code {
     [Parameter] public int Id { get; set; }
     Transaction? model;
     IReadOnlyCollection<Category> categories = [];
-    IReadOnlyCollection<Currency> currencies = [];
+    IReadOnlyList<AccountBalance> accounts = [];
 
     protected override async Task OnInitializedAsync()
     {
         model = await TransactionRepo.GetById(Id);
         categories = await CategoryRepo.GetAll();
-        currencies = await CurrencyRepo.GetAll();
+        // Open accounts, plus an archived one this transaction already uses so it still shows as selected.
+        var all = await Balances.GetBalances(includeArchived: true);
+        accounts = all
+            .Where(a => !a.Account.IsArchived || a.Account.Id == model?.AccountId || a.Account.Id == model?.ToAccountId)
+            .ToList();
     }
 
     async Task Submit()

@@ -4,7 +4,8 @@
     gap: var(--ss-space-3);
 }
 
-.filters ::deep .search {
+.filters ::deep .search,
+.filters ::deep .account {
     grid-column: 1 / -1;
 }
 

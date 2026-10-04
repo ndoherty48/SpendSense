@@ -4,6 +4,7 @@
 @using SpendSense.Common.Models.Enums
 @inject TransactionRepository Repository
 @inject CategoryRepository CategoryRepo
+@inject AccountRepository AccountRepo
 @inject IDialogService Dialog
 
 <PageHeader Title="Transactions" />
@@ -15,6 +16,14 @@
     <MudSelect Value="filterType" ValueChanged="OnTypeChanged" T="TransactionTypeEnum?" Label="Type" Clearable="true" Variant="Variant.Outlined">
         <MudSelectItem Value="@((TransactionTypeEnum?)TransactionTypeEnum.Income)">Income</MudSelectItem>
         <MudSelectItem Value="@((TransactionTypeEnum?)TransactionTypeEnum.Expense)">Expense</MudSelectItem>
+        <MudSelectItem Value="@((TransactionTypeEnum?)TransactionTypeEnum.Savings)">Savings</MudSelectItem>
+        <MudSelectItem Value="@((TransactionTypeEnum?)TransactionTypeEnum.Transfer)">Transfer</MudSelectItem>
+    </MudSelect>
+    <MudSelect Value="filterAccount" ValueChanged="OnAccountChanged" T="int?" Label="Account" Clearable="true" Variant="Variant.Outlined" Class="account">
+        @foreach (var account in accounts)
+        {
+            <MudSelectItem Value="@((int?)account.Id)">@account.Name@(account.IsArchived ? " (archived)" : "")</MudSelectItem>
+        }
     </MudSelect>
 </div>
 
@@ -24,7 +33,7 @@
 }
 else if (!Groups.Any())
 {
-    var filtering = !string.IsNullOrWhiteSpace(searchText) || filterCategory.HasValue || filterType.HasValue;
+    var filtering = !string.IsNullOrWhiteSpace(searchText) || filterCategory.HasValue || filterType.HasValue || filterAccount.HasValue;
     <EmptyState Icon="@Icons.Material.Filled.Receipt"
                 Title="@(filtering ? "No matching transactions" : "No transactions yet")"
                 Message="@(filtering ? "Try a different search or clear a filter." : "Tap + to add your first transaction.")" />
@@ -36,11 +45,10 @@ else
         <h2 class="day">@DayLabel(group.Key)</h2>
         @foreach (var t in group)
         {
-            var income = t.TransactionType == TransactionTypeEnum.Income;
             <div class="item">
-                <ListRow Title="@t.Description" Subtitle="@(t.Category?.Name ?? "Uncategorised")" Href="@($"/transactions/edit/{t.Id}")">
+                <ListRow Title="@t.Description" Subtitle="@TransactionVisuals.Subtitle(t)" Href="@($"/transactions/edit/{t.Id}")">
                     <Leading><IconTile Icon="@TransactionVisuals.Icon(t.TransactionType)" Tone="@TransactionVisuals.Tone(t.TransactionType)" Circle="true" /></Leading>
-                    <Trailing><Money Amount="@(income ? t.Amount : -t.Amount)" Symbol="@(t.Currency?.Symbol ?? "£")" Signed="true" Tone="@(income ? MoneyTone.Income : MoneyTone.Neutral)" /></Trailing>
+                    <Trailing><Money Amount="@TransactionVisuals.Amount(t)" Symbol="@(t.Currency?.Symbol ?? "£")" Signed="@TransactionVisuals.Signed(t)" Tone="@TransactionVisuals.AmountTone(t)" /></Trailing>
                 </ListRow>
                 <MudIconButton Icon="@Icons.Material.Filled.DeleteOutline" OnClick="() => Delete(t)" aria-label="@($"Delete {t.Description}")" />
             </div>
@@ -63,15 +71,22 @@ else
     IReadOnlyCollection<Transaction>? allElements;
     IEnumerable<Transaction>? FilteredElements;
     IReadOnlyCollection<Category> categories = [];
+    IReadOnlyCollection<Account> accounts = [];
     bool _loading => allElements is null;
     string searchText = "";
     int? filterCategory;
     TransactionTypeEnum? filterType;
+    int? filterAccount;
+
+    /// <summary>Open filtered to one account (an account page's "See all").</summary>
+    [SupplyParameterFromQuery(Name = "account")] public int? AccountParam { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
         allElements = await Repository.GetAll();
         categories = await CategoryRepo.GetAll();
+        accounts = await AccountRepo.GetAll();
+        filterAccount = AccountParam;
         ApplyFilters();
     }
 
@@ -87,6 +102,8 @@ else
             filtered = filtered.Where(t => t.CategoryId == filterCategory.Value);
         if (filterType.HasValue)
             filtered = filtered.Where(t => t.TransactionType == filterType.Value);
+        if (filterAccount.HasValue)
+            filtered = filtered.Where(t => t.AccountId == filterAccount.Value || t.ToAccountId == filterAccount.Value);
 
         FilteredElements = filtered.ToList();
     }
@@ -94,6 +111,7 @@ else
     void OnSearchChanged(string value) { searchText = value; ApplyFilters(); }
     void OnCategoryChanged(int? value) { filterCategory = value; ApplyFilters(); }
     void OnTypeChanged(TransactionTypeEnum? value) { filterType = value; ApplyFilters(); }
+    void OnAccountChanged(int? value) { filterAccount = value; ApplyFilters(); }
 
     async Task Delete(Transaction transaction)
     {

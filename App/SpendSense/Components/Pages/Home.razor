@@ -103,10 +103,9 @@
     <div class="recent">
         @foreach (var t in recentTransactions)
         {
-            var income = t.TransactionType == TransactionTypeEnum.Income;
             <ListRow Title="@t.Description" Subtitle="@RecentSubtitle(t)" Href="@($"/transactions/edit/{t.Id}")">
                 <Leading><IconTile Icon="@TransactionVisuals.Icon(t.TransactionType)" Tone="@TransactionVisuals.Tone(t.TransactionType)" Circle="true" /></Leading>
-                <Trailing><Money Amount="@(income ? t.Amount : -t.Amount)" Signed="true" Tone="@(income ? MoneyTone.Income : MoneyTone.Neutral)" /></Trailing>
+                <Trailing><Money Amount="@TransactionVisuals.Amount(t)" Symbol="@(t.Currency?.Symbol ?? "£")" Signed="@TransactionVisuals.Signed(t)" Tone="@TransactionVisuals.AmountTone(t)" /></Trailing>
             </ListRow>
         }
     </div>
@@ -122,7 +121,7 @@
 
     string ComparisonClass => comparisonColor == Color.Error ? "is-worse" : comparisonColor == Color.Success ? "is-better" : "";
 
-    static string RecentSubtitle(Transaction t) => $"{t.Category?.Name ?? "Uncategorised"} · {t.TransactionDate:dd MMM}";
+    static string RecentSubtitle(Transaction t) => $"{TransactionVisuals.Subtitle(t)} · {t.TransactionDate:dd MMM}";
 
     int year;
     int month;
@@ -238,6 +237,9 @@
 
         recentTransactions = await Db.Transactions
             .Include(t => t.Category)
+            .Include(t => t.Currency)
+            .Include(t => t.Account)
+            .Include(t => t.ToAccount)
             .Where(t => t.TransactionDate >= startOfMonth && t.TransactionDate < endOfMonth)
             .OrderByDescending(t => t.TransactionDate)
             .Take(10)
