@@ -10,7 +10,17 @@ database via EF Core; there is no backend (yet — see `ROADMAP.md` for planned 
 
 ## Commands
 
-There are no test projects in this repo — verification is build + manual run.
+### Tests
+
+```bash
+dotnet test --project Tests/SpendSense.Tests
+```
+
+`Tests/SpendSense.Tests` (xUnit v3 on Microsoft.Testing.Platform, set in `global.json`) references the app's
+plain `net10.0` build, so it still needs the MAUI workloads installed but no device. UI on a device is
+still verified by hand. Code under test must not call MAUI statics directly: inject `IPreferences`
+(registered as `Preferences.Default`) and `INotifier` (`LocalNotifier` in the app; doubles in
+`Tests/SpendSense.Tests/TestDoubles`).
 
 ### Run with Aspire (orchestrates iOS simulator, Android emulator/device, Mac Catalyst)
 
@@ -125,7 +135,7 @@ and `docs/design/tokens.md` (tokens, verified contrast). The rules that matter w
   `ThemeService` resolves it, sets `Application.UserAppTheme`, and `MainLayout` pushes `data-theme` to the
   webview via `wwwroot/js/theme.js`. Applied live — never reload the page to change theme.
 - Every page keeps exactly one `<h1>` (`PageHeader` or `FormShell`); `Routes.razor` focuses it on navigation.
-- `SettingsService` wraps MAUI `Preferences` (not the database) for device-local settings: theme mode,
+- `SettingsService` wraps MAUI `IPreferences` (injected; not the database) for device-local settings: theme mode,
   active budget year/month, income-attribution toggle, hide-amounts privacy mode, whether card credit
   counts toward Available. Use this — not the DB —
   for anything that's a per-device UI preference rather than budgeting data.
@@ -139,7 +149,8 @@ and `docs/design/tokens.md` (tokens, verified contrast). The rules that matter w
 - `RecurringTransactionGenerator` — generates due transactions from `RecurringTransaction` records on
   every app launch; also invoked manually where recurring transactions are edited.
 - `NotificationService` — evaluates budget threshold (80%/100%) and goal milestone (50%/100%) alerts
-  using `Plugin.LocalNotification`, and persists "already notified" state via `Preferences` so alerts
+  through `INotifier` (`LocalNotifier` uses `Plugin.LocalNotification`), and persists "already notified"
+  state via `IPreferences` so alerts
   don't repeat. Called both at startup and after any transaction add (see `Transactions/Add.razor`).
 
 ### Aspire / Infra

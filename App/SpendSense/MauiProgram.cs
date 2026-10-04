@@ -23,6 +23,8 @@ public static class MauiProgram
 		builder.Services.AddMauiBlazorWebView();
 		builder.Services.AddMudServices();
 		builder.Services.AddSpendSenseDb();
+		builder.Services.AddSingleton(Preferences.Default);
+		builder.Services.AddSingleton<INotifier, LocalNotifier>();
 		builder.Services.AddSingleton<SettingsService>();
 		builder.Services.AddSingleton<ThemeService>();
 		builder.Services.AddTransient<RecurringTransactionGenerator>();
