@@ -1,5 +1,6 @@
 @using SpendSense.Common.Models
 @using SpendSense.Common.Models.Enums
+@using SpendSense.Common.Services
 
 <FormShell Title="@Title" BackHref="/recurring-transactions" Model="Model" OnValidSubmit="OnValidSubmit" SubmitLabel="Save" PrimaryLabel="@SubmitLabel">
     <SegmentedControl T="TransactionTypeEnum" Segments="types" Value="Model.TransactionType" ValueChanged="OnTypeChanged" AriaLabel="Transaction type" />
@@ -9,9 +10,12 @@
     <MudTextField Label="Name" @bind-Value="Model.Name" For="@(() => Model.Name)" Variant="Variant.Outlined" />
     <MudTextField Label="Description" @bind-Value="Model.Description" Lines="2" Variant="Variant.Outlined" />
 
-    <CategorySelect Categories="Categories" @bind-Value="Model.CategoryId" Label="Category (optional)" Clearable="true" />
+    <AccountFields Model="Model" Accounts="Accounts" Error="@accountError" OnChanged="() => accountError = null" />
 
-    <CurrencySelect Currencies="Currencies" @bind-Value="Model.CurrencyId" />
+    @if (Model.TransactionType != TransactionTypeEnum.Transfer)
+    {
+        <CategorySelect Categories="Categories" @bind-Value="Model.CategoryId" Label="Category (optional)" Clearable="true" />
+    }
 
     <EnumSelect TEnum="FrequencyEnum" Label="Frequency" @bind-Value="Model.Frequency" />
 
@@ -30,7 +34,8 @@
 
     [Parameter, EditorRequired] public IReadOnlyCollection<Category> Categories { get; set; } = [];
 
-    [Parameter, EditorRequired] public IReadOnlyCollection<Currency> Currencies { get; set; } = [];
+    /// <summary>Accounts to offer, with balances: open accounts plus any archived one the rule already uses.</summary>
+    [Parameter, EditorRequired] public IReadOnlyList<AccountBalance> Accounts { get; set; } = [];
 
     [Parameter, EditorRequired] public string Title { get; set; } = "";
 
@@ -46,20 +51,37 @@
     [
         new(TransactionTypeEnum.Expense, "Expense"),
         new(TransactionTypeEnum.Income, "Income"),
-        new(TransactionTypeEnum.Savings, "Savings")
+        new(TransactionTypeEnum.Savings, "Savings"),
+        new(TransactionTypeEnum.Transfer, "Transfer")
     ];
 
     DateTime? startDate;
+    string? accountError;
 
-    string CurrentSymbol => Currencies.FirstOrDefault(c => c.Id == Model.CurrencyId)?.Symbol ?? "£";
+    AccountBalance? From => AccountFields.Find(Accounts, Model.AccountId);
+
+    // The currency follows the account.
+    string CurrentSymbol => From?.Symbol ?? "£";
 
     protected override void OnInitialized() => startDate = Model.StartDate;
 
-    void OnTypeChanged(TransactionTypeEnum type) => Model.TransactionType = type;
+    void OnTypeChanged(TransactionTypeEnum type)
+    {
+        Model.TransactionType = type;
+        accountError = null;
+    }
 
     async Task OnValidSubmit(EditContext context)
     {
+        accountError = AccountFields.Validate(Model, Accounts);
+        if (accountError is not null)
+            return;
+
         Model.StartDate = startDate ?? DateTime.Today;
+        Model.CurrencyId = From!.Account.CurrencyId;
+        AccountFields.Normalise(Model);
+        if (Model.TransactionType == TransactionTypeEnum.Transfer)
+            Model.CategoryId = null;
         await OnSubmit.InvokeAsync();
     }
 }

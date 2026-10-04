@@ -21,16 +21,15 @@ else
 {
     @foreach (var r in Elements!)
     {
-        var income = r.TransactionType == TransactionTypeEnum.Income;
         <div class="item">
-            <ListRow Title="@r.Name" Subtitle="@($"{r.Frequency} · {r.Category?.Name ?? "Uncategorised"} · from {r.StartDate:dd MMM yyyy}")" Href="@($"/recurring-transactions/edit/{r.Id}")">
+            <ListRow Title="@r.Name" Subtitle="@($"{r.Frequency} · {TransactionVisuals.Subtitle(r)} · from {r.StartDate:dd MMM yyyy}")" Href="@($"/recurring-transactions/edit/{r.Id}")">
                 <Leading><IconTile Icon="@TransactionVisuals.Icon(r.TransactionType)" Tone="@TransactionVisuals.Tone(r.TransactionType)" Circle="true" /></Leading>
                 <Trailing>
                     @if (!r.IsActive)
                     {
                         <Badge Tone="BadgeTone.Warn">Paused</Badge>
                     }
-                    <Money Amount="@(income ? r.Amount : -r.Amount)" Symbol="@(r.Currency?.Symbol ?? "£")" Signed="true" Tone="@(income ? MoneyTone.Income : MoneyTone.Neutral)" />
+                    <Money Amount="@TransactionVisuals.Amount(r)" Symbol="@(r.Currency?.Symbol ?? "£")" Signed="@TransactionVisuals.Signed(r)" Tone="@TransactionVisuals.AmountTone(r)" />
                 </Trailing>
             </ListRow>
             <MudIconButton Icon="@Icons.Material.Filled.DeleteOutline" OnClick="() => Delete(r)" aria-label="@($"Delete {r.Name}")" />

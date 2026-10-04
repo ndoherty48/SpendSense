@@ -5,11 +5,14 @@
 @using SpendSense.Common.Models.Enums
 @inject RecurringTransactionRepository RecurringRepo
 @inject CategoryRepository CategoryRepo
-@inject CurrencyRepository CurrencyRepo
 @inject AccountRepository AccountRepo
+@inject SpendSense.Common.Services.AccountBalanceService Balances
 @inject NavigationManager Navigation
 
-<RecurringForm Title="New recurring transaction" Model="model" Categories="categories" Currencies="currencies" SubmitLabel="Add recurring transaction" OnSubmit="Submit" />
+@if (ready)
+{
+    <RecurringForm Title="New recurring transaction" Model="model" Categories="categories" Accounts="accounts" SubmitLabel="Add recurring transaction" OnSubmit="Submit" />
+}
 
 @code {
     RecurringTransaction model = new()
@@ -21,17 +24,16 @@
         StartDate = DateTime.Today
     };
     IReadOnlyCollection<Category> categories = [];
-    IReadOnlyCollection<Currency> currencies = [];
+    IReadOnlyList<SpendSense.Common.Services.AccountBalance> accounts = [];
+    bool ready;
 
     protected override async Task OnInitializedAsync()
     {
         categories = await CategoryRepo.GetAll();
-        currencies = await CurrencyRepo.GetAll();
-        var defaultCurrency = currencies.FirstOrDefault(c => c.IsDefault);
-        if (defaultCurrency is not null)
-            model.CurrencyId = defaultCurrency.Id;
+        accounts = await Balances.GetBalances();
         if (await AccountRepo.GetDefault() is { } defaultAccount)
             model.AccountId = defaultAccount.Id;
+        ready = true;
     }
 
     async Task Submit()

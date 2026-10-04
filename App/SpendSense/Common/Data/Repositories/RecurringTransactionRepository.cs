@@ -11,6 +11,8 @@ public sealed class RecurringTransactionRepository(SpendSenseDbContext dbContext
         return await dbContext.RecurringTransactions
             .Include(r => r.Category)
             .Include(r => r.Currency)
+            .Include(r => r.Account)
+            .Include(r => r.ToAccount)
             .OrderByDescending(r => r.CreatedAt)
             .ToListAsync();
     }
