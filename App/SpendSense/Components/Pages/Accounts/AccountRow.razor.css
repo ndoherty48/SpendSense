@@ -1,0 +1,16 @@
+.owed {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.caption {
+    color: var(--ss-ink-muted);
+    font-size: 11px;
+}
+
+.chevron {
+    width: 20px;
+    height: 20px;
+    color: var(--ss-ink-muted);
+}

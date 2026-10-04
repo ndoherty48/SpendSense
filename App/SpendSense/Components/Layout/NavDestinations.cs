@@ -9,9 +9,8 @@ public sealed record NavTab(string Key, string Label, string Href, string Icon, 
 {
     /// <summary>True when <paramref name="path"/> (leading slash, lowercase, no query) belongs to this tab.</summary>
     public bool Matches(string path) =>
-        ExactOnly
-            ? path == Href
-            : Prefixes.Any(prefix => path == prefix || path.StartsWith(prefix + "/", StringComparison.Ordinal));
+        path == Href
+        || (!ExactOnly && Prefixes.Any(prefix => path == prefix || path.StartsWith(prefix + "/", StringComparison.Ordinal)));
 }
 
 /// <summary>A route-bound switch shown above a list page (e.g. All | Recurring).</summary>
@@ -31,7 +30,8 @@ public static class NavDestinations
 {
     public static IReadOnlyList<NavTab> Tabs { get; } =
     [
-        new("home", "Home", "/", Icons.Material.Filled.Home, [], ExactOnly: true),
+        // "/" itself matches exactly; accounts are reached from the dashboard, so they light Home too.
+        new("home", "Home", "/", Icons.Material.Filled.Home, ["/accounts"]),
         new("activity", "Activity", "/transactions", Icons.Material.Filled.ReceiptLong, ["/transactions", "/recurring-transactions"]),
         new("budgets", "Budgets", "/monthly-budgets", Icons.Material.Filled.AccountBalanceWallet, ["/monthly-budgets", "/goals"]),
         new("trends", "Trends", "/trends", Icons.Material.Filled.TrendingUp, ["/trends"]),
@@ -46,6 +46,7 @@ public static class NavDestinations
         ["/recurring-transactions"] = ("/recurring-transactions/add", "Add recurring transaction"),
         ["/monthly-budgets"] = ("/monthly-budgets/add", "Add budget"),
         ["/goals"] = ("/goals/add", "Add goal"),
+        ["/accounts"] = ("/accounts/add", "Add account"),
     };
 
     static readonly IReadOnlyList<Segment<string>> ActivitySegments =
@@ -69,6 +70,8 @@ public static class NavDestinations
         string? addHref = null, addLabel = null;
         if (AddTargets.TryGetValue(path, out var add))
             (addHref, addLabel) = add;
+        else if (AccountDetail.Match(path) is { Success: true } detail)
+            (addHref, addLabel) = ($"/transactions/add?account={detail.Groups[1].Value}", "Add transaction");
 
         NavSwitch? @switch = path switch
         {
@@ -79,6 +82,9 @@ public static class NavDestinations
 
         return new NavState(tab, addHref, addLabel, @switch);
     }
+
+    // An account's detail page: its add button pre-selects that account.
+    static readonly System.Text.RegularExpressions.Regex AccountDetail = new(@"^/accounts/(\d+)$");
 
     static string Normalize(string? relativePath)
     {

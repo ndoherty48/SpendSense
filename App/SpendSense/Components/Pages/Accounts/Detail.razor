@@ -1,0 +1,204 @@
+@page "/accounts/{Id:int}"
+@using Microsoft.EntityFrameworkCore
+@using SpendSense.Common.Data
+@using SpendSense.Common.Models
+@using SpendSense.Common.Models.Enums
+@using SpendSense.Common.Services
+@inject AccountBalanceService Balances
+@inject SpendSenseDbContext Db
+@inject SettingsService Settings
+@inject IDialogService Dialog
+
+<a class="back" href="/accounts">
+    <svg viewBox="0 0 24 24" fill="currentColor" focusable="false" aria-hidden="true">@((MarkupString)Icons.Material.Filled.ChevronLeft)</svg>
+    Accounts
+</a>
+
+@if (notFound)
+{
+    <EmptyState Icon="@Icons.Material.Filled.AccountBalance" Title="Account not found" Message="It may have been deleted." />
+}
+else if (item is null)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" aria-label="Loading account" />
+}
+else
+{
+    var account = item.Account;
+    <PageHeader Title="@account.Name">
+        <Actions>
+            <MudIconButton Icon="@Icons.Material.Filled.Edit" Href="@($"/accounts/edit/{account.Id}")" aria-label="Edit account" />
+        </Actions>
+    </PageHeader>
+    <p class="meta">
+        <IconTile Icon="@AccountVisuals.Icon(account.Type)" Color="@account.Color" Size="24" />
+        @AccountVisuals.Label(account.Type) · @account.Currency?.Code
+        @if (account.IsDefault)
+        {
+            <Badge Tone="BadgeTone.Accent">Default</Badge>
+        }
+        @if (account.IsArchived)
+        {
+            <Badge Tone="BadgeTone.Warn">Archived</Badge>
+        }
+    </p>
+
+    <HeroBalanceCard Label="@(item.IsCard ? "Owed" : "Balance")" Amount="@(item.IsCard ? item.Owed : item.Balance)" Symbol="@item.Symbol"
+                     Tone="@(!item.IsCard && item.Balance < 0 ? MoneyTone.Error : MoneyTone.Neutral)">
+        <StatTile Label="@(item.IsCard ? "Spent this month" : "In this month")"><Money Amount="@(item.IsCard ? monthOut : monthIn)" Symbol="@item.Symbol" /></StatTile>
+        <StatTile Label="@(item.IsCard ? "Paid off this month" : "Out this month")"><Money Amount="@(item.IsCard ? monthIn : monthOut)" Symbol="@item.Symbol" Tone="@(item.IsCard ? MoneyTone.Income : MoneyTone.Neutral)" /></StatTile>
+    </HeroBalanceCard>
+
+    @if (item.CreditUsedPercent is { } used)
+    {
+        <div class="credit">
+            <ProgressBar Percent="used" Over="@(used > 100)" Label="Credit used" ValueText="@($"{used:0}% of limit used")" />
+            <div class="credit-text">
+                <span>@($"{used:0}")% of <Money Amount="account.CreditLimit ?? 0" Symbol="@item.Symbol" Size="MoneySize.Small" Decimals="0" /> limit</span>
+                <span><Money Amount="item.AvailableCredit ?? 0" Symbol="@item.Symbol" Size="MoneySize.Small" /> left</span>
+            </div>
+        </div>
+    }
+
+    <div class="actions">
+        @if (item.IsCard)
+        {
+            <a class="action" href="@($"/transactions/add?type=Transfer&to={account.Id}")">
+                <svg viewBox="0 0 24 24" fill="currentColor" focusable="false" aria-hidden="true">@((MarkupString)Icons.Material.Filled.SwapHoriz)</svg>
+                Pay off
+            </a>
+        }
+        else
+        {
+            <a class="action" href="@($"/transactions/add?type=Transfer&from={account.Id}")">
+                <svg viewBox="0 0 24 24" fill="currentColor" focusable="false" aria-hidden="true">@((MarkupString)Icons.Material.Filled.SwapHoriz)</svg>
+                Transfer
+            </a>
+        }
+        <button type="button" class="action" @onclick="SetBalance">
+            <svg viewBox="0 0 24 24" fill="currentColor" focusable="false" aria-hidden="true">@((MarkupString)Icons.Material.Filled.Balance)</svg>
+            Set balance
+        </button>
+    </div>
+
+    @if (!rows.Any())
+    {
+        <EmptyState Icon="@Icons.Material.Filled.Receipt" Title="No transactions yet" Message="Tap + to add one paid from this account." />
+    }
+    else
+    {
+        @foreach (var group in rows.GroupBy(r => r.Transaction.TransactionDate.Date))
+        {
+            <h2 class="day">@DayLabel(group.Key)</h2>
+            @foreach (var row in group)
+            {
+                var t = row.Transaction;
+                <ListRow Title="@t.Description" Subtitle="@Subtitle(row)" Href="@($"/transactions/edit/{t.Id}")">
+                    <Leading><IconTile Icon="@TransactionVisuals.Icon(t.TransactionType)" Tone="@(row.Delta > 0 ? IconTone.Accent : IconTone.Neutral)" Circle="true" /></Leading>
+                    <Trailing><Money Amount="row.Delta" Symbol="@item.Symbol" Signed="true" Tone="@(row.Delta > 0 ? MoneyTone.Income : MoneyTone.Neutral)" /></Trailing>
+                </ListRow>
+            }
+        }
+        @if (truncated)
+        {
+            <p class="more">Showing the latest @PageSize. <a href="@($"/transactions?account={account.Id}")">See all in Activity</a></p>
+        }
+    }
+}
+
+@code {
+    const int PageSize = 50;
+
+    [Parameter] public int Id { get; set; }
+
+    /// <summary>A transaction as it affects this account, with the balance right after it (null if future-dated).</summary>
+    sealed record Row(Transaction Transaction, double Delta, double? BalanceAfter);
+
+    AccountBalance? item;
+    bool notFound;
+    List<Row> rows = [];
+    bool truncated;
+    double monthIn;
+    double monthOut;
+
+    static string DayLabel(DateTime day) =>
+        day == DateTime.Today ? "Today"
+        : day == DateTime.Today.AddDays(-1) ? "Yesterday"
+        : day > DateTime.Today ? $"Scheduled · {day:ddd d MMM yyyy}"
+        : day.ToString("ddd d MMM yyyy");
+
+    protected override async Task OnParametersSetAsync() => await Load();
+
+    async Task Load()
+    {
+        item = await Balances.GetBalance(Id);
+        notFound = item is null;
+        if (item is null)
+            return;
+
+        var transactions = await Db.Transactions
+            .Include(t => t.Category)
+            .Include(t => t.Account)
+            .Include(t => t.ToAccount)
+            .Where(t => t.AccountId == Id || t.ToAccountId == Id)
+            .OrderByDescending(t => t.TransactionDate)
+            .ThenByDescending(t => t.Id)
+            .Take(PageSize + 1)
+            .ToListAsync();
+        truncated = transactions.Count > PageSize;
+
+        // Walk back from today's balance; future-dated rows don't count yet.
+        var today = DateTime.Today;
+        var running = item.Balance;
+        rows = [];
+        foreach (var t in transactions.Take(PageSize))
+        {
+            var delta = AccountBalanceService.Delta(t, Id);
+            if (t.TransactionDate.Date > today)
+            {
+                rows.Add(new Row(t, delta, null));
+                continue;
+            }
+            rows.Add(new Row(t, delta, running));
+            running -= delta;
+        }
+
+        var monthStart = new DateTime(today.Year, today.Month, 1);
+        var month = await Db.Transactions
+            .Where(t => (t.AccountId == Id || t.ToAccountId == Id) && t.TransactionDate >= monthStart && t.TransactionDate < today.AddDays(1))
+            .ToListAsync();
+        monthIn = month.Select(t => AccountBalanceService.Delta(t, Id)).Where(d => d > 0).Sum();
+        monthOut = -month.Select(t => AccountBalanceService.Delta(t, Id)).Where(d => d < 0).Sum();
+    }
+
+    string Subtitle(Row row)
+    {
+        var t = row.Transaction;
+        var what = t.TransactionType switch
+        {
+            TransactionTypeEnum.Transfer or TransactionTypeEnum.Savings when t.ToAccountId == Id => $"From {t.Account?.Name}",
+            TransactionTypeEnum.Transfer => $"To {t.ToAccount?.Name}",
+            TransactionTypeEnum.Savings when t.ToAccount is not null => $"Savings · to {t.ToAccount.Name}",
+            _ => t.Category?.Name ?? (t.TransactionType == TransactionTypeEnum.Income ? "Income" : "Uncategorised")
+        };
+        if (row.BalanceAfter is not { } after)
+            return what;
+
+        var hide = Settings.HideAmounts;
+        return item!.IsCard
+            ? $"{what} · {MoneyFormat.Format(Math.Max(0, -after), item.Symbol, hide)} owed after"
+            : $"{what} · {MoneyFormat.Format(after, item.Symbol, hide)} after";
+    }
+
+    async Task SetBalance()
+    {
+        var parameters = new DialogParameters<SetBalanceDialog> { { x => x.Item, item! } };
+        var dialog = await Dialog.ShowAsync<SetBalanceDialog>("Set balance", parameters);
+        var result = await dialog.Result;
+        if (result is { Canceled: false, Data: double target })
+        {
+            await Balances.SetBalance(item!.Account, target);
+            await Load();
+        }
+    }
+}

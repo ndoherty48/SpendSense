@@ -1,0 +1,120 @@
+@using SpendSense.Common.Models
+@using SpendSense.Common.Models.Enums
+
+<FormShell Title="@Title" BackHref="@BackHref" Model="Model" OnValidSubmit="OnValidSubmit" SubmitLabel="Save" PrimaryLabel="@SubmitLabel" Footer="Footer">
+    <SegmentedControl T="AccountTypeEnum" Segments="types" Value="Model.Type" ValueChanged="OnTypeChanged" AriaLabel="Account type" />
+
+    <MudTextField Label="Name" @bind-Value="Model.Name" For="@(() => Model.Name)" Variant="Variant.Outlined" />
+
+    @if (CurrencyLocked)
+    {
+        <p class="locked">Currency: @Model.Currency?.Code. It can't change once the account has transactions.</p>
+    }
+    else
+    {
+        <CurrencySelect Currencies="Currencies" @bind-Value="Model.CurrencyId" />
+    }
+
+    @if (ShowBalance)
+    {
+        @if (IsCard)
+        {
+            <MoneyInput @bind-Value="balance" Label="Currently owed" Symbol="@Symbol" Min="0" />
+        }
+        else
+        {
+            <MoneyInput @bind-Value="balance" Label="Current balance" Symbol="@Symbol" Min="double.MinValue" />
+        }
+        <p class="note">What your banking app shows right now. You can correct it later with Set balance.</p>
+    }
+
+    @if (IsCard)
+    {
+        <MoneyInput @bind-Value="creditLimit" Label="Credit limit (optional)" Symbol="@Symbol" Min="0" />
+    }
+
+    <FormSection Title="Colour">
+        <ColorSwatchPicker @bind-Value="Model.Color" />
+    </FormSection>
+
+    <div class="toggles">
+        <ToggleRow Label="Count towards Available" Description="@AvailableDescription" @bind-Value="Model.IncludeInAvailable" />
+        <ToggleRow Label="Default account" Description="Pre-selected on new transactions." @bind-Value="Model.IsDefault" />
+    </div>
+</FormShell>
+
+@code {
+    [Parameter, EditorRequired] public Account Model { get; set; } = default!;
+
+    [Parameter, EditorRequired] public IReadOnlyCollection<Currency> Currencies { get; set; } = [];
+
+    [Parameter, EditorRequired] public string Title { get; set; } = "";
+
+    [Parameter, EditorRequired] public string BackHref { get; set; } = "/accounts";
+
+    [Parameter] public string SubmitLabel { get; set; } = "Save";
+
+    /// <summary>Add only: ask for the starting balance (or, for a card, what's owed).</summary>
+    [Parameter] public bool ShowBalance { get; set; }
+
+    /// <summary>Edit of an account in use: the currency is shown, not editable.</summary>
+    [Parameter] public bool CurrencyLocked { get; set; }
+
+    /// <summary>Extra actions under the primary button (archive, delete).</summary>
+    [Parameter] public RenderFragment? Footer { get; set; }
+
+    /// <summary>Called after the balance and limit have been applied to the model; the page persists it.</summary>
+    [Parameter] public EventCallback OnSubmit { get; set; }
+
+    static readonly IReadOnlyList<Segment<AccountTypeEnum>> types =
+    [
+        new(AccountTypeEnum.Current, AccountVisuals.ShortLabel(AccountTypeEnum.Current)),
+        new(AccountTypeEnum.Savings, AccountVisuals.ShortLabel(AccountTypeEnum.Savings)),
+        new(AccountTypeEnum.CreditCard, AccountVisuals.ShortLabel(AccountTypeEnum.CreditCard)),
+        new(AccountTypeEnum.Cash, AccountVisuals.ShortLabel(AccountTypeEnum.Cash))
+    ];
+
+    double balance;
+    double creditLimit;
+
+    bool IsCard => Model.Type == AccountTypeEnum.CreditCard;
+
+    string Symbol => Currencies.FirstOrDefault(c => c.Id == Model.CurrencyId)?.Symbol ?? Model.Currency?.Symbol ?? "£";
+
+    string AvailableDescription => Model.Type switch
+    {
+        AccountTypeEnum.CreditCard => "What you owe is taken off Available.",
+        AccountTypeEnum.Savings => "Savings are usually left out of Available.",
+        _ => "Include this balance in Available on the dashboard."
+    };
+
+    protected override void OnInitialized()
+    {
+        // Cards are stored with a negative balance when they owe money; the form shows what's owed.
+        balance = IsCard ? -Model.OpeningBalance : Model.OpeningBalance;
+        creditLimit = Model.CreditLimit ?? 0;
+    }
+
+    void OnTypeChanged(AccountTypeEnum type)
+    {
+        var previous = Model.Type;
+        Model.Type = type;
+
+        // Follow the type's defaults unless the user already picked something else.
+        if (string.Equals(Model.Color, AccountVisuals.DefaultColor(previous), StringComparison.OrdinalIgnoreCase))
+            Model.Color = AccountVisuals.DefaultColor(type);
+        if (ShowBalance)
+            Model.IncludeInAvailable = type != AccountTypeEnum.Savings;
+    }
+
+    async Task OnValidSubmit(EditContext context)
+    {
+        Model.Name = Model.Name.Trim();
+        if (ShowBalance)
+            Model.OpeningBalance = IsCard ? -Math.Abs(balance) : balance;
+        Model.CreditLimit = IsCard && creditLimit > 0 ? creditLimit : null;
+        if (Model.IsDefault)
+            Model.IsArchived = false;
+        await OnSubmit.InvokeAsync();
+    }
+}

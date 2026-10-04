@@ -1,0 +1,11 @@
+.prompt {
+    margin: 0 0 var(--ss-space-4);
+    color: var(--ss-ink-muted);
+    font-size: 13px;
+}
+
+.hint {
+    margin: var(--ss-space-3) 0 0;
+    color: var(--ss-ink-muted);
+    font-size: 12px;
+}

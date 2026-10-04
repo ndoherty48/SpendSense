@@ -1,0 +1,86 @@
+@page "/accounts"
+@using SpendSense.Common.Models.Enums
+@using SpendSense.Common.Services
+@inject AccountBalanceService Balances
+
+<PageHeader Title="Accounts" />
+
+@if (accounts is null || summary is null)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" aria-label="Loading accounts" />
+}
+else
+{
+    <HeroBalanceCard Label="Available" Amount="summary.Available" Symbol="@summary.Symbol" Tone="@(summary.Available < 0 ? MoneyTone.Error : MoneyTone.Neutral)">
+        <StatTile Label="In accounts"><Money Amount="summary.InAccounts" Symbol="@summary.Symbol" /></StatTile>
+        <StatTile Label="On cards"><Money Amount="summary.OwedOnCards" Symbol="@summary.Symbol" /></StatTile>
+        <StatTile Label="Savings"><Money Amount="summary.Savings" Symbol="@summary.Symbol" Tone="MoneyTone.Income" /></StatTile>
+    </HeroBalanceCard>
+
+    @if (summary.OtherCurrencies.Any())
+    {
+        <p class="other">
+            Plus
+            @foreach (var (total, i) in summary.OtherCurrencies.Select((t, i) => (t, i)))
+            {
+                @(i > 0 ? ", " : " ")<Money Amount="total.Amount" Symbol="@total.Symbol" Size="MoneySize.Small" />
+            }
+            in other currencies.
+        </p>
+    }
+
+    @if (!open.Any())
+    {
+        <EmptyState Icon="@Icons.Material.Filled.AccountBalance" Title="No accounts" Message="Tap + to add a current account, savings, credit card or cash." />
+    }
+
+    @foreach (var group in groups)
+    {
+        var items = open.Where(b => group.Types.Contains(b.Account.Type)).ToList();
+        if (items.Count == 0)
+            continue;
+        <h2 class="group-title">@group.Title</h2>
+        @foreach (var item in items)
+        {
+            <AccountRow Item="item" />
+        }
+    }
+
+    @if (archived.Any())
+    {
+        <button type="button" class="archived-toggle" aria-expanded="@(showArchived ? "true" : "false")" @onclick="() => showArchived = !showArchived">
+            <svg viewBox="0 0 24 24" fill="currentColor" focusable="false" aria-hidden="true">@((MarkupString)Icons.Material.Filled.Archive)</svg>
+            <span>Archived (@archived.Count)</span>
+            <svg viewBox="0 0 24 24" fill="currentColor" focusable="false" aria-hidden="true">@((MarkupString)(showArchived ? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.ExpandMore))</svg>
+        </button>
+        @if (showArchived)
+        {
+            @foreach (var item in archived)
+            {
+                <AccountRow Item="item" />
+            }
+        }
+    }
+}
+
+@code {
+    static readonly (string Title, AccountTypeEnum[] Types)[] groups =
+    [
+        ("Everyday", [AccountTypeEnum.Current, AccountTypeEnum.Cash]),
+        ("Savings", [AccountTypeEnum.Savings]),
+        ("Credit cards", [AccountTypeEnum.CreditCard])
+    ];
+
+    IReadOnlyList<AccountBalance>? accounts;
+    AvailableSummary? summary;
+    bool showArchived;
+
+    IEnumerable<AccountBalance> open => accounts?.Where(b => !b.Account.IsArchived) ?? [];
+    List<AccountBalance> archived => accounts?.Where(b => b.Account.IsArchived).ToList() ?? [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        accounts = await Balances.GetBalances(includeArchived: true);
+        summary = await Balances.GetSummary(accounts);
+    }
+}

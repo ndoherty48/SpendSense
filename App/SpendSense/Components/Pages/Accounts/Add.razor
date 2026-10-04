@@ -1,0 +1,47 @@
+@page "/accounts/add"
+@layout FocusLayout
+@using SpendSense.Common.Data.Repositories
+@using SpendSense.Common.Models
+@using SpendSense.Common.Models.Enums
+@inject AccountRepository AccountRepo
+@inject CurrencyRepository CurrencyRepo
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+
+@if (ready)
+{
+    <AccountForm Title="New account" Model="model" Currencies="currencies" BackHref="/accounts" ShowBalance="true" SubmitLabel="Add account" OnSubmit="Submit" />
+}
+
+@code {
+    Account model = new()
+    {
+        Name = "",
+        Type = AccountTypeEnum.Current,
+        Color = AccountVisuals.DefaultColor(AccountTypeEnum.Current),
+        IncludeInAvailable = true
+    };
+    IReadOnlyCollection<Currency> currencies = [];
+    bool ready;
+
+    protected override async Task OnInitializedAsync()
+    {
+        currencies = await CurrencyRepo.GetAll();
+        if (currencies.FirstOrDefault(c => c.IsDefault) is { } defaultCurrency)
+            model.CurrencyId = defaultCurrency.Id;
+        // The first open account becomes the default automatically.
+        model.IsDefault = await AccountRepo.GetDefault() is null;
+        ready = true;
+    }
+
+    async Task Submit()
+    {
+        if (await AccountRepo.NameExists(model.Name))
+        {
+            Snackbar.Add($"An account called '{model.Name}' already exists.", Severity.Error);
+            return;
+        }
+        await AccountRepo.Add(model);
+        Navigation.NavigateTo("/accounts");
+    }
+}
