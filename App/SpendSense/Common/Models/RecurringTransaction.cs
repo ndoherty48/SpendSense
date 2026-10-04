@@ -17,6 +17,10 @@ public class RecurringTransaction : ITimestamped
     public int? CategoryId {get;set;}
     public required double Amount { get; set; }
     public int CurrencyId{get;set;}
+    /// <summary>Copied to each generated transaction.</summary>
+    public int AccountId {get;set;}
+    /// <summary>Copied to each generated transaction; makes a scheduled transfer or standing order into savings.</summary>
+    public int? ToAccountId {get;set;}
     [Required]
     public required FrequencyEnum Frequency { get; set; }
     [Required]
@@ -34,6 +38,10 @@ public class RecurringTransaction : ITimestamped
     public Category? Category { get; set; }
     [ForeignKey(nameof(CurrencyId))]
     public Currency? Currency { get; set; }
+    [ForeignKey(nameof(AccountId))]
+    public Account? Account { get; set; }
+    [ForeignKey(nameof(ToAccountId))]
+    public Account? ToAccount { get; set; }
 
     // Navigation Properties
     public ICollection<Transaction> Transactions {get;set;} = [];

@@ -16,6 +16,10 @@ public class Transaction : ITimestamped
     [Required]
     public required double Amount { get; set; }
     public int CurrencyId{get;set;}
+    /// <summary>The account the money comes out of (or, for income, goes into).</summary>
+    public int AccountId {get;set;}
+    /// <summary>The destination account: required for a transfer, optional for savings, otherwise null.</summary>
+    public int? ToAccountId {get;set;}
     [Required]
     public required DateTime TransactionDate {get;set;}
     [Required]
@@ -33,6 +37,10 @@ public class Transaction : ITimestamped
     public Category? Category { get; set; }
     [ForeignKey(nameof(CurrencyId))]
     public Currency? Currency { get; set; }
+    [ForeignKey(nameof(AccountId))]
+    public Account? Account { get; set; }
+    [ForeignKey(nameof(ToAccountId))]
+    public Account? ToAccount { get; set; }
 
     // Navigation Properties
     public ICollection<Tag>? Tags {get;set;}

@@ -10,6 +10,7 @@ public class SpendSenseDbContext(DbContextOptions options) : DbContext(options)
     public DbSet<MonthlyBudget> MonthlyBudgets { get; set; }
     public DbSet<Category> Categories { get; set; }
     public DbSet<Currency> Currencies { get; set; }
+    public DbSet<Account> Accounts { get; set; }
     public DbSet<Goal> Goals { get; set; }
     public DbSet<RecurringTransaction> RecurringTransactions { get; set; }
     public DbSet<Transaction> Transactions { get; set; }
@@ -45,8 +46,57 @@ public class SpendSenseDbContext(DbContextOptions options) : DbContext(options)
                 Name = "Great British Pound"
             });
 
+        // Every transaction needs an account, so a fresh install starts with one. The AddAccounts
+        // migration assigns all pre-existing transactions to it.
+        modelBuilder.Entity<Account>()
+            .HasData(new Account
+            {
+                Id = 1,
+                Name = "Main account",
+                Type = AccountTypeEnum.Current,
+                CurrencyId = 1,
+                IncludeInAvailable = true,
+                IsDefault = true
+            });
+
+        modelBuilder.Entity<Account>()
+            .HasOne(a => a.Currency)
+            .WithMany(c => c.Accounts)
+            .HasForeignKey(a => a.CurrencyId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Two relationships between Transaction and Account: the source and the destination.
+        // Restrict, so an account in use can't be deleted (archive it instead).
+        modelBuilder.Entity<Transaction>()
+            .HasOne(t => t.Account)
+            .WithMany(a => a.Transactions)
+            .HasForeignKey(t => t.AccountId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Transaction>()
+            .HasOne(t => t.ToAccount)
+            .WithMany(a => a.IncomingTransfers)
+            .HasForeignKey(t => t.ToAccountId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<RecurringTransaction>()
+            .HasOne(r => r.Account)
+            .WithMany()
+            .HasForeignKey(r => r.AccountId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<RecurringTransaction>()
+            .HasOne(r => r.ToAccount)
+            .WithMany()
+            .HasForeignKey(r => r.ToAccountId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         modelBuilder.Entity<MonthlyBudget>()
             .HasIndex(mb=> new {mb.Year, mb.Month, mb.CategoryId, mb.CurrencyId})
+            .IsUnique();
+
+        modelBuilder.Entity<Account>()
+            .HasIndex(a=>a.Name)
             .IsUnique();
 
         modelBuilder.Entity<Category>()
@@ -79,5 +129,8 @@ public class SpendSenseDbContext(DbContextOptions options) : DbContext(options)
         modelBuilder.Entity<RecurringTransaction>()
             .Property(p=>p.TransactionType)
             .HasConversion(v=>v.ToString(), v=>Enum.Parse<TransactionTypeEnum>(v));
+        modelBuilder.Entity<Account>()
+            .Property(p=>p.Type)
+            .HasConversion(v=>v.ToString(), v=>Enum.Parse<AccountTypeEnum>(v));
     }
 }

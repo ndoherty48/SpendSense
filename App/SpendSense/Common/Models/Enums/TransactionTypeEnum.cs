@@ -4,5 +4,7 @@ public enum TransactionTypeEnum
 {
     Income,
     Expense,
-    Savings
+    Savings,
+    /// <summary>Moves money between two of your own accounts; never counts toward budgets.</summary>
+    Transfer
 }
