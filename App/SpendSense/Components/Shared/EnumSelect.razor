@@ -7,7 +7,7 @@
            For="ValueExpression"
            Label="@Label"
            Variant="Variant.Outlined">
-    @foreach (var option in Enum.GetValues<TEnum>())
+    @foreach (var option in Enum.GetValues<TEnum>().Except(Exclude ?? []))
     {
         <MudSelectItem T="TEnum" Value="option">@option</MudSelectItem>
     }
@@ -21,4 +21,7 @@
     [Parameter] public Expression<Func<TEnum>>? ValueExpression { get; set; }
 
     [Parameter, EditorRequired] public string Label { get; set; } = "";
+
+    /// <summary>Values not offered, e.g. <c>Transfer</c> for a category type.</summary>
+    [Parameter] public IEnumerable<TEnum>? Exclude { get; set; }
 }

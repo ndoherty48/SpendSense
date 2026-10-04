@@ -23,6 +23,7 @@ public static class SpendSenseDbExtensions
                     x.AddInterceptors(new AddEntityInterceptor(), new ModifyEntityInterceptor());
                 })
                 .AddTransient<CurrencyRepository>()
+                .AddTransient<AccountRepository>()
                 .AddTransient<CategoryRepository>()
                 .AddTransient<TransactionRepository>()
                 .AddTransient<MonthlyBudgetRepository>()

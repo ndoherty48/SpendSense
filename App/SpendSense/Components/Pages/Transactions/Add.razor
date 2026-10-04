@@ -6,6 +6,7 @@
 @inject TransactionRepository TransactionRepo
 @inject CategoryRepository CategoryRepo
 @inject CurrencyRepository CurrencyRepo
+@inject AccountRepository AccountRepo
 @inject SpendSense.Common.Services.NotificationService NotificationSvc
 @inject NavigationManager Navigation
 
@@ -29,6 +30,8 @@
         var defaultCurrency = currencies.FirstOrDefault(c => c.IsDefault);
         if (defaultCurrency is not null)
             model.CurrencyId = defaultCurrency.Id;
+        if (await AccountRepo.GetDefault() is { } defaultAccount)
+            model.AccountId = defaultAccount.Id;
     }
 
     async Task Submit()
