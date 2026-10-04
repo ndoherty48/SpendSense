@@ -24,4 +24,5 @@ public class Currency : ITimestamped
     public ICollection<MonthlyBudget> MonthlyBudgets {get;set;} = [];
     public ICollection<Goal> Goals {get;set;} = [];
     public ICollection<RecurringTransaction> RecurringTransactions {get;set;} = [];
+    public ICollection<Account> Accounts {get;set;} = [];
 }
