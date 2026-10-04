@@ -6,6 +6,7 @@
 @inject RecurringTransactionRepository RecurringRepo
 @inject CategoryRepository CategoryRepo
 @inject CurrencyRepository CurrencyRepo
+@inject AccountRepository AccountRepo
 @inject NavigationManager Navigation
 
 <RecurringForm Title="New recurring transaction" Model="model" Categories="categories" Currencies="currencies" SubmitLabel="Add recurring transaction" OnSubmit="Submit" />
@@ -29,6 +30,8 @@
         var defaultCurrency = currencies.FirstOrDefault(c => c.IsDefault);
         if (defaultCurrency is not null)
             model.CurrencyId = defaultCurrency.Id;
+        if (await AccountRepo.GetDefault() is { } defaultAccount)
+            model.AccountId = defaultAccount.Id;
     }
 
     async Task Submit()
