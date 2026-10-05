@@ -13,8 +13,9 @@ their transactions in a spreadsheet.
 
 ### 1. A backup is the SQLite database itself
 
-A backup is a copy of `SpendSense.db`, made with SQLite's online backup API
-(`SqliteConnection.BackupDatabase`), so the copy is consistent even while the app has the database open.
+A backup is a copy of `SpendSense.db`, made with SQLite's backup API (`SqliteConnection.BackupDatabase`),
+which can safely copy the database while the app is using it, so the copy is always consistent. Nothing
+goes over the network: the copy is made on the device.
 It's named `SpendSense-backup-YYYY-MM-DD-HHMM.db`, written to the cache directory, and handed to the share
 sheet: Files, iCloud Drive, Google Drive, email, AirDrop and so on. The app doesn't store backups anywhere
 itself. The share sheet is the destination picker.
