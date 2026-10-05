@@ -146,8 +146,9 @@ and `docs/design/tokens.md` (tokens, verified contrast). The rules that matter w
 ### Cross-cutting services (`Common/Services/`)
 
 - `AccountBalanceService` — account balances, the Available summary and Set balance (see Data layer).
-- `BackupService` — backup (SQLite online backup of the live database), checked restore (safety copy, then
-  migrate), CSV export and the 30-day reminder (`docs/adr/0003-backup-and-export.md`). The UI goes through
+- `BackupService` — backup (a copy of the live database made with SQLite's backup API, safe while the app is
+  using it), checked restore (safety copy, then migrate), CSV export and the 30-day reminder
+  (`docs/adr/0003-backup-and-export.md`). The UI goes through
   `Components/Pages/Data/BackupFlow` (share sheet, confirmation, snackbars). Files are handed to the user via
   `IFileExchange` (`MauiFileExchange` wraps `IShare`/`IFilePicker`), never written anywhere permanent.
   Folders for this are called `Data`, not `Backup`: `.gitignore` excludes `Backup*/`.
