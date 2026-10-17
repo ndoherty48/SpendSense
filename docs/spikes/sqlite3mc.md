@@ -145,7 +145,11 @@ or clear the pool first.
 - `net11.0` (tests): builds and runs; loads `runtimes/osx-x64/native/libsqlite3mc.dylib`.
 - `net11.0-maccatalyst`, `net11.0-ios`: **not built here**: this Mac has only Command Line Tools, no Xcode
   ("Could not find a valid Xcode developer path"). Needs a machine with Xcode 26 or the CI `macos-26` runner.
-- `net11.0-android`: see "Android build" below.
+- `net11.0-android`: **builds** (Debug, Android SDK platforms 36/37). The APK contains
+  `lib/arm64-v8a/libsqlite3mc.so` and `lib/x86_64/libsqlite3mc.so` and no `libe_sqlite3.so`. Not run: the local
+  `milo-test` emulator (API 37, x86_64, 16 KB pages) didn't finish a headless cold boot in 15 minutes on this
+  Intel Mac. Runtime loading on Android is still to be checked on a device or a faster emulator. Milo already
+  ships this package on Android.
 
 What the packages ship (`SQLite3MC.PCLRaw.lib` 2.4.0):
 
