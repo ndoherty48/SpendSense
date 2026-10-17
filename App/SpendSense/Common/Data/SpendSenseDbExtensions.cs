@@ -12,6 +12,9 @@ public static class SpendSenseDbExtensions
     {
         public IServiceCollection AddSpendSenseDb()
         {
+            // The .Sqlite.Core provider has no bundled engine: wire up SQLite3 Multiple Ciphers first.
+            SQLitePCL.Batteries_V2.Init();
+
             return services
                 .AddDbContext<SpendSenseDbContext>(x =>
                 {

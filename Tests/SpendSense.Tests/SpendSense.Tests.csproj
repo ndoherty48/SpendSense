@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net10.0</TargetFramework>
+        <TargetFramework>net11.0</TargetFramework>
         <!-- xUnit v3 on Microsoft.Testing.Platform (global.json): the test project is an executable. -->
         <OutputType>Exe</OutputType>
         <ImplicitUsings>enable</ImplicitUsings>
@@ -12,12 +12,12 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="xunit.v3.mtp-v2" Version="4.0.1" />
+        <PackageReference Include="xunit.v3.mtp-v2" Version="4.0.2" />
         <PackageReference Include="bunit" Version="2.11.3" />
     </ItemGroup>
 
     <ItemGroup>
-        <!-- Resolves to the app's plain net10.0 build: no device, no platform code. -->
+        <!-- Resolves to the app's plain net11.0 build: no device, no platform code. -->
         <ProjectReference Include="../../App/SpendSense/SpendSense.csproj" />
     </ItemGroup>
 
