@@ -1,8 +1,10 @@
 # Spike: encrypting SpendSense.db with SQLite3 Multiple Ciphers
 
 - Date: 2026-10-17
-- Branch: `spike/sqlite3mc` (throwaway, not for merging as is)
-- Tests: `Tests/SpendSense.Tests/Encryption/Sqlite3McSpikeTests.cs` (19 tests, real temp files)
+- Branch: `spike/sqlite3mc`. The .NET 11 / sqlite3mc move was merged; the spike tests were not.
+- Tests: `Tests/SpendSense.Tests/Encryption/Sqlite3McSpikeTests.cs` (19 tests, real temp files), removed before
+  merging. Recover them with `git show 37c87b3:Tests/SpendSense.Tests/Encryption/Sqlite3McSpikeTests.cs`
+  (plus `HexKeyInterceptor.cs` and `SqlCipher.cs` in the same folder).
 
 This spike answers four questions before an ADR commits SpendSense to an encrypted database the way Milo has
 one: does the engine reject a wrong key, can an existing plaintext database be converted in place, does the
@@ -181,9 +183,8 @@ What the packages ship (`SQLite3MC.PCLRaw.lib` 2.4.0):
 
 ## What it would take (for the ADR)
 
-- .NET 11 / EF Core 11 RC 2 across the solution (this branch), and CI pinned to the workload set
-  (`dotnet workload install maui --version 11.0.100-rc.2.26513.2`; `tests.yml` currently installs the latest
-  `maui`, which won't match an RC SDK).
+- ~~.NET 11 / EF Core 11 RC 2 across the solution, and CI pinned to the workload set~~ (done: merged with this
+  document; `tests.yml` pins `WORKLOAD_VERSION`).
 - A device key in SecureStorage / Keystore / DPAPI (not built), applied with `PRAGMA key = 'raw:…'` from a
   `DbConnectionInterceptor`.
 - Startup conversion of an existing plaintext DB (above), before migrations.

@@ -74,7 +74,7 @@
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
           <PrivateAssets>all</PrivateAssets>
         </PackageReference>
-        <!-- Spike: no bundled e_sqlite3; the engine is SQLite3 Multiple Ciphers (SQLitePCLRaw 3.x). -->
+        <!-- .Sqlite.Core ships no engine: SQLite3 Multiple Ciphers provides it (SQLitePCLRaw 3.x), so e_sqlite3 is never bundled. -->
         <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite.Core" Version="11.0.0-rc.2.26504.105" />
         <PackageReference Include="SQLite3MC.PCLRaw.bundle" Version="2.4.0" />
         <PackageReference Include="Microsoft.Maui.Controls" Version="11.0.0-rc.2.26505.5" />

@@ -12,10 +12,15 @@ concurrency:
   group: tests-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  # The workload set that matches the SDK in global.json and the MAUI packages in the csproj files. It's pinned here,
+  # not in global.json, because a global.json pin makes every dotnet command require it.
+  WORKLOAD_VERSION: 11.0.100-rc.2.26513.2
+
 jobs:
   test:
     # macOS: restoring the app restores every target framework, including iOS and Mac Catalyst, so the
-    # MAUI workload must be installed. The tests themselves run against the plain net10.0 build.
+    # MAUI workload must be installed. The tests themselves run against the plain net11.0 build.
     runs-on: macos-15
     timeout-minutes: 30
     steps:
@@ -26,7 +31,7 @@ jobs:
           global-json-file: global.json
 
       - name: Install the MAUI workload
-        run: dotnet workload install maui
+        run: dotnet workload install maui --version ${{ env.WORKLOAD_VERSION }}
 
       - name: Test
         run: dotnet test --project Tests/SpendSense.Tests
