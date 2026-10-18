@@ -30,6 +30,13 @@
 - Transactions CSV export (spreadsheet-safe); last-backup date in Preferences and a 30-day dashboard reminder
 - Design: [ADR 0003](docs/adr/0003-backup-and-export.md)
 
+### Encryption at Rest ✅
+- The database is encrypted with SQLite3 Multiple Ciphers, keyed by a device key in secure storage; existing data is encrypted on the first launch after updating
+- Backups are encrypted zips protected by a backup password and a recovery code; old plaintext backups still restore
+- A recovery screen (restore a backup, or start fresh) when the key is missing
+- Design: [ADR 0004](docs/adr/0004-encryption-at-rest.md)
+- Still to check on devices: iOS, Mac Catalyst (signed, with the Keychain entitlement) and Windows
+
 ### Accounts ✅
 - Current accounts, savings, credit cards and cash, each with a computed balance
 - Every transaction is paid from (or into) an account; transfers move money between accounts without touching budgets
@@ -102,7 +109,7 @@
 
 ### Automatic Backups
 - Back up on a schedule to a folder chosen once (Files/iCloud), keeping the last N
-- Builds on the manual backup/restore (ADR 0003)
+- Builds on the manual backup/restore (ADRs 0003 and 0004); needs the remembered backup keys
 
 ### Filtered CSV Export
 - Export a date range, or filter by category, type or account before exporting
