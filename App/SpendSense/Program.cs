@@ -15,6 +15,7 @@ public class MyDbContextFactory : IDesignTimeDbContextFactory<SpendSenseDbContex
 {
     public SpendSenseDbContext CreateDbContext(string[] args)
     {
+        SQLitePCL.Batteries_V2.Init();
         var optionsBuilder = new DbContextOptionsBuilder<SpendSenseDbContext>();
 
         optionsBuilder.UseSqlite("Data Source=my.db");

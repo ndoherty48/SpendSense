@@ -25,7 +25,7 @@ Out: <explicitly not in this PR>.
 
 ## Verification
 
-- [ ] `cd App/SpendSense && dotnet build -f net10.0-maccatalyst` (no new warnings)
+- [ ] `cd App/SpendSense && dotnet build -f net11.0-maccatalyst` (no new warnings)
 - [ ] Ran on Mac Catalyst (light + dark, narrow + wide resize)
 - [ ] iOS simulator / Android / Windows: <required for theme, shell, form and platform changes>
 - [ ] Smoke matrix for touched screens (create, edit, delete, guards)

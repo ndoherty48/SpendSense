@@ -17,10 +17,10 @@ A personal budgeting app built with .NET MAUI Blazor Hybrid and Aspire.
 
 ## Tech Stack
 
-- **.NET 10** / C#
+- **.NET 11** / C#
 - **MAUI Blazor Hybrid** — cross-platform (iOS, Android, Mac Catalyst, Windows)
 - **MudBlazor 9** — behaviour layer (inputs, dialogs, charts) under the Ledger Noir design system (`docs/`)
-- **Entity Framework Core** — SQLite local database with migrations
+- **Entity Framework Core 11** — SQLite local database with migrations, on SQLite3 Multiple Ciphers
 - **Aspire** — orchestration for multi-device development (AppHost with dev tunnels)
 
 ## Project Structure
@@ -50,8 +50,8 @@ SpendSense/
 
 ### Prerequisites
 
-- .NET 10 SDK
-- MAUI workload (`dotnet workload install maui`)
+- .NET 11 SDK (the exact version is pinned in `global.json`)
+- MAUI workload (`dotnet workload install maui --version <WORKLOAD_VERSION from .github/workflows/tests.yml>`)
 - For iOS: Xcode (Mac only)
 - For Android: Android SDK
 
@@ -67,15 +67,15 @@ Run from the repo root — `aspire.config.json` points the Aspire CLI at the App
 
 ```bash
 cd App/SpendSense
-dotnet build -f net10.0-maccatalyst
-dotnet run -f net10.0-maccatalyst
+dotnet build -f net11.0-maccatalyst
+dotnet run -f net11.0-maccatalyst
 ```
 
 ### Add a migration
 
 ```bash
 cd App/SpendSense
-dotnet ef migrations add <MigrationName> --framework net10.0
+dotnet ef migrations add <MigrationName> --framework net11.0
 ```
 
 ## Architecture Decisions

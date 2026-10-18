@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-SpendSense is a personal budgeting app built with .NET MAUI Blazor Hybrid (.NET 10) and Aspire for
+SpendSense is a personal budgeting app built with .NET MAUI Blazor Hybrid (.NET 11, currently RC 2) and Aspire for
 multi-device dev orchestration. It's a local-first app — all data lives in an on-device SQLite
 database via EF Core; there is no backend (yet — see `ROADMAP.md` for planned cloud sync).
 
@@ -17,9 +17,10 @@ dotnet test --project Tests/SpendSense.Tests
 ```
 
 `Tests/SpendSense.Tests` (xUnit v3 on Microsoft.Testing.Platform, set in `global.json`) references the app's
-plain `net10.0` build, so it still needs the MAUI workloads installed but no device. UI on a device is
+plain `net11.0` build, so it still needs the MAUI workloads installed but no device. UI on a device is
 still verified by hand. `.github/workflows/tests.yml` runs the same command on every pull request (macOS
-runner with the MAUI workload). Code under test must not call MAUI statics directly: inject `IPreferences`
+runner with the MAUI workload pinned to the workload set in its `WORKLOAD_VERSION`; bump it together with
+`global.json` and the MAUI package versions). Code under test must not call MAUI statics directly: inject `IPreferences`
 (registered as `Preferences.Default`), `IFileSystem` (`FileSystem.Current`), `INotifier` (`LocalNotifier`)
 and `IFileExchange` (`MauiFileExchange`); doubles live in `Tests/SpendSense.Tests/TestDoubles`.
 
@@ -39,17 +40,17 @@ dashboard/orchestration tooling that `aspire run` provides — prefer `aspire ru
 
 ```bash
 cd App/SpendSense
-dotnet build -f net10.0-maccatalyst
-dotnet run -f net10.0-maccatalyst
+dotnet build -f net11.0-maccatalyst
+dotnet run -f net11.0-maccatalyst
 ```
 
-Other target frameworks: `net10.0-android`, `net10.0-ios`, `net10.0-windows10.0.19041.0` (Windows host only).
+Other target frameworks: `net11.0-android`, `net11.0-ios`, `net11.0-windows10.0.19041.0` (Windows host only).
 
 ### EF Core migrations
 
 ```bash
 cd App/SpendSense
-dotnet ef migrations add <MigrationName> --framework net10.0
+dotnet ef migrations add <MigrationName> --framework net11.0
 ```
 
 Migrations run automatically on app startup (`app.RunDatabaseMigrations()` in `MauiProgram.cs`), not via `dotnet ef database update`.
@@ -84,6 +85,11 @@ After `builder.Build()`, three extension methods run in sequence and each swallo
   `Year+Month+CategoryId+CurrencyId`, `Category.Name`, `Currency.Code`, `Tag.Name`) — check there before
   adding a field that should be unique.
 - Default currency (GBP) is seeded via `HasData` in `OnModelCreating`.
+- **SQLite engine**: the app uses `Microsoft.EntityFrameworkCore.Sqlite.Core` (no bundled engine) with
+  `SQLite3MC.PCLRaw.bundle` (SQLite3 Multiple Ciphers) underneath, wired up by `SQLitePCL.Batteries_V2.Init()` in
+  `AddSpendSenseDb()`, `MyDbContextFactory` and the test project's `SqliteSetup` module initializer. No key is set
+  yet, so the database is still plaintext; encrypting it is planned (`docs/spikes/sqlite3mc.md`). Don't add
+  `Microsoft.EntityFrameworkCore.Sqlite` or another SQLitePCLRaw bundle alongside it.
 - **Accounts** (`docs/adr/0002-accounts.md`): every `Transaction` and `RecurringTransaction` has a required
   `AccountId` and an optional `ToAccountId` (FKs are `Restrict`; a used account is archived, not deleted).
   `ToAccountId` is required for `TransactionTypeEnum.Transfer`, optional for `Savings`, null otherwise, and
