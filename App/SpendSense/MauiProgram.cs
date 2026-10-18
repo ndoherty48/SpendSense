@@ -4,8 +4,8 @@ using Microsoft.Extensions.Hosting;
 using MudBlazor.Services;
 
 using SpendSense.Common.Data;
+using SpendSense.Common.Security;
 using SpendSense.Common.Services;
-using Microsoft.EntityFrameworkCore;
 
 using Plugin.LocalNotification;
 
@@ -29,6 +29,18 @@ public static class MauiProgram
 		builder.Services.AddSingleton(Share.Default);
 		builder.Services.AddSingleton(FilePicker.Default);
 		builder.Services.AddSingleton<IFileExchange, MauiFileExchange>();
+		builder.Services.AddSingleton(Clipboard.Default);
+#if WINDOWS
+		// Unpackaged, so SecureStorage has no package identity to use (ADR 0004).
+		builder.Services.AddSingleton<ISecretStore, SpendSense.Platforms.Windows.DpapiSecretStore>();
+#elif MACCATALYST && DEBUG
+		// Unsigned Debug builds can't use the Keychain; fall back to files so `dotnet run` keeps working.
+		builder.Services.AddSingleton<ISecretStore>(provider => new DevFallbackSecretStore(
+			new SecureStorageSecretStore(SecureStorage.Default),
+			Path.Join(DatabasePaths.Folder(provider.GetRequiredService<IFileSystem>()), "dev-secrets")));
+#else
+		builder.Services.AddSingleton<ISecretStore>(new SecureStorageSecretStore(SecureStorage.Default));
+#endif
 		builder.Services.AddSingleton<SettingsService>();
 		builder.Services.AddSingleton<ThemeService>();
 		builder.Services.AddTransient<RecurringTransactionGenerator>();
@@ -44,10 +56,7 @@ public static class MauiProgram
 		builder.Logging.AddDebug();
 #endif
 
-		var app = builder.Build();
-		app.RunDatabaseMigrations();
-		app.GenerateRecurringTransactions();
-		app.CheckNotifications();
-		return app;
+		// The database is opened, migrated and brought up to date by DatabaseGate, once the device key is loaded.
+		return builder.Build();
 	}
 }

@@ -5,6 +5,7 @@ using Bunit;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Maui.ApplicationModel.DataTransfer;
 using Microsoft.Maui.Storage;
 
 using MudBlazor;
@@ -15,6 +16,7 @@ using SpendSense.Common.Data.Interceptors;
 using SpendSense.Common.Data.Repositories;
 using SpendSense.Common.Models;
 using SpendSense.Common.Models.Enums;
+using SpendSense.Common.Security;
 using SpendSense.Common.Services;
 using SpendSense.Tests.TestDoubles;
 
@@ -22,14 +24,15 @@ namespace SpendSense.Tests.Support;
 
 /// <summary>
 /// bUnit context with the app's services: MudBlazor (JS interop loose, no popover provider needed), settings
-/// on in-memory preferences, and a migrated in-memory SQLite database for components that query.
+/// on in-memory preferences, and a migrated in-memory SQLite database for components that query. Pass
+/// <c>encryptedDatabase</c> for an encrypted database file keyed like the app's, which backups need (ADR 0004).
 /// </summary>
 public abstract class ComponentTest : BunitContext
 {
-    readonly SqliteConnection connection = new("Data Source=:memory:");
+    readonly SqliteConnection connection;
     readonly CultureInfo previousCulture = CultureInfo.CurrentCulture;
 
-    protected ComponentTest()
+    protected ComponentTest(bool encryptedDatabase = false)
     {
         // Money formatting follows the current culture; pin it so assertions are stable.
         CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("en-GB");
@@ -42,11 +45,24 @@ public abstract class ComponentTest : BunitContext
         Services.AddSingleton<INotifier>(Notifier);
         Services.AddSingleton<SettingsService>();
 
-        connection.Open();
-        Db = new SpendSenseDbContext(new DbContextOptionsBuilder<SpendSenseDbContext>()
-            .UseSqlite(connection)
-            .AddInterceptors(new AddEntityInterceptor(), new ModifyEntityInterceptor())
-            .Options);
+        var options = new DbContextOptionsBuilder<SpendSenseDbContext>()
+            .AddInterceptors(new AddEntityInterceptor(), new ModifyEntityInterceptor());
+        if (encryptedDatabase)
+        {
+            Key.Load(System.Security.Cryptography.RandomNumberGenerator.GetBytes(DatabaseKey.Size));
+            Secrets.Set(DatabaseOpener.DeviceKeyName, Key.Value).GetAwaiter().GetResult();
+            var path = DatabasePaths.Database(Files);
+            Directory.CreateDirectory(DatabasePaths.Folder(Files));
+            options.UseSqlite($"Data Source={path}").AddInterceptors(new DatabaseKeyInterceptor(Key));
+            connection = SqliteCipher.Open(path, Key.Value);
+        }
+        else
+        {
+            connection = new SqliteConnection("Data Source=:memory:");
+            connection.Open();
+            options.UseSqlite(connection);
+        }
+        Db = new SpendSenseDbContext(options.Options);
         Db.Database.Migrate();
         Services.AddSingleton(Db);
         Services.AddTransient<AccountRepository>();
@@ -58,11 +74,25 @@ public abstract class ComponentTest : BunitContext
 
         Services.AddSingleton<IFileSystem>(Files);
         Services.AddSingleton<IFileExchange>(FileExchange);
+        Services.AddSingleton(Key);
+        Services.AddSingleton<ISecretStore>(Secrets);
+        Services.AddSingleton(new BackupKeys(Secrets) { PasswordIterations = TestPasswordIterations });
+        Services.AddSingleton<DatabaseOpener>();
+        Services.AddSingleton<IClipboard>(Clipboard);
         Services.AddTransient<BackupService>();
         Services.AddTransient<SpendSense.Components.Pages.Data.BackupFlow>();
     }
 
+    /// <summary>Real PBKDF2, far fewer rounds than the app's 600,000, so tests stay quick.</summary>
+    public const int TestPasswordIterations = 1_000;
+
     protected TempFileSystem Files { get; } = new();
+
+    protected DatabaseKey Key { get; } = new();
+
+    protected InMemorySecretStore Secrets { get; } = new();
+
+    protected FakeClipboard Clipboard { get; } = new();
 
     protected FakeFileExchange FileExchange { get; } = new();
 

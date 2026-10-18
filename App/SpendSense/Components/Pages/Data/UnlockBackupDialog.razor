@@ -1,0 +1,88 @@
+@using SpendSense.Common.Security
+@using SpendSense.Common.Services
+@inject BackupService Backups
+
+@* An encrypted backup this device can't open by itself: ask for its password or its recovery code (ADR 0004). *@
+<MudDialog>
+    <DialogContent>
+        <p class="file">@FileName</p>
+        <SegmentedControl T="UnlockMethod" Segments="methods" Value="method" ValueChanged="OnMethodChanged" AriaLabel="Unlock with" />
+        <div class="field">
+            @if (method == UnlockMethod.Password)
+            {
+                <p class="help">Enter the backup password used when this backup was made.</p>
+                <MudTextField @bind-Value="secret" Label="Backup password" InputType="InputType.Password" Variant="Variant.Outlined"
+                              Error="@(error is not null)" ErrorText="@error" Immediate="true" OnKeyUp="OnKeyUp" />
+            }
+            else
+            {
+                <p class="help">Enter the recovery code you saved when you set your backup password.</p>
+                <MudTextField @bind-Value="secret" Label="Recovery code" Placeholder="XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XX" Variant="Variant.Outlined"
+                              Error="@(error is not null)" ErrorText="@error" Immediate="true" OnKeyUp="OnKeyUp" spellcheck="false" autocapitalize="characters" />
+            }
+        </div>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Unlock" Disabled="@(busy || string.IsNullOrWhiteSpace(secret))">
+            @(busy ? "Unlocking…" : "Unlock")
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    static readonly IReadOnlyList<Segment<UnlockMethod>> methods =
+    [
+        new(UnlockMethod.Password, "Password"),
+        new(UnlockMethod.RecoveryCode, "Recovery code")
+    ];
+
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter, EditorRequired] public string Path { get; set; } = "";
+
+    [Parameter, EditorRequired] public string FileName { get; set; } = "";
+
+    UnlockMethod method = UnlockMethod.Password;
+    string? secret;
+    string? error;
+    bool busy;
+
+    void OnMethodChanged(UnlockMethod value)
+    {
+        method = value;
+        secret = null;
+        error = null;
+    }
+
+    async Task OnKeyUp(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+            await Unlock();
+    }
+
+    void Cancel() => MudDialog.Cancel();
+
+    async Task Unlock()
+    {
+        if (busy || string.IsNullOrWhiteSpace(secret))
+            return;
+
+        busy = true;
+        error = null;
+        try
+        {
+            var info = await Backups.Unlock(Path, method, secret);
+            // Still locked: wrong password or code, so say so here and let them try again. Anything else (unlocked,
+            // or damaged) goes back to the flow, which confirms or explains.
+            if (info.IsLocked)
+                error = info.Problem;
+            else
+                MudDialog.Close(DialogResult.Ok(info));
+        }
+        finally
+        {
+            busy = false;
+        }
+    }
+}

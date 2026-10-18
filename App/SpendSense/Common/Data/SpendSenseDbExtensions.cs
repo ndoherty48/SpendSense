@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 
 using SpendSense.Common.Data.Interceptors;
 using SpendSense.Common.Data.Repositories;
-using SpendSense.Common.Services;
+using SpendSense.Common.Security;
 
 namespace SpendSense.Common.Data;
 
@@ -10,20 +10,26 @@ public static class SpendSenseDbExtensions
 {
     extension(IServiceCollection services)
     {
+        /// <summary>
+        /// The encrypted database (ADR 0004): EF over SQLite3 Multiple Ciphers, keyed on every connection by
+        /// <see cref="DatabaseKeyInterceptor"/>. Nothing may query it until <see cref="DatabaseOpener.Open"/> has
+        /// loaded the key; <c>DatabaseGate</c> makes the UI wait for that.
+        /// </summary>
         public IServiceCollection AddSpendSenseDb()
         {
             // The .Sqlite.Core provider has no bundled engine: wire up SQLite3 Multiple Ciphers first.
             SQLitePCL.Batteries_V2.Init();
 
             return services
-                .AddDbContext<SpendSenseDbContext>(x =>
+                .AddSingleton<DatabaseKey>()
+                .AddSingleton<DatabaseKeyInterceptor>()
+                .AddSingleton<DatabaseOpener>()
+                .AddSingleton<BackupKeys>()
+                .AddDbContext<SpendSenseDbContext>((provider, x) =>
                 {
-                    var folder = Path.Join(FileSystem.AppDataDirectory, "SpendSense");
-                    if(Directory.Exists(folder) is false)
-                        Directory.CreateDirectory(folder);
-                    var path = Path.Join(folder, "SpendSense.db");
+                    var path = DatabasePaths.Database(provider.GetRequiredService<IFileSystem>());
                     x.UseSqlite($"Data Source={path}");
-                    x.AddInterceptors(new AddEntityInterceptor(), new ModifyEntityInterceptor());
+                    x.AddInterceptors(new AddEntityInterceptor(), new ModifyEntityInterceptor(), provider.GetRequiredService<DatabaseKeyInterceptor>());
                 })
                 .AddTransient<CurrencyRepository>()
                 .AddTransient<AccountRepository>()
@@ -32,53 +38,6 @@ public static class SpendSenseDbExtensions
                 .AddTransient<MonthlyBudgetRepository>()
                 .AddTransient<GoalRepository>()
                 .AddTransient<RecurringTransactionRepository>();
-        }
-    }
-
-    extension(MauiApp app)
-    {
-        public MauiApp RunDatabaseMigrations()
-        {
-            using var scope = app.Services.CreateScope();
-            var dbContext = app.Services.GetRequiredService<SpendSenseDbContext>();
-            if (dbContext.Database.GetPendingMigrations().Any())
-            {
-                dbContext.Database.Migrate();
-            }
-            return app;
-        }
-
-        public MauiApp GenerateRecurringTransactions()
-        {
-            try
-            {
-                Console.WriteLine("[RecurringGen] Starting generation...");
-                using var scope = app.Services.CreateScope();
-                var generator = scope.ServiceProvider.GetRequiredService<RecurringTransactionGenerator>();
-                generator.GeneratePendingTransactions().GetAwaiter().GetResult();
-                Console.WriteLine("[RecurringGen] Complete.");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[RecurringGen] FAILED: {ex}");
-            }
-            return app;
-        }
-
-        public MauiApp CheckNotifications()
-        {
-            try
-            {
-                using var scope = app.Services.CreateScope();
-                var svc = scope.ServiceProvider.GetRequiredService<NotificationService>();
-                svc.CheckBudgetThresholds().GetAwaiter().GetResult();
-                svc.CheckGoalMilestones().GetAwaiter().GetResult();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[Notifications] FAILED: {ex}");
-            }
-            return app;
         }
     }
 }

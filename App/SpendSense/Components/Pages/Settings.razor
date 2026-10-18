@@ -3,6 +3,7 @@
 @using SpendSense.Components.Pages.Data
 @inject SettingsService SettingsSvc
 @inject BackupFlow Backup
+@inject BackupService Backups
 
 <PageHeader Title="Preferences" />
 
@@ -30,14 +31,17 @@
     <ListRow Title="Back up now" Subtitle="@LastBackupText" OnClick="BackUp">
         <Leading><IconTile Icon="@Icons.Material.Filled.CloudUpload" Tone="IconTone.Brand" /></Leading>
     </ListRow>
+    <ListRow Title="Backup password" Subtitle="@PasswordText" Href="@BackupFlow.PasswordPage">
+        <Leading><IconTile Icon="@Icons.Material.Filled.Key" Tone="IconTone.Brand" /></Leading>
+    </ListRow>
     <ListRow Title="Restore from backup" Subtitle="Replace this device's data with a backup file" OnClick="Restore">
         <Leading><IconTile Icon="@Icons.Material.Filled.SettingsBackupRestore" Tone="IconTone.Brand" /></Leading>
     </ListRow>
-    <ListRow Title="Export transactions (CSV)" Subtitle="For spreadsheets; can't be restored" OnClick="ExportCsv">
+    <ListRow Title="Export transactions (CSV)" Subtitle="For spreadsheets; not encrypted, and can't be restored" OnClick="ExportCsv">
         <Leading><IconTile Icon="@Icons.Material.Filled.TableView" Tone="IconTone.Brand" /></Leading>
     </ListRow>
 </div>
-<p class="note">Everything stays on this device. Save a backup somewhere safe, like Files, iCloud or Drive.</p>
+<p class="note">Everything stays on this device, encrypted. Backups are encrypted with your backup password: save them somewhere safe, like Files, iCloud or Drive.</p>
 
 <SectionHeader Title="Privacy" />
 <div class="group">
@@ -60,12 +64,15 @@
     bool hideAmounts;
     bool includeCredit;
 
-    protected override void OnInitialized()
+    bool hasPassword;
+
+    protected override async Task OnInitializedAsync()
     {
         themeMode = SettingsSvc.ThemeMode;
         incomeAppliesNextMonth = SettingsSvc.IncomeAppliesNextMonth;
         hideAmounts = SettingsSvc.HideAmounts;
         includeCredit = SettingsSvc.IncludeCreditInAvailable;
+        hasPassword = await Backups.HasPassword();
     }
 
     void OnThemeChanged(ThemeMode value)
@@ -88,6 +95,8 @@
 
     bool busy;
 
+    string PasswordText => hasPassword ? "Change it, or get a new recovery code" : "Set when you first back up";
+
     string LastBackupText => busy ? "Working…"
         : SettingsSvc.LastBackupAt is { } last ? $"Last backup: {last:d MMM yyyy}"
         : "Never backed up";
@@ -103,7 +112,7 @@
 
     Task BackUp() => Run(Backup.BackUp);
 
-    Task Restore() => Run(Backup.Restore);
+    Task Restore() => Run(() => Backup.Restore());
 
     Task ExportCsv() => Run(Backup.ExportCsv);
 
