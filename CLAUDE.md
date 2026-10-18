@@ -22,7 +22,10 @@ still verified by hand. `.github/workflows/tests.yml` runs the same command on e
 runner with the MAUI workload pinned to the workload set in its `WORKLOAD_VERSION`; bump it together with
 `global.json` and the MAUI package versions). Code under test must not call MAUI statics directly: inject `IPreferences`
 (registered as `Preferences.Default`), `IFileSystem` (`FileSystem.Current`), `INotifier` (`LocalNotifier`)
-and `IFileExchange` (`MauiFileExchange`); doubles live in `Tests/SpendSense.Tests/TestDoubles`.
+`IFileExchange` (`MauiFileExchange`), `ISecretStore` and `IClipboard`; doubles live in
+`Tests/SpendSense.Tests/TestDoubles`. Most tests use in-memory SQLite; code that copies the database file
+(backups, the opener) uses the encrypted-file mode of `DatabaseTest(TempFileSystem)` /
+`ComponentTest(encryptedDatabase: true)`, with `ComponentTest.TestPasswordIterations` for PBKDF2.
 
 ### Run with Aspire (orchestrates iOS simulator, Android emulator/device, Mac Catalyst)
 
@@ -58,16 +61,24 @@ Migrations run automatically on app startup (`app.RunDatabaseMigrations()` in `M
 
 ## Architecture
 
-### Startup pipeline (`MauiProgram.cs`)
+### Startup pipeline (`MauiProgram.cs`, `Components/DatabaseGate.razor`)
 
 DI registration happens through the `AddSpendSenseDb()` extension (`Common/Data/SpendSenseDbExtensions.cs`),
-which wires up the SQLite `DbContext` (with `AddEntityInterceptor`/`ModifyEntityInterceptor` for
-timestamps), all repositories, and points EF at `{FileSystem.AppDataDirectory}/SpendSense/SpendSense.db`.
-After `builder.Build()`, three extension methods run in sequence and each swallows its own exceptions
-(logged via `Console.WriteLine`, never crashes startup):
-1. `RunDatabaseMigrations()` — applies pending EF migrations
-2. `GenerateRecurringTransactions()` — materializes due recurring transactions (salary, rent, etc.)
-3. `CheckNotifications()` — evaluates budget threshold / goal milestone alerts and fires local notifications
+which wires up the SQLite `DbContext` (with `AddEntityInterceptor`/`ModifyEntityInterceptor` for timestamps and
+`DatabaseKeyInterceptor` for the encryption key), all repositories, the key and backup-key services, and points
+EF at `DatabasePaths.Database` (`{AppDataDirectory}/SpendSense/SpendSense.db`). `MauiProgram` registers the
+platform's `ISecretStore` and does nothing with the database itself.
+
+The database is encrypted (`docs/adr/0004-encryption-at-rest.md`), so nothing may query it before its key is
+loaded. `DatabaseGate` wraps the router in `Routes.razor` and, before any page renders:
+1. `DatabaseOpener.Open()` — loads or creates the device key, encrypts a plaintext database left from before
+   encryption, checks the key, and applies pending EF migrations. A missing or wrong key renders
+   `Pages/Data/Recover` (restore a backup, or start fresh) instead of the app.
+2. `RecurringTransactionGenerator` — materializes due recurring transactions (salary, rent, etc.)
+3. `NotificationService` — evaluates budget threshold / goal milestone alerts and fires local notifications
+
+Steps 2 and 3 each swallow their own exceptions (logged via `Console.WriteLine`); a failure in step 1 shows an
+error screen.
 
 ### Data layer conventions
 
@@ -85,11 +96,17 @@ After `builder.Build()`, three extension methods run in sequence and each swallo
   `Year+Month+CategoryId+CurrencyId`, `Category.Name`, `Currency.Code`, `Tag.Name`) — check there before
   adding a field that should be unique.
 - Default currency (GBP) is seeded via `HasData` in `OnModelCreating`.
-- **SQLite engine**: the app uses `Microsoft.EntityFrameworkCore.Sqlite.Core` (no bundled engine) with
-  `SQLite3MC.PCLRaw.bundle` (SQLite3 Multiple Ciphers) underneath, wired up by `SQLitePCL.Batteries_V2.Init()` in
-  `AddSpendSenseDb()`, `MyDbContextFactory` and the test project's `SqliteSetup` module initializer. No key is set
-  yet, so the database is still plaintext; encrypting it is planned (`docs/spikes/sqlite3mc.md`). Don't add
-  `Microsoft.EntityFrameworkCore.Sqlite` or another SQLitePCLRaw bundle alongside it.
+- **Encrypted SQLite** (`docs/adr/0004-encryption-at-rest.md`): the app uses
+  `Microsoft.EntityFrameworkCore.Sqlite.Core` (no bundled engine) with `SQLite3MC.PCLRaw.bundle` (SQLite3 Multiple
+  Ciphers) underneath, wired up by `SQLitePCL.Batteries_V2.Init()` in `AddSpendSenseDb()`, `MyDbContextFactory`
+  and the test project's `SqliteSetup` module initializer. Don't add `Microsoft.EntityFrameworkCore.Sqlite` or
+  another SQLitePCLRaw bundle alongside it.
+  - The device key (32 random bytes) lives in `ISecretStore` (`Common/Security/`: `SecureStorage`, DPAPI on
+    Windows, a file fallback only in unsigned Mac Catalyst Debug builds) and in memory in `DatabaseKey`.
+    `DatabaseKeyInterceptor` applies it as raw key material (`PRAGMA key = 'raw:…'`, see `SqliteCipher`) on every
+    connection. Never use `hexkey` (it runs a KDF on every open), log the key, or put it in a connection string.
+  - Raw connections outside EF go through `SqliteCipher.Open(path, key)`. The backup API won't copy between a
+    plaintext and an encrypted database; `SqliteCipher.CopyEncrypted` (a keyed `VACUUM INTO`) can.
 - **Accounts** (`docs/adr/0002-accounts.md`): every `Transaction` and `RecurringTransaction` has a required
   `AccountId` and an optional `ToAccountId` (FKs are `Restrict`; a used account is archived, not deleted).
   `ToAccountId` is required for `TransactionTypeEnum.Transfer`, optional for `Savings`, null otherwise, and
@@ -152,10 +169,14 @@ and `docs/design/tokens.md` (tokens, verified contrast). The rules that matter w
 ### Cross-cutting services (`Common/Services/`)
 
 - `AccountBalanceService` — account balances, the Available summary and Set balance (see Data layer).
-- `BackupService` — backup (a copy of the live database made with SQLite's backup API, safe while the app is
-  using it), checked restore (safety copy, then migrate), CSV export and the 30-day reminder
-  (`docs/adr/0003-backup-and-export.md`). The UI goes through
-  `Components/Pages/Data/BackupFlow` (share sheet, confirmation, snackbars). Files are handed to the user via
+- `BackupService` — backup, checked restore (safety copy, then migrate), CSV export and the 30-day reminder
+  (`docs/adr/0003-backup-and-export.md`, amended by `docs/adr/0004-encryption-at-rest.md`). A backup is a zip of
+  `manifest.json` and the database encrypted with its own key, copied with SQLite's backup API (safe while the app
+  is using it). `BackupKeys` (`Common/Security/`) wraps that key under the backup password (PBKDF2) and the
+  recovery code (HKDF), and remembers the derived keys in `ISecretStore`. `Inspect`/`Unlock` return a `BackupInfo`
+  (`IsLocked` when this device can't open it); pass that to `Restore`. Plaintext `.db` backups from before
+  encryption still restore. The UI goes through `Components/Pages/Data/BackupFlow` (share sheet, password set-up
+  at `/data/backup-password`, `UnlockBackupDialog`, confirmation, snackbars). Files are handed to the user via
   `IFileExchange` (`MauiFileExchange` wraps `IShare`/`IFilePicker`), never written anywhere permanent.
   Folders for this are called `Data`, not `Backup`: `.gitignore` excludes `Backup*/`.
 
