@@ -2,6 +2,7 @@
 
 - Date: 2026-10-17
 - Branch: `spike/sqlite3mc`. The .NET 11 / sqlite3mc move was merged; the spike tests were not.
+- Outcome: [ADR 0004](../adr/0004-encryption-at-rest.md).
 - Tests: `Tests/SpendSense.Tests/Encryption/Sqlite3McSpikeTests.cs` (19 tests, real temp files), removed before
   merging. Recover them with `git show 37c87b3:Tests/SpendSense.Tests/Encryption/Sqlite3McSpikeTests.cs`
   (plus `HexKeyInterceptor.cs` and `SqlCipher.cs` in the same folder).
