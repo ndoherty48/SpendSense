@@ -20,6 +20,7 @@
         <LayoutView Layout="typeof(Layout.FocusLayout)">
             <PageHeader Title="SpendSense couldn't start" />
             <p role="alert">Your data couldn't be opened: @error</p>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Open">Try again</MudButton>
         </LayoutView>
         break;
     default:

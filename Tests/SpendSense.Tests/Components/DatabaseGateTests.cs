@@ -53,4 +53,20 @@ public class DatabaseGateTests : ComponentTest
         Assert.Single(Directory.GetDirectories(DatabasePaths.Locked(Files)));
         SqliteConnection.ClearAllPools();
     }
+
+    [Fact]
+    public void A_failure_to_open_offers_try_again()
+    {
+        // A folder where the database file should be: SQLite can't open it.
+        Directory.CreateDirectory(DatabasePaths.Database(Files));
+
+        var gate = Render<DatabaseGate>(p => p.AddChildContent(App));
+
+        gate.WaitForAssertion(() => Assert.Equal("SpendSense couldn't start", gate.Find("h1").TextContent));
+
+        Directory.Delete(DatabasePaths.Database(Files));
+        gate.FindAll("button").Single(b => b.TextContent.Trim() == "Try again").Click();
+
+        gate.WaitForAssertion(() => Assert.NotNull(gate.Find("p.app")));
+    }
 }

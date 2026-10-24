@@ -83,7 +83,9 @@ OS restore brings back the file without the key. `Recover` explains this and off
 - **Restore from a backup.** Pick a file, unlock it with its password or recovery code, confirm, then the locked
   database is set aside (as below) and the backup is restored into a new one.
 - **Start fresh.** The locked database is moved, never deleted, into `AppData/SpendSense/Locked/<timestamp>/`
-  in case the key comes back. A new key and an empty database are created.
+  in case the key comes back. The old key isn't deleted either: it's kept in `ISecretStore` under
+  `spendsense.db.device-key.locked-<timestamp>`, since a damaged file reports a missing key too. A new key and
+  an empty database are created.
 
 ### 5. A backup is a zip protected by a password and a recovery code
 
@@ -150,7 +152,8 @@ It's for spreadsheets. Its row in Preferences says "Not encrypted".
 - **Tests:** backup and opener tests run against real encrypted temp files. The rest of the suite keeps using
   unencrypted in-memory SQLite.
 - **Platform setup:** Android's `allowBackup` is off, so Auto Backup can't restore the encrypted database to a
-  new phone without its Keystore key. Signed Mac Catalyst builds use `Entitlements.Keychain.plist` when
+  new phone without its Keystore key. On Android, then, a SpendSense backup is the only way to move to a new
+  phone (unlike iOS, decision 1). Signed Mac Catalyst builds use `Entitlements.Keychain.plist` when
   `CodesignProvision` is set.
 - **Not verified here:** iOS and Mac Catalyst can't be built on the machine this was written on (no Xcode),
   and the Windows store compiles only on Windows. Each needs a run on the device before release.

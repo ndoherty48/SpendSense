@@ -176,6 +176,22 @@ public sealed class DatabaseOpenerTests : IDisposable
     }
 
     [Fact]
+    public async Task Starting_fresh_keeps_the_old_key_with_the_locked_data()
+    {
+        // A stored key reported missing because the file is damaged, not because the key is wrong: keep it.
+        await Opener.Open();
+        var oldKey = key.Value;
+        SqliteConnection.ClearAllPools();
+
+        var locked = await Opener.StartFresh();
+
+        var kept = await secrets.Get(DatabaseOpener.LockedKeyName(Path.GetFileName(locked)));
+        Assert.Equal(oldKey, kept);
+        Assert.True(SqliteCipher.Opens(Path.Join(locked, "SpendSense.db"), kept));
+        Assert.NotEqual(oldKey, await StoredKey());
+    }
+
+    [Fact]
     public async Task An_empty_file_left_by_sqlite_counts_as_no_database()
     {
         Directory.CreateDirectory(DatabasePaths.Folder(files));

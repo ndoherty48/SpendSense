@@ -25,6 +25,12 @@ public class DatabaseOpener(ISecretStore secrets, IFileSystem fileSystem, Databa
 {
     public const string DeviceKeyName = "spendsense.db.device-key";
 
+    /// <summary>
+    /// Where <see cref="StartFresh"/> keeps the old key, named after the folder the old data went to. A key reported
+    /// missing may only have failed on a damaged file, so it's kept with the data rather than deleted.
+    /// </summary>
+    public static string LockedKeyName(string stamp) => $"{DeviceKeyName}.locked-{stamp}";
+
     public async Task<DatabaseState> Open()
     {
         var path = DatabasePaths.Database(fileSystem);
@@ -66,12 +72,14 @@ public class DatabaseOpener(ISecretStore secrets, IFileSystem fileSystem, Databa
 
     /// <summary>
     /// Moves the unreadable database aside (kept, never deleted, in case the key comes back) and starts again with a
-    /// new key and an empty database. Returns the folder the old data went to.
+    /// new key and an empty database. The old key, if there is one, is kept too (<see cref="LockedKeyName"/>).
+    /// Returns the folder the old data went to.
     /// </summary>
     public async Task<string> StartFresh()
     {
         SqliteConnection.ClearAllPools();
-        var locked = Path.Join(DatabasePaths.Locked(fileSystem), DateTime.Now.ToString("yyyy-MM-dd-HHmmss", CultureInfo.InvariantCulture));
+        var stamp = DateTime.Now.ToString("yyyy-MM-dd-HHmmss", CultureInfo.InvariantCulture);
+        var locked = Path.Join(DatabasePaths.Locked(fileSystem), stamp);
         Directory.CreateDirectory(locked);
 
         foreach (var file in DatabasePaths.WithSidecars(DatabasePaths.Database(fileSystem)).Where(File.Exists))
@@ -82,6 +90,8 @@ public class DatabaseOpener(ISecretStore secrets, IFileSystem fileSystem, Databa
         if (Directory.Exists(safetyCopies))
             Directory.Move(safetyCopies, Path.Join(locked, "Backups"));
 
+        if (await secrets.Get(DeviceKeyName) is { } oldKey)
+            await secrets.Set(LockedKeyName(stamp), oldKey);
         await secrets.Remove(DeviceKeyName);
         key.Unload();
 
