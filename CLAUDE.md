@@ -178,3 +178,17 @@ both AppHost-style and MAUI builders; it's referenced by the MAUI app project it
 See `ROADMAP.md` for planned work (CSV/PDF bank import, receipt attachments, cloud sync via API
 Gateway + Lambda + DynamoDB + Cognito). The Architecture Decisions section of `README.md` documents
 why choices like SQLite-local-first and repository pattern were made.
+
+## Agent skills
+
+### Issue tracker
+
+Issues are tracked in GitHub Issues on `ndoherty48/SpendSense` (via the `gh` CLI). See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default vocabulary: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: one `GLOSSARY.md` at the repo root (created when needed) plus `docs/adr/`. See `docs/agents/domain.md`.
