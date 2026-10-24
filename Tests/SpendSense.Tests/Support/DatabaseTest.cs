@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 
@@ -5,6 +7,7 @@ using SpendSense.Common.Data;
 using SpendSense.Common.Data.Interceptors;
 using SpendSense.Common.Models;
 using SpendSense.Common.Models.Enums;
+using SpendSense.Common.Security;
 using SpendSense.Common.Services;
 using SpendSense.Tests.TestDoubles;
 
@@ -18,29 +21,51 @@ namespace SpendSense.Tests.Support;
 public abstract class DatabaseTest : IDisposable
 {
     readonly SqliteConnection connection;
+    readonly Action<DbContextOptionsBuilder> useSqlite;
 
     protected DatabaseTest(bool migrate = true)
     {
         // The in-memory database lives as long as this connection stays open.
         connection = new SqliteConnection("Data Source=:memory:");
         connection.Open();
+        useSqlite = options => options.UseSqlite(connection);
         Db = CreateContext();
         if (migrate)
             Db.Database.Migrate();
     }
 
+    /// <summary>
+    /// An encrypted database file where the app keeps it under <paramref name="files"/>, keyed with a random
+    /// <see cref="Key"/> the way the app keys it (ADR 0004). For code that copies the database file around.
+    /// </summary>
+    protected DatabaseTest(TempFileSystem files)
+    {
+        Key.Load(RandomNumberGenerator.GetBytes(DatabaseKey.Size));
+        var path = DatabasePaths.Database(files);
+        Directory.CreateDirectory(DatabasePaths.Folder(files));
+        var interceptor = new DatabaseKeyInterceptor(Key);
+        useSqlite = options => options.UseSqlite($"Data Source={path}").AddInterceptors(interceptor);
+        Db = CreateContext();
+        Db.Database.Migrate();
+        connection = SqliteCipher.Open(path, Key.Value);
+    }
+
     protected SpendSenseDbContext Db { get; }
+
+    /// <summary>The device key, loaded only for an encrypted database.</summary>
+    protected DatabaseKey Key { get; } = new();
 
     protected InMemoryPreferences Preferences { get; } = new();
 
     protected SettingsService Settings => new(Preferences);
 
     /// <summary>A second context on the same database, e.g. to read back without the first one's tracked entities.</summary>
-    protected SpendSenseDbContext CreateContext() =>
-        new(new DbContextOptionsBuilder<SpendSenseDbContext>()
-            .UseSqlite(connection)
-            .AddInterceptors(new AddEntityInterceptor(), new ModifyEntityInterceptor())
-            .Options);
+    protected SpendSenseDbContext CreateContext()
+    {
+        var options = new DbContextOptionsBuilder<SpendSenseDbContext>();
+        useSqlite(options);
+        return new(options.AddInterceptors(new AddEntityInterceptor(), new ModifyEntityInterceptor()).Options);
+    }
 
     /// <summary>Runs SQL directly, for seeding a database at an older migration.</summary>
     protected void Sql(string sql)

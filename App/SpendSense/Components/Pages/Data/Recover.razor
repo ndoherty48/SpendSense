@@ -1,0 +1,66 @@
+@using SpendSense.Common.Security
+@inject BackupFlow Backup
+@inject DatabaseOpener Opener
+@inject IDialogService Dialogs
+
+@* Shown by DatabaseGate instead of the app when the database is encrypted and its key is missing (ADR 0004 decision 4).
+   Not routable: nothing else can run until the data is restored or set aside. *@
+<PageHeader Title="Your data is locked" />
+
+<p class="lead">
+    Your data is still on this device, but it's encrypted and the key that unlocks it is missing. This can happen after
+    reinstalling SpendSense, clearing its storage, or setting up a device from a system backup.
+</p>
+
+<div class="group">
+    <ListRow Title="Restore from a backup" Subtitle="Get your data back from a backup file. You'll need its password or recovery code." OnClick="Restore">
+        <Leading><IconTile Icon="@Icons.Material.Filled.SettingsBackupRestore" Tone="IconTone.Brand" /></Leading>
+    </ListRow>
+    <ListRow Title="Start fresh" Subtitle="Start again with no data. The locked data stays on this device in case the key comes back." OnClick="StartFresh">
+        <Leading><IconTile Icon="@Icons.Material.Filled.RestartAlt" Tone="IconTone.Error" /></Leading>
+    </ListRow>
+</div>
+
+@code {
+    /// <summary>Raised once there's a readable database again, so the gate can open it.</summary>
+    [Parameter] public EventCallback OnRecovered { get; set; }
+
+    bool busy;
+
+    async Task Restore()
+    {
+        if (busy) return;
+        busy = true;
+        try
+        {
+            // The locked data is only set aside once the backup is unlocked and the restore confirmed.
+            if (await Backup.Restore(beforeRestore: async () => await Opener.StartFresh()))
+                await OnRecovered.InvokeAsync();
+        }
+        finally
+        {
+            busy = false;
+        }
+    }
+
+    async Task StartFresh()
+    {
+        if (busy) return;
+        var confirmed = await Dialogs.ShowMessageBoxAsync("Start fresh?",
+            "SpendSense will start again with no transactions, accounts or budgets. The locked data is moved aside on this device, not deleted.",
+            yesText: "Start fresh", cancelText: "Cancel");
+        if (confirmed != true)
+            return;
+
+        busy = true;
+        try
+        {
+            await Opener.StartFresh();
+            await OnRecovered.InvokeAsync();
+        }
+        finally
+        {
+            busy = false;
+        }
+    }
+}

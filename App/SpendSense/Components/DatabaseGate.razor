@@ -1,0 +1,87 @@
+@using SpendSense.Common.Security
+@using SpendSense.Common.Services
+@using SpendSense.Components.Pages.Data
+@inject DatabaseOpener Opener
+@inject IServiceProvider Services
+
+@* Nothing touches the database until its key is loaded (ADR 0004 decision 2): this opens it, then shows the app, the
+   recovery screen when the key is missing, or what went wrong. *@
+@switch (phase)
+{
+    case Phase.Ready:
+        @ChildContent
+        break;
+    case Phase.KeyMissing:
+        <LayoutView Layout="typeof(Layout.FocusLayout)">
+            <Recover OnRecovered="Open" />
+        </LayoutView>
+        break;
+    case Phase.Failed:
+        <LayoutView Layout="typeof(Layout.FocusLayout)">
+            <PageHeader Title="SpendSense couldn't start" />
+            <p role="alert">Your data couldn't be opened: @error</p>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Open">Try again</MudButton>
+        </LayoutView>
+        break;
+    default:
+        <div aria-busy="true"></div>
+        break;
+}
+
+@code {
+    enum Phase { Opening, Ready, KeyMissing, Failed }
+
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    Phase phase;
+    string? error;
+
+    protected override Task OnInitializedAsync() => Open();
+
+    async Task Open()
+    {
+        phase = Phase.Opening;
+        try
+        {
+            if (await Opener.Open() == DatabaseState.KeyMissing)
+            {
+                phase = Phase.KeyMissing;
+                return;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Database] FAILED: {ex}");
+            error = ex.Message;
+            phase = Phase.Failed;
+            return;
+        }
+
+        await BringUpToDate();
+        phase = Phase.Ready;
+    }
+
+    // What MauiProgram used to do after migrating: each swallows its own failure, so neither stops the app opening.
+    async Task BringUpToDate()
+    {
+        try
+        {
+            await Services.GetRequiredService<RecurringTransactionGenerator>().GeneratePendingTransactions();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[RecurringGen] FAILED: {ex}");
+        }
+
+        try
+        {
+            var notifications = Services.GetRequiredService<NotificationService>();
+            await notifications.CheckBudgetThresholds();
+            await notifications.CheckGoalMilestones();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Notifications] FAILED: {ex}");
+        }
+    }
+}
