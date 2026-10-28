@@ -12,7 +12,7 @@ public sealed class TransactionRepository(SpendSenseDbContext dbContext)
             .Include(t => t.Category)
             .Include(t => t.Currency)
             .Include(t => t.Account)
-            .Include(t => t.ToAccount)
+            .Include(t => t.ToAccount).ThenInclude(a => a!.Currency)
             .OrderByDescending(t => t.TransactionDate)
             .ToListAsync();
     }

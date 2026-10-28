@@ -96,6 +96,9 @@ Transfers must be between accounts in the same currency. `Currency.ExchangeRate`
 calculation today, so totals don't convert: **Available** sums default-currency accounts and lists other
 currencies separately.
 
+> Superseded in part by [ADR 0004](0004-cross-currency-transfers.md): transfers and savings can now move
+> between currencies, and `Currency.ExchangeRate` has been removed. Totals still don't convert.
+
 ### 5. Available
 
 ```
@@ -134,5 +137,5 @@ Available is unchanged; it still sums each account by its own switch.
   `RecurringTransactions` to add the foreign keys.
 - Every place that reads `TransactionType` must treat `Transfer` as neither income nor outflow. Lists
   show transfers as "From → To" rows without a sign.
-- Out of scope: linking goals to a savings account, cross-currency transfers, converted totals,
+- Out of scope: linking goals to a savings account, cross-currency transfers (since added by ADR 0004), converted totals,
   importing statements into an account, card statement cycles.

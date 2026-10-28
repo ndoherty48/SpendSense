@@ -13,7 +13,10 @@ public interface IAccountMovement
     public double Amount { get; set; }
     public int AccountId { get; set; }
     public int? ToAccountId { get; set; }
+    /// <summary>What arrived in the destination account, in its currency; null unless the currencies differ.</summary>
+    public double? AmountReceived { get; set; }
     public Account? Account { get; }
     public Account? ToAccount { get; }
     public Category? Category { get; }
+    public Currency? Currency { get; }
 }

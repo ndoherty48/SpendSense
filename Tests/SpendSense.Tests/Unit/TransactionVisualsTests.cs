@@ -56,6 +56,16 @@ public class TransactionVisualsTests
     }
 
     [Fact]
+    public void A_move_between_currencies_also_shows_what_arrived()
+    {
+        var t = Row(TransactionTypeEnum.Transfer, Everyday, Account(4, "Euro account", currency: Eur));
+        t.AmountReceived = 57.6;
+
+        Assert.Equal((57.6, "€"), TransactionVisuals.Received(t));
+        Assert.Null(TransactionVisuals.Received(Row(TransactionTypeEnum.Transfer, Everyday, Visa)));
+    }
+
+    [Fact]
     public void Savings_into_an_account_is_a_move_labelled_savings()
     {
         var t = Row(TransactionTypeEnum.Savings, Everyday, Rainy);

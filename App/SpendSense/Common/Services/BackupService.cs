@@ -56,7 +56,7 @@ public class BackupService(SpendSenseDbContext db, IFileSystem fileSystem, Setti
             .AsNoTracking()
             .Include(t => t.Category)
             .Include(t => t.Account)
-            .Include(t => t.ToAccount)
+            .Include(t => t.ToAccount).ThenInclude(a => a!.Currency)
             .Include(t => t.Currency)
             .OrderBy(t => t.TransactionDate)
             .ThenBy(t => t.Id)

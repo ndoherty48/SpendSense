@@ -40,7 +40,6 @@ public class SpendSenseDbContext(DbContextOptions options) : DbContext(options)
             {
                 Id = 1,
                 Code = "GBP",
-                ExchangeRate = 1,
                 Symbol = "£",
                 IsDefault = true,
                 Name = "Great British Pound"
