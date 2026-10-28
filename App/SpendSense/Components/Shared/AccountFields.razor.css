@@ -22,3 +22,13 @@
     width: 20px;
     height: 20px;
 }
+
+.exchange {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--ss-space-2);
+}
+
+.exchange ::deep input {
+    font-family: var(--ss-font-mono);
+}

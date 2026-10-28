@@ -26,7 +26,7 @@ public class TransactionCsvTests
         var lines = Csv(t).Split("\r\n");
 
         Assert.Equal(TransactionCsv.Header, lines[0]);
-        Assert.Equal("2026-10-04,Whole Foods,Expense,Groceries,Everyday,,-62.10,GBP,", lines[1]);
+        Assert.Equal("2026-10-04,Whole Foods,Expense,Groceries,Everyday,,-62.10,GBP,,,", lines[1]);
         Assert.Equal("", lines[2]);
     }
 
@@ -47,7 +47,18 @@ public class TransactionCsvTests
         t.Account = Account(1, "Everyday");
         t.ToAccount = Account(2, "Visa card", AccountTypeEnum.CreditCard);
 
-        Assert.Equal("2026-10-03,Card payment,Transfer,,Everyday,Visa card,-300.00,,", Csv(t).Split("\r\n")[1]);
+        Assert.Equal("2026-10-03,Card payment,Transfer,,Everyday,Visa card,-300.00,,,,", Csv(t).Split("\r\n")[1]);
+    }
+
+    [Fact]
+    public void A_transfer_between_currencies_adds_what_was_received()
+    {
+        var t = Transaction(TransactionTypeEnum.Transfer, 100, 1, 2, description: "To euros", date: new DateTime(2026, 10, 3), amountReceived: 115.2);
+        t.Account = Account(1, "Everyday");
+        t.Currency = Gbp;
+        t.ToAccount = Account(2, "Euro account", currency: Eur);
+
+        Assert.Equal("2026-10-03,To euros,Transfer,,Everyday,Euro account,-100.00,GBP,,115.20,EUR", Csv(t).Split("\r\n")[1]);
     }
 
     [Theory]

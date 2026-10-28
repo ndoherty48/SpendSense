@@ -47,7 +47,9 @@ Restoring a file:
 
 `SpendSense-transactions-YYYY-MM-DD.csv` (UTF-8 with BOM, so Excel opens it correctly) has one row per
 transaction, oldest first, with the columns: Date (ISO), Description, Type, Category, Account, To account,
-Amount, Currency and Notes.
+Amount, Currency and Notes, then Amount received and Received currency, which are filled in only for a move
+between currencies ([ADR 0004](0004-cross-currency-transfers.md)). They come last so formulas that rely on
+the earlier column positions keep working.
 
 - **Amount sign:** amounts are signed from the source account's point of view: income is positive,
   everything else (expense, savings, transfer) is negative, and `To account` names where a transfer or

@@ -31,6 +31,12 @@ public static class TransactionVisuals
     public static double Amount(IAccountMovement t) =>
         t.TransactionType == TransactionTypeEnum.Income || IsMove(t) ? t.Amount : -t.Amount;
 
+    /// <summary>What arrived, in the destination's currency, for a move between currencies; null otherwise.</summary>
+    public static (double Amount, string Symbol)? Received(IAccountMovement t) =>
+        IsMove(t) && t.AmountReceived is { } received
+            ? (received, t.ToAccount?.Currency?.Symbol ?? t.ToAccount?.Currency?.Code ?? "")
+            : null;
+
     /// <summary>Whether to print a + or − (never for a move).</summary>
     public static bool Signed(IAccountMovement t) => !IsMove(t);
 

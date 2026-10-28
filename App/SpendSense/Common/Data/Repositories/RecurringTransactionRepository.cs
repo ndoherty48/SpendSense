@@ -12,7 +12,7 @@ public sealed class RecurringTransactionRepository(SpendSenseDbContext dbContext
             .Include(r => r.Category)
             .Include(r => r.Currency)
             .Include(r => r.Account)
-            .Include(r => r.ToAccount)
+            .Include(r => r.ToAccount).ThenInclude(a => a!.Currency)
             .OrderByDescending(r => r.CreatedAt)
             .ToListAsync();
     }

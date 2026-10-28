@@ -26,7 +26,7 @@ public static class Make
     public static AccountBalance Balance(Account account, double balance) => new(account, balance);
 
     public static Transaction Transaction(TransactionTypeEnum type, double amount, int accountId, int? toAccountId = null,
-        string description = "Test", DateTime? date = null, int currencyId = 1, int? categoryId = null) => new()
+        string description = "Test", DateTime? date = null, int currencyId = 1, int? categoryId = null, double? amountReceived = null) => new()
     {
         Description = description,
         Amount = amount,
@@ -35,6 +35,7 @@ public static class Make
         CurrencyId = currencyId,
         AccountId = accountId,
         ToAccountId = toAccountId,
+        AmountReceived = amountReceived,
         CategoryId = categoryId
     };
 }

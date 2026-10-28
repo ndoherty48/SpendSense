@@ -58,7 +58,7 @@ public class AccountBalanceService(SpendSenseDbContext db, SettingsService setti
         if (transaction.AccountId == accountId)
             delta += transaction.TransactionType == TransactionTypeEnum.Income ? transaction.Amount : -transaction.Amount;
         if (transaction.ToAccountId == accountId)
-            delta += transaction.Amount;
+            delta += transaction.AmountReceived ?? transaction.Amount;
         return delta;
     }
 
@@ -168,7 +168,8 @@ public class AccountBalanceService(SpendSenseDbContext db, SettingsService setti
         await db.SaveChangesAsync();
     }
 
-    // Net movement per account: income in, expenses/savings/transfers out, savings/transfers received.
+    // Net movement per account: income in, expenses/savings/transfers out, savings/transfers received (in the
+    // destination's currency when the two differ).
     async Task<Dictionary<int, double>> GetMovements(int? accountId = null)
     {
         var tomorrow = DateTime.Today.AddDays(1);
@@ -183,7 +184,7 @@ public class AccountBalanceService(SpendSenseDbContext db, SettingsService setti
         var incoming = await dated
             .Where(t => t.ToAccountId != null && (accountId == null || t.ToAccountId == accountId))
             .GroupBy(t => t.ToAccountId!.Value)
-            .Select(g => new { AccountId = g.Key, Total = g.Sum(t => t.Amount) })
+            .Select(g => new { AccountId = g.Key, Total = g.Sum(t => t.AmountReceived ?? t.Amount) })
             .ToListAsync();
 
         var result = new Dictionary<int, double>();

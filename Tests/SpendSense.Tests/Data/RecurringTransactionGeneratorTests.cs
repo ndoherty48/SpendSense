@@ -95,6 +95,24 @@ public class RecurringTransactionGeneratorTests : DatabaseTest
         Assert.Equal(1, t.AccountId);
         Assert.Equal(savings.Id, t.ToAccountId);
         Assert.Equal(10, t.Amount);
+        Assert.Null(t.AmountReceived);
         Assert.Equal("Rule", t.Description);
+    }
+
+    [Fact]
+    public async Task Generated_transactions_copy_a_fixed_amount_received()
+    {
+        var euro = new Currency { Code = "EUR", Name = "Euro", Symbol = "€" };
+        Db.Currencies.Add(euro);
+        await Db.SaveChangesAsync(Ct);
+        var euros = await AddAccount("Euro account", currencyId: euro.Id);
+        var rule = await AddRule(FrequencyEnum.Monthly, Today, TransactionTypeEnum.Transfer, toAccountId: euros.Id);
+        rule.AmountReceived = 11.52;
+        await Db.SaveChangesAsync(Ct);
+
+        await Generator.GeneratePendingTransactions();
+
+        var t = await Db.Transactions.SingleAsync(x => x.RecurringTransactionId == rule.Id, Ct);
+        Assert.Equal(11.52, t.AmountReceived);
     }
 }

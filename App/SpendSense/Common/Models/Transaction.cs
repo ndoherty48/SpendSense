@@ -20,6 +20,8 @@ public class Transaction : ITimestamped, IAccountMovement
     public int AccountId {get;set;}
     /// <summary>The destination account: required for a transfer, optional for savings, otherwise null.</summary>
     public int? ToAccountId {get;set;}
+    /// <summary>What arrived in the destination account, in its currency; null unless the two currencies differ.</summary>
+    public double? AmountReceived {get;set;}
     [Required]
     public required DateTime TransactionDate {get;set;}
     [Required]

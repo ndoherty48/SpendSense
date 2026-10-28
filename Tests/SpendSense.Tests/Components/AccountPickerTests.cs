@@ -1,5 +1,7 @@
 using Bunit;
 
+using Microsoft.Extensions.DependencyInjection;
+
 using SpendSense.Common.Models;
 using SpendSense.Common.Models.Enums;
 using SpendSense.Common.Services;
@@ -112,5 +114,75 @@ public class AccountPickerTests : ComponentTest
 
         Assert.Equal(["From", "Into (optional)"], cut.FindAll(".account-select .label").Select(l => l.TextContent));
         Assert.Contains("Not tracked", cut.Markup);
+    }
+
+    // A GBP account and a EUR account, with a past GBP → EUR transfer at 1.152 for the suggested rate.
+    async Task<IReadOnlyList<AccountBalance>> CrossCurrencyAccounts()
+    {
+        var euro = new Currency { Code = "EUR", Name = "Euro", Symbol = "€" };
+        Db.Currencies.Add(euro);
+        await Db.SaveChangesAsync(Xunit.TestContext.Current.CancellationToken);
+        var euros = await AddAccount("Euro account");
+        euros.CurrencyId = euro.Id;
+        await Db.SaveChangesAsync(Xunit.TestContext.Current.CancellationToken);
+        await AddTransaction(TransactionTypeEnum.Transfer, 100, 1, euros.Id, days: -3);
+        var past = Db.Transactions.Single();
+        past.AmountReceived = 115.2;
+        await Db.SaveChangesAsync(Xunit.TestContext.Current.CancellationToken);
+        return await Services.GetRequiredService<AccountBalanceService>().GetBalances();
+    }
+
+    [Fact]
+    public void One_currency_shows_no_exchange_fields()
+    {
+        var cut = Render<AccountFields>(p => p.Add(x => x.Model, Model(TransactionTypeEnum.Transfer, from: 1, to: 3)).Add(x => x.Accounts, Accounts));
+
+        Assert.Empty(cut.FindAll(".exchange"));
+    }
+
+    [Fact]
+    public async Task Choosing_a_foreign_destination_suggests_the_last_rate()
+    {
+        var accounts = await CrossCurrencyAccounts();
+        var model = Transaction(TransactionTypeEnum.Transfer, 50, accountId: 1);
+        var cut = Render<AccountFields>(p => p.Add(x => x.Model, model).Add(x => x.Accounts, accounts));
+
+        cut.FindAll(".account-select")[1].QuerySelectorAll("button.pill").Single(b => b.TextContent.Contains("Euro account")).Click();
+
+        cut.WaitForAssertion(() => Assert.Equal(57.6, model.AmountReceived));
+        Assert.Equal("1.152", cut.Find(".rate input").GetAttribute("value"));
+    }
+
+    [Fact]
+    public async Task Typing_the_amount_received_sets_the_rate_and_changing_the_amount_keeps_it()
+    {
+        var accounts = await CrossCurrencyAccounts();
+        var euros = accounts.Single(a => a.Account.Name == "Euro account").Account.Id;
+        var model = Transaction(TransactionTypeEnum.Transfer, 100, accountId: 1, toAccountId: euros);
+        var cut = Render<AccountFields>(p => p.Add(x => x.Model, model).Add(x => x.Accounts, accounts));
+
+        cut.Find(".received input").Change("120");
+        Assert.Equal(120, model.AmountReceived);
+        Assert.Equal("1.2", cut.Find(".rate input").GetAttribute("value"));
+
+        model.Amount = 50;
+        cut.Render(p => p.Add(x => x.Model, model));
+        Assert.Equal(60, model.AmountReceived);
+    }
+
+    [Fact]
+    public async Task Swapping_a_move_between_currencies_swaps_the_amounts()
+    {
+        var accounts = await CrossCurrencyAccounts();
+        var euros = accounts.Single(a => a.Account.Name == "Euro account").Account.Id;
+        var model = Transaction(TransactionTypeEnum.Transfer, 100, accountId: 1, toAccountId: euros, amountReceived: 115.2);
+        var cut = Render<AccountFields>(p => p.Add(x => x.Model, model).Add(x => x.Accounts, accounts));
+
+        cut.Find("button[aria-label='Swap accounts']").Click();
+
+        Assert.Equal(euros, model.AccountId);
+        Assert.Equal(115.2, model.Amount);
+        Assert.Equal(100, model.AmountReceived);
+        Assert.Equal("0.8681", cut.Find(".rate input").GetAttribute("value"));
     }
 }
