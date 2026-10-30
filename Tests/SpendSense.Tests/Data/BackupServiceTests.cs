@@ -1,4 +1,6 @@
+using System.IO.Compression;
 using System.Text;
+using System.Text.Json;
 
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -7,39 +9,104 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 using SpendSense.Common.Data;
 using SpendSense.Common.Models.Enums;
+using SpendSense.Common.Security;
 using SpendSense.Common.Services;
 using SpendSense.Tests.Support;
 using SpendSense.Tests.TestDoubles;
 
 namespace SpendSense.Tests.Data;
 
-/// <summary>Backups are real SQLite files: written, inspected and restored over the live (in-memory) database.</summary>
+/// <summary>
+/// Backups are real encrypted zips (ADR 0004): written from, inspected against and restored over a live encrypted
+/// database file. Plaintext backups from before encryption must still restore.
+/// </summary>
 public sealed class BackupServiceTests : DatabaseTest, IDisposable
 {
-    readonly TempFileSystem files = new();
+    const string Password = "correct horse battery";
 
-    BackupService Service => new(Db, files, Settings);
+    readonly TempFileSystem files;
+    readonly InMemorySecretStore secrets = new();
+    readonly string recoveryCode;
+
+    public BackupServiceTests() : this(new TempFileSystem()) { }
+
+    BackupServiceTests(TempFileSystem files) : base(files)
+    {
+        this.files = files;
+        recoveryCode = Keys(secrets).SetPassword(Password).GetAwaiter().GetResult();
+    }
+
+    BackupService Service => ServiceWith(secrets);
+
+    BackupService ServiceWith(ISecretStore store) => new(Db, files, Settings, Key, Keys(store));
+
+    static BackupKeys Keys(ISecretStore store) => new(store) { PasswordIterations = ComponentTest.TestPasswordIterations };
+
+    /// <summary>The same app on another device: a different secret store, so nothing is remembered.</summary>
+    BackupService OtherDevice => ServiceWith(new InMemorySecretStore());
 
     static CancellationToken Ct => TestContext.Current.CancellationToken;
 
-    static SpendSenseDbContext OpenFile(string path) =>
+    /// <summary>A plaintext SpendSense database, as backups were before ADR 0004.</summary>
+    static SpendSenseDbContext OpenPlaintext(string path) =>
         new(new DbContextOptionsBuilder<SpendSenseDbContext>()
             .UseSqlite(new SqliteConnectionStringBuilder { DataSource = path, Pooling = false }.ToString())
             .Options);
 
+    static string ReadEntry(string zipPath, string name)
+    {
+        using var zip = ZipFile.OpenRead(zipPath);
+        using var reader = new StreamReader(zip.GetEntry(name)!.Open());
+        return reader.ReadToEnd();
+    }
+
+    static byte[] ReadEntryBytes(string zipPath, string name)
+    {
+        using var zip = ZipFile.OpenRead(zipPath);
+        using var stream = new MemoryStream();
+        zip.GetEntry(name)!.Open().CopyTo(stream);
+        return stream.ToArray();
+    }
+
+    /// <summary>Rewrites the manifest of a backup with <paramref name="change"/> applied to its JSON.</summary>
+    static void EditManifest(string zipPath, Func<string, string> change)
+    {
+        var manifest = change(ReadEntry(zipPath, BackupManifest.EntryName));
+        using var zip = ZipFile.Open(zipPath, ZipArchiveMode.Update);
+        zip.GetEntry(BackupManifest.EntryName)!.Delete();
+        using var writer = new StreamWriter(zip.CreateEntry(BackupManifest.EntryName).Open());
+        writer.Write(manifest);
+    }
+
     [Fact]
-    public async Task A_backup_is_a_complete_copy_of_the_database()
+    public async Task A_backup_is_a_zip_of_a_manifest_and_an_encrypted_database()
     {
         await AddTransaction(TransactionTypeEnum.Expense, 62.10, accountId: 1, description: "Groceries");
-        await AddAccount("Visa", AccountTypeEnum.CreditCard);
 
         var path = await Service.CreateBackup(new DateTime(2026, 10, 4, 9, 30, 0));
 
-        Assert.Equal("SpendSense-backup-2026-10-04-093000.db", Path.GetFileName(path));
-        await using var copy = OpenFile(path);
-        Assert.Equal("Groceries", (await copy.Transactions.SingleAsync(Ct)).Description);
-        Assert.Equal(2, await copy.Accounts.CountAsync(Ct));
-        Assert.Empty(await copy.Database.GetPendingMigrationsAsync(Ct));
+        Assert.Equal("SpendSense-backup-2026-10-04-093000.zip", Path.GetFileName(path));
+        using (var zip = ZipFile.OpenRead(path))
+            Assert.Equal(["manifest.json", "SpendSense.db"], zip.Entries.Select(e => e.FullName));
+
+        var database = ReadEntryBytes(path, "SpendSense.db");
+        Assert.NotEqual("SQLite format 3\0", Encoding.ASCII.GetString(database, 0, 16));
+        Assert.DoesNotContain("Groceries", Encoding.UTF8.GetString(database));
+
+        var manifest = ReadEntry(path, "manifest.json");
+        Assert.DoesNotContain("Groceries", manifest);
+        using var json = JsonDocument.Parse(manifest);
+        Assert.Equal("spendsense-backup", json.RootElement.GetProperty("format").GetString());
+        Assert.Equal(["password", "recoveryCode"], json.RootElement.GetProperty("keySlots").EnumerateArray().Select(s => s.GetProperty("type").GetString()));
+    }
+
+    [Fact]
+    public async Task Backing_up_needs_a_backup_password()
+    {
+        var service = ServiceWith(new InMemorySecretStore());
+
+        Assert.False(await service.HasPassword());
+        await Assert.ThrowsAsync<InvalidOperationException>(() => service.CreateBackup());
     }
 
     [Fact]
@@ -53,19 +120,89 @@ public sealed class BackupServiceTests : DatabaseTest, IDisposable
     }
 
     [Fact]
-    public async Task Inspecting_a_backup_summarises_it()
+    public async Task A_backup_made_on_this_device_opens_without_asking_and_is_summarised()
     {
         await AddTransaction(TransactionTypeEnum.Expense, 10, accountId: 1, days: -3);
         await AddTransaction(TransactionTypeEnum.Income, 20, accountId: 1);
         var path = await Service.CreateBackup();
 
-        var info = Service.Inspect(path);
+        var info = await Service.Inspect(path);
 
         Assert.True(info.IsValid, info.Problem);
+        Assert.False(info.IsLocked);
         Assert.Equal(2, info.Transactions);
         Assert.Equal(1, info.Accounts);
         Assert.Equal(DateTime.Today, info.LatestTransaction?.Date);
         Assert.False(info.NeedsUpgrade);
+    }
+
+    [Fact]
+    public async Task On_another_device_a_backup_is_locked_until_its_password_is_entered()
+    {
+        await AddTransaction(TransactionTypeEnum.Expense, 10, accountId: 1);
+        var path = await Service.CreateBackup();
+
+        var locked = await OtherDevice.Inspect(path);
+        Assert.True(locked.IsLocked);
+        Assert.False(locked.IsValid);
+
+        var wrong = await OtherDevice.Unlock(path, UnlockMethod.Password, "not the password");
+        Assert.True(wrong.IsLocked);
+        Assert.Contains("doesn't match", wrong.Problem);
+
+        var unlocked = await OtherDevice.Unlock(path, UnlockMethod.Password, Password);
+        Assert.True(unlocked.IsValid, unlocked.Problem);
+        Assert.Equal(1, unlocked.Transactions);
+    }
+
+    [Fact]
+    public async Task The_recovery_code_opens_a_backup_however_it_is_typed()
+    {
+        var path = await Service.CreateBackup();
+
+        Assert.True((await OtherDevice.Unlock(path, UnlockMethod.RecoveryCode, recoveryCode)).IsValid);
+        Assert.True((await OtherDevice.Unlock(path, UnlockMethod.RecoveryCode, recoveryCode.Replace("-", " ").ToLowerInvariant())).IsValid);
+        Assert.True((await OtherDevice.Unlock(path, UnlockMethod.RecoveryCode, "AAAA-AAAA-AAAA-AAAA-AAAA-AAAA-AA")).IsLocked);
+        Assert.True((await OtherDevice.Unlock(path, UnlockMethod.RecoveryCode, "too short")).IsLocked);
+    }
+
+    [Fact]
+    public async Task A_new_password_opens_new_backups_and_the_old_one_still_opens_old_backups()
+    {
+        var before = await Service.CreateBackup(new DateTime(2026, 10, 1));
+        var keptBefore = files.PathFor("before.zip");
+        File.Copy(before, keptBefore);
+
+        await Keys(secrets).SetPassword("a brand new password");
+        var after = await Service.CreateBackup(new DateTime(2026, 10, 2));
+
+        Assert.True((await OtherDevice.Unlock(keptBefore, UnlockMethod.Password, Password)).IsValid);
+        Assert.True((await OtherDevice.Unlock(after, UnlockMethod.Password, "a brand new password")).IsValid);
+        Assert.True((await OtherDevice.Unlock(after, UnlockMethod.Password, Password)).IsLocked);
+        // This device no longer remembers the old password's key.
+        Assert.True((await Service.Inspect(keptBefore)).IsLocked);
+    }
+
+    [Fact]
+    public async Task Editing_the_manifest_stops_the_backup_opening()
+    {
+        var path = await Service.CreateBackup(new DateTime(2026, 10, 4, 9, 30, 0));
+        EditManifest(path, json => json.Replace("2026-10-04", "2026-10-05"));
+
+        Assert.True((await Service.Inspect(path)).IsLocked);
+        Assert.True((await OtherDevice.Unlock(path, UnlockMethod.Password, Password)).IsLocked);
+    }
+
+    [Fact]
+    public async Task A_backup_in_a_newer_format_is_refused()
+    {
+        var path = await Service.CreateBackup();
+        EditManifest(path, json => json.Replace("\"formatVersion\": 1", "\"formatVersion\": 2"));
+
+        var info = await Service.Inspect(path);
+
+        Assert.False(info.IsValid);
+        Assert.Contains("newer version", info.Problem);
     }
 
     [Fact]
@@ -74,14 +211,25 @@ public sealed class BackupServiceTests : DatabaseTest, IDisposable
         var path = files.PathFor("notes.db");
         File.WriteAllText(path, "definitely not sqlite");
 
-        var info = Service.Inspect(path);
+        var info = Service.Inspect(path).GetAwaiter().GetResult();
 
         Assert.False(info.IsValid);
+        Assert.False(info.IsLocked);
         Assert.Equal("This file isn't a SpendSense backup.", info.Problem);
     }
 
     [Fact]
-    public void Another_apps_database_is_refused()
+    public async Task A_zip_that_is_not_a_backup_is_refused()
+    {
+        var path = files.PathFor("photos.zip");
+        using (var zip = ZipFile.Open(path, ZipArchiveMode.Create))
+            zip.CreateEntry("photo.jpg");
+
+        Assert.Equal("This file isn't a SpendSense backup.", (await Service.Inspect(path)).Problem);
+    }
+
+    [Fact]
+    public async Task Another_apps_database_is_refused()
     {
         var path = files.PathFor("other.db");
         using (var other = new SqliteConnection($"Data Source={path};Pooling=False"))
@@ -92,29 +240,28 @@ public sealed class BackupServiceTests : DatabaseTest, IDisposable
             command.ExecuteNonQuery();
         }
 
-        Assert.Equal("This file isn't a SpendSense backup.", Service.Inspect(path).Problem);
+        Assert.Equal("This file isn't a SpendSense backup.", (await Service.Inspect(path)).Problem);
     }
 
     [Fact]
     public async Task A_backup_from_a_newer_app_version_is_refused()
     {
-        var path = await Service.CreateBackup();
-        using (var connection = new SqliteConnection($"Data Source={path};Pooling=False"))
+        var path = files.PathFor("future.db");
+        await using (var future = OpenPlaintext(path))
         {
-            connection.Open();
-            using var command = connection.CreateCommand();
-            command.CommandText = "INSERT INTO __EFMigrationsHistory (MigrationId, ProductVersion) VALUES ('29991231000000_FromTheFuture', '99.0');";
-            command.ExecuteNonQuery();
+            await future.Database.MigrateAsync(Ct);
+            await future.Database.ExecuteSqlRawAsync(
+                "INSERT INTO __EFMigrationsHistory (MigrationId, ProductVersion) VALUES ('29991231000000_FromTheFuture', '99.0');", Ct);
         }
 
-        var info = Service.Inspect(path);
+        var info = await Service.Inspect(path);
 
         Assert.False(info.IsValid);
         Assert.Contains("newer version", info.Problem);
     }
 
     [Fact]
-    public async Task Restoring_brings_back_the_backed_up_data_and_keeps_a_safety_copy()
+    public async Task Restoring_brings_back_the_backed_up_data_and_keeps_an_encrypted_safety_copy()
     {
         await AddTransaction(TransactionTypeEnum.Expense, 10, accountId: 1, description: "Before backup");
         var backup = await Service.CreateBackup();
@@ -123,9 +270,45 @@ public sealed class BackupServiceTests : DatabaseTest, IDisposable
         await Service.Restore(backup);
 
         Assert.Equal(["Before backup"], await Db.Transactions.Select(t => t.Description).ToListAsync(Ct));
+        Assert.False(SqliteCipher.IsPlaintext(DatabasePaths.Database(files)));
         var safety = Assert.Single(Directory.GetFiles(Service.SafetyCopyDirectory));
-        await using var saved = OpenFile(safety);
-        Assert.Equal(2, await saved.Transactions.CountAsync(Ct));
+        Assert.False(SqliteCipher.IsPlaintext(safety));
+        Assert.True(SqliteCipher.Opens(safety, Key.Value));
+    }
+
+    [Fact]
+    public async Task A_backup_from_another_device_restores_once_unlocked()
+    {
+        await AddTransaction(TransactionTypeEnum.Expense, 10, accountId: 1, description: "From the old phone");
+        var backup = await Service.CreateBackup();
+        await AddTransaction(TransactionTypeEnum.Expense, 99, accountId: 1, description: "On the new phone");
+        var newPhone = OtherDevice;
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => newPhone.Restore(backup));
+        var info = await newPhone.Unlock(backup, UnlockMethod.Password, Password);
+        await newPhone.Restore(backup, info);
+
+        Assert.Equal(["From the old phone"], await Db.Transactions.Select(t => t.Description).ToListAsync(Ct));
+        Assert.True(SqliteCipher.Opens(DatabasePaths.Database(files), Key.Value));
+    }
+
+    [Fact]
+    public async Task A_plaintext_backup_from_before_encryption_still_restores_into_the_encrypted_database()
+    {
+        var path = files.PathFor("SpendSense-backup-2026-10-04-0930.db");
+        await using (var old = OpenPlaintext(path))
+        {
+            await old.Database.MigrateAsync(Ct);
+            old.Transactions.Add(Make.Transaction(TransactionTypeEnum.Expense, 42, accountId: 1, description: "Plaintext backup"));
+            await old.SaveChangesAsync(Ct);
+        }
+
+        var info = await Service.Inspect(path);
+        Assert.True(info.IsValid, info.Problem);
+        await Service.Restore(path, info);
+
+        Assert.Equal(["Plaintext backup"], await Db.Transactions.Select(t => t.Description).ToListAsync(Ct));
+        Assert.False(SqliteCipher.IsPlaintext(DatabasePaths.Database(files)));
     }
 
     [Fact]
@@ -159,7 +342,7 @@ public sealed class BackupServiceTests : DatabaseTest, IDisposable
     {
         // A backup made before accounts existed.
         var path = files.PathFor("old.db");
-        await using (var old = OpenFile(path))
+        await using (var old = OpenPlaintext(path))
         {
             old.GetService<IMigrator>().Migrate("20260601172005_MakeRecurringTransactionIdNullable");
             await old.Database.ExecuteSqlRawAsync("""
@@ -168,7 +351,7 @@ public sealed class BackupServiceTests : DatabaseTest, IDisposable
                 """, Ct);
         }
 
-        Assert.True(Service.Inspect(path).NeedsUpgrade);
+        Assert.True((await Service.Inspect(path)).NeedsUpgrade);
         await Service.Restore(path);
 
         var t = await Db.Transactions.Include(x => x.Account).SingleAsync(Ct);
@@ -188,6 +371,22 @@ public sealed class BackupServiceTests : DatabaseTest, IDisposable
 
         Assert.Equal(1, await Db.Transactions.CountAsync(Ct));
         Assert.False(Directory.Exists(Service.SafetyCopyDirectory));
+    }
+
+    [Fact]
+    public async Task Nothing_decrypted_is_left_in_the_cache_after_a_backup_and_a_restore()
+    {
+        await AddTransaction(TransactionTypeEnum.Expense, 10, accountId: 1, description: "Secret groceries");
+        var backup = await Service.CreateBackup();
+        await Service.Restore(backup);
+
+        foreach (var file in Directory.GetFiles(files.CacheDirectory, "*", SearchOption.AllDirectories))
+        {
+            var bytes = await File.ReadAllBytesAsync(file, Ct);
+            Assert.DoesNotContain("Secret groceries", Encoding.UTF8.GetString(bytes));
+            Assert.False(bytes.Length >= 16 && Encoding.ASCII.GetString(bytes, 0, 16) == "SQLite format 3\0", file);
+        }
+        Assert.Equal([Path.GetFileName(backup)], Directory.GetFiles(files.CacheDirectory, "*", SearchOption.AllDirectories).Select(Path.GetFileName));
     }
 
     [Fact]

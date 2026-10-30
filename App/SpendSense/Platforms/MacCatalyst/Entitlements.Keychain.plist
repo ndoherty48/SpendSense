@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+    <dict>
+        <key>com.apple.security.app-sandbox</key>
+        <true/>
+        <key>com.apple.security.network.client</key>
+        <true/>
+        <!-- MAUI SecureStorage uses the Keychain, which needs an access group (it holds the database key). Apple only
+             allows this entitlement with a provisioning profile, so SpendSense.csproj uses this file only when
+             CodesignProvision is set. -->
+        <key>keychain-access-groups</key>
+        <array>
+            <string>$(AppIdentifierPrefix)dev.nathandoherty.spendsense</string>
+        </array>
+    </dict>
+</plist>

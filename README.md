@@ -12,7 +12,8 @@ A personal budgeting app built with .NET MAUI Blazor Hybrid and Aspire.
 - **Dashboard** — monthly summary with balance, income/expenses/savings, an accounts strip with the total available, a spending-by-category donut with budget progress, overspend warnings
 - **Preferences** — System/Light/Dark theme, income attribution toggle (income funds next month's budget), hide-amounts privacy mode
 - **Filtering** — search transactions by description/notes, filter by category, type or account
-- **Backup & export** — back up the whole database to Files/iCloud/Drive via the share sheet, restore it (checked, upgraded, with a safety copy of current data), export transactions as CSV; a dashboard reminder after 30 days without a backup
+- **Encrypted on the device** — the database is encrypted with a key kept in the platform's secure storage; no unlock screen
+- **Backup & export** — back up to Files/iCloud/Drive via the share sheet as an encrypted file protected by a backup password and a recovery code, restore it on any device (checked, upgraded, with a safety copy of current data), export transactions as CSV; a dashboard reminder after 30 days without a backup
 - **Delete protection** — prevents deletion of categories, currencies and accounts that are in use (accounts can be archived instead)
 
 ## Tech Stack
@@ -81,10 +82,11 @@ dotnet ef migrations add <MigrationName> --framework net11.0
 ## Architecture Decisions
 
 - **SQLite** — local-first, works offline, no server dependency
+- **Encryption at rest** — SQLite3 Multiple Ciphers with a device key in secure storage; backups get their own key, wrapped by a password and a recovery code ([ADR 0004](docs/adr/0004-encryption-at-rest.md))
 - **Repository pattern** — thin layer over DbContext for testability
 - **SaveChanges interceptors** — auto-set CreatedAt/UpdatedAt timestamps
 - **Preferences API** — persists settings (theme, active budget period) via platform-native storage
-- **Recurring transaction generation** — runs synchronously on app startup after migrations
+- **Recurring transaction generation** — runs on app startup, once the database is open and migrated
 - **Enum-to-string storage** — enums stored as readable strings in SQLite for debuggability
 - **Computed account balances** — opening balance plus transactions, never stored, so edits can't leave a balance out of sync; transfers never count toward budgets ([ADR 0002](docs/adr/0002-accounts.md))
 
