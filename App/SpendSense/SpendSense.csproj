@@ -62,7 +62,7 @@
 
     <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">
         <!-- DpapiSecretStore: the app is unpackaged, so MAUI SecureStorage isn't available. -->
-        <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="11.0.0-rc.2.26504.105" />
+        <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="11.0.0" />
     </ItemGroup>
 
     <ItemGroup>
