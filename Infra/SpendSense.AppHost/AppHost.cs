@@ -4,14 +4,16 @@ var builder = DistributedApplication.CreateBuilder(args);
 
 var maui = builder.AddMauiProject("SpendSense", "../../App/SpendSense/SpendSense.csproj");
 
-maui.AddiOSSimulator();
-    // .WithOtlpDevTunnel();
+maui.AddiOSSimulator()
+    .WithOtlpDevTunnel();
 maui.AddAndroidDevice("SpendSense-Android-Device", deviceId: builder.Configuration.GetValue<string>("AndroidDeviceId"))
     .WithArgs(ctx => ctx.Args.Remove("run"))
     .WithOtlpDevTunnel();
 maui.AddAndroidEmulator()
-    .WithArgs(ctx => ctx.Args.Remove("run"));
-    // .WithOtlpDevTunnel();
-maui.AddMacCatalystDevice();
-
+    .WithArgs(ctx => ctx.Args.Remove("run"))
+    .WithOtlpDevTunnel();
+maui.AddMacCatalystDevice()
+    .WithOtlpDevTunnel();
+maui.AddWindowsDevice()
+    .WithOtlpDevTunnel();
 builder.Build().Run();
