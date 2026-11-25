@@ -55,6 +55,11 @@
         <CodesignEntitlements>Platforms\MacCatalyst\Entitlements.Keychain.plist</CodesignEntitlements>
     </PropertyGroup>
 
+    <!-- iOS (simulator included) always needs the Keychain access group for SecureStorage. -->
+    <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">
+        <CodesignEntitlements>Platforms\iOS\Entitlements.plist</CodesignEntitlements>
+    </PropertyGroup>
+
     <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">
         <!-- DpapiSecretStore: the app is unpackaged, so MAUI SecureStorage isn't available. -->
         <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="11.0.0-rc.2.26504.105" />

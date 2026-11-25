@@ -72,8 +72,9 @@ which the next launch converts again. The other order could lose the key to an e
 3. `PRAGMA rekey = 'raw:<hex>'`, then `PRAGMA journal_mode = WAL` again.
 
 The conversion runs in one rollback-journal transaction, so it is as crash-safe as any SQLite write. The safety
-copies ADR 0003 keeps under `AppData/SpendSense/Backups` are encrypted the same way, and the export cache is
-emptied. Plaintext blocks that the flash storage already wrote elsewhere can't be scrubbed by an app.
+copies ADR 0003 keeps under `AppData/SpendSense/Backups` are encrypted the same way, and plaintext databases in
+the export and import caches are deleted. That sweep runs on every launch, so a conversion interrupted after the
+database but before its copies still finishes. Plaintext blocks that the flash storage already wrote elsewhere can't be scrubbed by an app.
 
 ### 4. A missing key has a recovery screen, not a crash
 
@@ -151,10 +152,12 @@ It's for spreadsheets. Its row in Preferences says "Not encrypted".
 
 - **Tests:** backup and opener tests run against real encrypted temp files. The rest of the suite keeps using
   unencrypted in-memory SQLite.
-- **Platform setup:** Android's `allowBackup` is off, so Auto Backup can't restore the encrypted database to a
-  new phone without its Keystore key. On Android, then, a SpendSense backup is the only way to move to a new
-  phone (unlike iOS, decision 1). Signed Mac Catalyst builds use `Entitlements.Keychain.plist` when
-  `CodesignProvision` is set.
+- **Platform setup:** Android's `allowBackup` is off and `data_extraction_rules.xml` excludes everything from
+  cloud backup and device-to-device transfer (Android 12+ ignores `allowBackup` for the latter), so neither can
+  move the encrypted database to a new phone without its Keystore key. On Android, then, a SpendSense backup is
+  the only way to move to a new phone (unlike iOS, decision 1). iOS builds, the simulator included, use
+  `Platforms/iOS/Entitlements.plist` for the Keychain access group. Signed Mac Catalyst builds use
+  `Entitlements.Keychain.plist` when `CodesignProvision` is set.
 - **Not verified here:** iOS and Mac Catalyst can't be built on the machine this was written on (no Xcode),
   and the Windows store compiles only on Windows. Each needs a run on the device before release.
 - **Later:** an optional app lock (biometrics or PIN on open, independent of the device key), automatic
