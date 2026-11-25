@@ -15,7 +15,7 @@ concurrency:
 env:
   # The workload set that matches the SDK in global.json and the MAUI packages in the csproj files. It's pinned here,
   # not in global.json, because a global.json pin makes every dotnet command require it.
-  WORKLOAD_VERSION: 11.0.100-rc.2.26513.2
+  WORKLOAD_VERSION: 11.0.100.1
 
 jobs:
   test:

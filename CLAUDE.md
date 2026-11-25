@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-SpendSense is a personal budgeting app built with .NET MAUI Blazor Hybrid (.NET 11, currently RC 2) and Aspire for
+SpendSense is a personal budgeting app built with .NET MAUI Blazor Hybrid (.NET 11) and Aspire for
 multi-device dev orchestration. It's a local-first app — all data lives in an on-device SQLite
 database via EF Core; there is no backend (yet — see `ROADMAP.md` for planned cloud sync).
 
