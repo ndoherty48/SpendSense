@@ -7,7 +7,7 @@ using SpendSense.Common.Security;
 namespace SpendSense.Common.Data.Interceptors;
 
 /// <summary>
-/// Applies the device key as the first statement on every connection EF opens (ADR 0004). It runs on every
+/// Applies the device key as the first statement on every connection EF opens (ADR 0005). It runs on every
 /// logical open, including pooled handles, which is cheap with a raw key.
 /// </summary>
 public sealed class DatabaseKeyInterceptor(DatabaseKey key) : DbConnectionInterceptor

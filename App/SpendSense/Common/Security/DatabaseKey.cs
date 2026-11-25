@@ -1,7 +1,7 @@
 namespace SpendSense.Common.Security;
 
 /// <summary>
-/// The device key for the life of the process (ADR 0004). <see cref="DatabaseOpener"/> loads it; the
+/// The device key for the life of the process (ADR 0005). <see cref="DatabaseOpener"/> loads it; the
 /// <see cref="Data.Interceptors.DatabaseKeyInterceptor"/> applies it. Never logged or put in a connection string.
 /// </summary>
 public sealed class DatabaseKey

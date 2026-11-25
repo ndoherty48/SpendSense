@@ -5,7 +5,7 @@ using Microsoft.Data.Sqlite;
 namespace SpendSense.Common.Data;
 
 /// <summary>
-/// SQLite3 Multiple Ciphers operations outside EF (ADR 0004, <c>docs/spikes/sqlite3mc.md</c>). Keys are raw 256-bit
+/// SQLite3 Multiple Ciphers operations outside EF (ADR 0005, <c>docs/spikes/sqlite3mc.md</c>). Keys are raw 256-bit
 /// key material (<c>'raw:&lt;hex&gt;'</c>), which skips the cipher's passphrase KDF.
 /// </summary>
 public static class SqliteCipher

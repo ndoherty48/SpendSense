@@ -69,11 +69,12 @@ which wires up the SQLite `DbContext` (with `AddEntityInterceptor`/`ModifyEntity
 EF at `DatabasePaths.Database` (`{AppDataDirectory}/SpendSense/SpendSense.db`). `MauiProgram` registers the
 platform's `ISecretStore` and does nothing with the database itself.
 
-The database is encrypted (`docs/adr/0004-encryption-at-rest.md`), so nothing may query it before its key is
+The database is encrypted (`docs/adr/0005-encryption-at-rest.md`), so nothing may query it before its key is
 loaded. `DatabaseGate` wraps the router in `Routes.razor` and, before any page renders:
 1. `DatabaseOpener.Open()` — loads or creates the device key, encrypts a plaintext database left from before
    encryption, checks the key, and applies pending EF migrations. A missing or wrong key renders
-   `Pages/Data/Recover` (restore a backup, or start fresh) instead of the app.
+   `Pages/Data/Recover` (restore a backup, or start fresh) instead of the app. A database with migrations this
+   build doesn't know (an older build installed over a newer one) is left untouched and the gate asks for an update.
 2. `RecurringTransactionGenerator` — materializes due recurring transactions (salary, rent, etc.)
 3. `NotificationService` — evaluates budget threshold / goal milestone alerts and fires local notifications
 
@@ -96,7 +97,7 @@ error screen.
   `Year+Month+CategoryId+CurrencyId`, `Category.Name`, `Currency.Code`, `Tag.Name`) — check there before
   adding a field that should be unique.
 - Default currency (GBP) is seeded via `HasData` in `OnModelCreating`.
-- **Encrypted SQLite** (`docs/adr/0004-encryption-at-rest.md`): the app uses
+- **Encrypted SQLite** (`docs/adr/0005-encryption-at-rest.md`): the app uses
   `Microsoft.EntityFrameworkCore.Sqlite.Core` (no bundled engine) with `SQLite3MC.PCLRaw.bundle` (SQLite3 Multiple
   Ciphers) underneath, wired up by `SQLitePCL.Batteries_V2.Init()` in `AddSpendSenseDb()`, `MyDbContextFactory`
   and the test project's `SqliteSetup` module initializer. Don't add `Microsoft.EntityFrameworkCore.Sqlite` or
@@ -173,7 +174,7 @@ and `docs/design/tokens.md` (tokens, verified contrast). The rules that matter w
 
 - `AccountBalanceService` — account balances, the Available summary and Set balance (see Data layer).
 - `BackupService` — backup, checked restore (safety copy, then migrate), CSV export and the 30-day reminder
-  (`docs/adr/0003-backup-and-export.md`, amended by `docs/adr/0004-encryption-at-rest.md`). A backup is a zip of
+  (`docs/adr/0003-backup-and-export.md`, amended by `docs/adr/0005-encryption-at-rest.md`). A backup is a zip of
   `manifest.json` and the database encrypted with its own key, copied with SQLite's backup API (safe while the app
   is using it). `BackupKeys` (`Common/Security/`) wraps that key under the backup password (PBKDF2) and the
   recovery code (HKDF), and remembers the derived keys in `ISecretStore`. `Inspect`/`Unlock` return a `BackupInfo`

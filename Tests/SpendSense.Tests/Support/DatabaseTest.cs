@@ -36,7 +36,7 @@ public abstract class DatabaseTest : IDisposable
 
     /// <summary>
     /// An encrypted database file where the app keeps it under <paramref name="files"/>, keyed with a random
-    /// <see cref="Key"/> the way the app keys it (ADR 0004). For code that copies the database file around.
+    /// <see cref="Key"/> the way the app keys it (ADR 0005). For code that copies the database file around.
     /// </summary>
     protected DatabaseTest(TempFileSystem files)
     {

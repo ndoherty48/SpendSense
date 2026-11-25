@@ -1,6 +1,6 @@
 # ADR 0003: Backup, restore and CSV export
 
-- Status: Accepted, amended by [ADR 0004](0004-encryption-at-rest.md): backups are now encrypted zips, and
+- Status: Accepted, amended by [ADR 0005](0005-encryption-at-rest.md): backups are now encrypted zips, and
   plaintext `.db` backups made under this ADR still restore
 - Date: 2026-10-04
 

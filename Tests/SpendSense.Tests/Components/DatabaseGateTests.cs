@@ -13,7 +13,7 @@ using SpendSense.Tests.Support;
 
 namespace SpendSense.Tests.Components;
 
-/// <summary>The app waits for the database to open, and a missing key shows the recovery screen (ADR 0004).</summary>
+/// <summary>The app waits for the database to open, and a missing key shows the recovery screen (ADR 0005).</summary>
 public class DatabaseGateTests : ComponentTest
 {
     // The gate shows the recovery screen in the app's own layout, which needs the theme.
@@ -52,6 +52,24 @@ public class DatabaseGateTests : ComponentTest
         gate.WaitForAssertion(() => Assert.NotNull(gate.Find("p.app")));
         Assert.Single(Directory.GetDirectories(DatabasePaths.Locked(Files)));
         SqliteConnection.ClearAllPools();
+    }
+
+    [Fact]
+    public async Task Data_from_a_newer_version_asks_for_an_update()
+    {
+        var opener = Services.GetRequiredService<DatabaseOpener>();
+        await opener.Open();
+        using (var connection = SqliteCipher.Open(DatabasePaths.Database(Files), Key.Value))
+            SqliteCipher.Execute(connection,
+                "INSERT INTO __EFMigrationsHistory (MigrationId, ProductVersion) VALUES ('29991231000000_FromTheFuture', '11.0.0');");
+        SqliteConnection.ClearAllPools();
+        Key.Unload();
+
+        var gate = Render<DatabaseGate>(p => p.AddChildContent(App));
+
+        gate.WaitForAssertion(() => Assert.Equal("Update SpendSense", gate.Find("h1").TextContent));
+        Assert.Empty(gate.FindAll("p.app"));
+        Assert.False(Key.IsLoaded);
     }
 
     [Fact]

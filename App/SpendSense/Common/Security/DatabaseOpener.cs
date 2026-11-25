@@ -14,12 +14,18 @@ public enum DatabaseState
     Ready,
 
     /// <summary>The database is encrypted and the device key is gone or wrong: show the recovery screen.</summary>
-    KeyMissing
+    KeyMissing,
+
+    /// <summary>
+    /// A newer version of the app has migrated this database past what this build knows: it's left untouched, and the
+    /// app asks to be updated rather than running against a schema it doesn't match.
+    /// </summary>
+    NewerVersion
 }
 
 /// <summary>
-/// Opens the encrypted database before any page renders (ADR 0004 decisions 2–4): loads or creates the device key,
-/// encrypts data left from before encryption, checks the key, and migrates.
+/// Opens the encrypted database before any page renders (ADR 0005 decisions 2–4): loads or creates the device key,
+/// encrypts data left from before encryption, checks the key, refuses data from a newer version, and migrates.
 /// </summary>
 public class DatabaseOpener(ISecretStore secrets, IFileSystem fileSystem, DatabaseKey key)
 {
@@ -66,6 +72,15 @@ public class DatabaseOpener(ISecretStore secrets, IFileSystem fileSystem, Databa
             .UseSqlite($"Data Source={path}")
             .AddInterceptors(new DatabaseKeyInterceptor(key))
             .Options);
+
+        // Installing an older build over a newer one: EF would happily run, and every query on a changed table fails.
+        var known = db.Database.GetMigrations().ToHashSet();
+        if ((await db.Database.GetAppliedMigrationsAsync()).Any(m => !known.Contains(m)))
+        {
+            key.Unload();
+            return DatabaseState.NewerVersion;
+        }
+
         await db.Database.MigrateAsync();
         return DatabaseState.Ready;
     }
@@ -101,7 +116,7 @@ public class DatabaseOpener(ISecretStore secrets, IFileSystem fileSystem, Databa
     }
 
     /// <summary>
-    /// First launch after encryption arrived (ADR 0004 decision 3): the database and its safety copies are encrypted
+    /// First launch after encryption arrived (ADR 0005 decision 3): the database and its safety copies are encrypted
     /// in place, and old plaintext exports are deleted.
     /// </summary>
     void EncryptExistingData(string path)

@@ -6,7 +6,7 @@ using System.Text.Json.Serialization;
 namespace SpendSense.Common.Security;
 
 /// <summary>
-/// <c>manifest.json</c> in a backup zip (ADR 0004 decision 5). Plaintext, with no personal data: just enough to
+/// <c>manifest.json</c> in a backup zip (ADR 0005 decision 5). Plaintext, with no personal data: just enough to
 /// recognise the file and unwrap its key.
 /// </summary>
 public sealed record BackupManifest(string Format, int FormatVersion, DateTime CreatedUtc, string Cipher, IReadOnlyList<KeySlot> KeySlots)

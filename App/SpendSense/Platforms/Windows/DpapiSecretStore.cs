@@ -5,7 +5,7 @@ using SpendSense.Common.Security;
 namespace SpendSense.Platforms.Windows;
 
 /// <summary>
-/// Secret store for the unpackaged Windows app, where MAUI SecureStorage needs package identity (ADR 0004).
+/// Secret store for the unpackaged Windows app, where MAUI SecureStorage needs package identity (ADR 0005).
 /// Values are encrypted with DPAPI (current-user scope) and written under the app data folder, so only the same
 /// Windows user on the same machine can read them.
 /// </summary>

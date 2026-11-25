@@ -11,7 +11,7 @@ public enum UnlockMethod
 }
 
 /// <summary>
-/// The backup password and recovery code (ADR 0004 decision 5). Only the keys derived from them, and their salts,
+/// The backup password and recovery code (ADR 0005 decision 5). Only the keys derived from them, and their salts,
 /// are kept, in <see cref="ISecretStore"/>; the password and the code themselves are never stored.
 /// </summary>
 public class BackupKeys(ISecretStore secrets)
