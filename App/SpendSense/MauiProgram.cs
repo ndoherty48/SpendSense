@@ -9,6 +9,11 @@ using SpendSense.Common.Services;
 
 using Plugin.LocalNotification;
 
+#if DEVFLOW
+using Microsoft.Maui.DevFlow.Agent;
+using Microsoft.Maui.DevFlow.Blazor;
+#endif
+
 namespace SpendSense;
 
 public static class MauiProgram
@@ -54,6 +59,11 @@ public static class MauiProgram
 #if DEBUG
 		builder.Services.AddBlazorWebViewDeveloperTools();
 		builder.Logging.AddDebug();
+#endif
+#if DEVFLOW
+		// Debug builds of the device targets only (SpendSense.csproj).
+		builder.AddMauiDevFlowAgent();
+		builder.AddMauiBlazorDevFlowTools();
 #endif
 
 		// The database is opened, migrated and brought up to date by DatabaseGate, once the device key is loaded.

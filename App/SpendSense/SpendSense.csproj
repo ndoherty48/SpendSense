@@ -100,6 +100,18 @@
         <PackageReference Include="Plugin.LocalNotification" Version="14.2.0" />
     </ItemGroup>
 
+    <!-- MAUI DevFlow: lets agents and the `maui devflow` CLI inspect and drive the running app. Debug builds of the
+         device targets only (the packages have no plain net11.0 asset, which the tests use); MauiProgram registers it
+         under #if DEVFLOW. Pinned to preview.14: preview.15 needs Microsoft.Extensions.* 11.0.1, not yet on nuget.org. -->
+    <PropertyGroup Condition="'$(Configuration)' == 'Debug' And $([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) != ''">
+        <EnableDevFlow>true</EnableDevFlow>
+        <DefineConstants>$(DefineConstants);DEVFLOW</DefineConstants>
+    </PropertyGroup>
+    <ItemGroup Condition="'$(EnableDevFlow)' == 'true'">
+        <PackageReference Include="Microsoft.Maui.DevFlow.Agent" Version="0.1.0-preview.14.26573.4" />
+        <PackageReference Include="Microsoft.Maui.DevFlow.Blazor" Version="0.1.0-preview.14.26573.4" />
+    </ItemGroup>
+
     <ItemGroup>
         <ProjectReference Include="..\..\Infra\SpendSense.ServiceDefaults\SpendSense.ServiceDefaults.csproj" />
     </ItemGroup>
