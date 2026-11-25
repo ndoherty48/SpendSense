@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+    <dict>
+        <!-- MAUI SecureStorage uses the Keychain, which holds the database key (ADR 0005). The simulator refuses
+             Keychain writes without an access group; on a device this is the app's default group, which every
+             provisioning profile allows. -->
+        <key>keychain-access-groups</key>
+        <array>
+            <string>$(AppIdentifierPrefix)dev.nathandoherty.spendsense</string>
+        </array>
+    </dict>
+</plist>

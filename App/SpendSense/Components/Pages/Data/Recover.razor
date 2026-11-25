@@ -33,8 +33,16 @@
         busy = true;
         try
         {
-            // The locked data is only set aside once the backup is unlocked and the restore confirmed.
-            if (await Backup.Restore(beforeRestore: async () => await Opener.StartFresh()))
+            // The locked data is only set aside once the backup is unlocked and the restore confirmed. Once it has
+            // been, there's a fresh database to open even if the restore then fails (the flow says so), and staying
+            // here would set aside that empty one too on the next attempt.
+            var setAside = false;
+            var restored = await Backup.Restore(beforeRestore: async () =>
+            {
+                await Opener.StartFresh();
+                setAside = true;
+            });
+            if (restored || setAside)
                 await OnRecovered.InvokeAsync();
         }
         finally

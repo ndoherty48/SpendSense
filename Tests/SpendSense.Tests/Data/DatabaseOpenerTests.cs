@@ -126,6 +126,29 @@ public sealed class DatabaseOpenerTests : IDisposable
     }
 
     [Fact]
+    public async Task Plaintext_copies_left_by_an_interrupted_conversion_are_dealt_with_on_the_next_launch()
+    {
+        // The database was encrypted, then the app was killed before its safety copies and old exports were.
+        await CreatePlaintextDatabase("Copied before");
+        SqliteConnection.ClearAllPools();
+        var safetyCopy = Path.Join(DatabasePaths.SafetyCopies(files), "before-restore-2026-10-01-120000.db");
+        Directory.CreateDirectory(DatabasePaths.SafetyCopies(files));
+        File.Copy(DatabasePath, safetyCopy);
+        var oldExport = Path.Join(files.CacheDirectory, "exports", "SpendSense-backup-2026-10-01-1200.db");
+        Directory.CreateDirectory(Path.GetDirectoryName(oldExport)!);
+        File.Copy(DatabasePath, oldExport);
+        var stored = RandomNumberGenerator.GetBytes(DatabaseKey.Size);
+        await secrets.Set(DatabaseOpener.DeviceKeyName, stored);
+        SqliteCipher.EncryptInPlace(DatabasePath, stored, wal: true);
+
+        Assert.Equal(DatabaseState.Ready, await Opener.Open());
+
+        Assert.False(SqliteCipher.IsPlaintext(safetyCopy));
+        Assert.True(SqliteCipher.Opens(safetyCopy, stored));
+        Assert.False(File.Exists(oldExport));
+    }
+
+    [Fact]
     public async Task An_encrypted_database_without_its_key_needs_recovering()
     {
         await Opener.Open();
