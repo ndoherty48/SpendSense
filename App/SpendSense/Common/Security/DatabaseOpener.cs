@@ -60,13 +60,20 @@ public class DatabaseOpener(ISecretStore secrets, IFileSystem fileSystem, Databa
         key.Load(stored);
 
         if (plaintext)
-            await Task.Run(() => EncryptExistingData(path));
+            await Task.Run(() =>
+            {
+                SqliteConnection.ClearAllPools();
+                SqliteCipher.EncryptInPlace(path, key.Value, wal: true);
+            });
 
         if (exists && !SqliteCipher.Opens(path, key.Value))
         {
             key.Unload();
             return DatabaseState.KeyMissing;
         }
+
+        // Every launch, not only the one that encrypted the database: one interrupted part-way leaves copies behind.
+        await Task.Run(EncryptLeftovers);
 
         await using var db = new SpendSenseDbContext(new DbContextOptionsBuilder<SpendSenseDbContext>()
             .UseSqlite($"Data Source={path}")
@@ -116,14 +123,12 @@ public class DatabaseOpener(ISecretStore secrets, IFileSystem fileSystem, Databa
     }
 
     /// <summary>
-    /// First launch after encryption arrived (ADR 0005 decision 3): the database and its safety copies are encrypted
-    /// in place, and old plaintext exports are deleted.
+    /// Data from before encryption besides the database itself (ADR 0005 decision 3): plaintext safety copies are
+    /// encrypted in place, and plaintext databases left in the export and import caches are deleted. Cheap once
+    /// there are none, so it runs on every launch.
     /// </summary>
-    void EncryptExistingData(string path)
+    void EncryptLeftovers()
     {
-        SqliteConnection.ClearAllPools();
-        SqliteCipher.EncryptInPlace(path, key.Value, wal: true);
-
         var safetyCopies = DatabasePaths.SafetyCopies(fileSystem);
         if (Directory.Exists(safetyCopies))
         {
@@ -133,8 +138,10 @@ public class DatabaseOpener(ISecretStore secrets, IFileSystem fileSystem, Databa
 
         foreach (var cache in new[] { "exports", "imports" }.Select(name => Path.Join(fileSystem.CacheDirectory, name)))
         {
-            if (Directory.Exists(cache))
-                Directory.Delete(cache, recursive: true);
+            if (!Directory.Exists(cache))
+                continue;
+            foreach (var file in Directory.GetFiles(cache).Where(SqliteCipher.IsPlaintext))
+                File.Delete(file);
         }
     }
 }

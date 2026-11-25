@@ -80,6 +80,10 @@
             else
                 MudDialog.Close(DialogResult.Ok(info));
         }
+        catch (Exception ex)
+        {
+            error = $"Couldn't open the file: {ex.Message}";
+        }
         finally
         {
             busy = false;
