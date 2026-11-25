@@ -1,6 +1,9 @@
 {
   "appHost": {
-    "language": "csharp",
-    "path": "./Infra/SpendSense.AppHost/SpendSense.AppHost.csproj"
+    "path": "./Infra/SpendSense.AppHost/SpendSense.AppHost.csproj",
+    "language": "csharp"
+  },
+  "sdk": {
+    "version": "17.0.0"
   }
 }

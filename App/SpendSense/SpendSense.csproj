@@ -44,7 +44,7 @@
 
         <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">15.0</SupportedOSPlatformVersion>
         <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">15.0</SupportedOSPlatformVersion>
-        <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">24.0</SupportedOSPlatformVersion>
+        <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">33.0</SupportedOSPlatformVersion>
         <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
         <TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
     </PropertyGroup>
@@ -80,19 +80,19 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="11.0.0-rc.2.26504.105" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="11.0.0-rc.2.26504.105">
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="11.0.0" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="11.0.0">
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
           <PrivateAssets>all</PrivateAssets>
         </PackageReference>
         <!-- .Sqlite.Core ships no engine: SQLite3 Multiple Ciphers provides it (SQLitePCLRaw 3.x), so e_sqlite3 is never bundled. -->
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite.Core" Version="11.0.0-rc.2.26504.105" />
-        <PackageReference Include="SQLite3MC.PCLRaw.bundle" Version="2.4.0" />
-        <PackageReference Include="Microsoft.Maui.Controls" Version="11.0.0-rc.2.26505.5" />
-        <PackageReference Include="Microsoft.AspNetCore.Components.WebView.Maui" Version="11.0.0-rc.2.26505.5" />
-        <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="11.0.0-rc.2.26504.105" />
-        <PackageReference Include="MudBlazor" Version="9.5.0" />
-        <PackageReference Include="Plugin.LocalNotification" Version="14.1.0" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite.Core" Version="11.0.0" />
+        <PackageReference Include="SQLite3MC.PCLRaw.bundle" Version="2.7.1" />
+        <PackageReference Include="Microsoft.Maui.Controls" Version="11.0.10" />
+        <PackageReference Include="Microsoft.AspNetCore.Components.WebView.Maui" Version="11.0.10" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="11.0.0" />
+        <PackageReference Include="MudBlazor" Version="9.14.0" />
+        <PackageReference Include="Plugin.LocalNotification" Version="14.2.0" />
     </ItemGroup>
 
     <ItemGroup>
