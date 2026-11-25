@@ -10,7 +10,7 @@
     flex: 1;
     align-items: center;
     justify-content: center;
-    min-height: 40px;
+    min-height: var(--ss-target);
     padding: 0 var(--ss-space-3);
     border: 0;
     border-radius: var(--ss-radius-pill);

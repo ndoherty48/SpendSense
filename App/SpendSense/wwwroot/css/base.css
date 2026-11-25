@@ -38,6 +38,12 @@ h3 {
     outline-offset: 2px;
 }
 
+/* Interactive targets >= --ss-target (tokens.md). MudBlazor's text and filled buttons are 36.5px tall, which
+   dialog actions and the start-up error's "Try again" would otherwise inherit. Icon buttons are already 48px. */
+.mud-button-root.mud-button {
+    min-height: var(--ss-target);
+}
+
 @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
