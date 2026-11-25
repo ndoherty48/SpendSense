@@ -79,7 +79,7 @@
 
         Model.StartDate = startDate ?? DateTime.Today;
         Model.CurrencyId = From!.Account.CurrencyId;
-        AccountFields.Normalise(Model);
+        AccountFields.Normalise(Model, Accounts);
         if (Model.TransactionType == TransactionTypeEnum.Transfer)
             Model.CategoryId = null;
         await OnSubmit.InvokeAsync();

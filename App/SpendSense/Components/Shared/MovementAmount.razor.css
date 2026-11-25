@@ -1,0 +1,10 @@
+.movement-amount {
+    display: inline-flex;
+    align-items: baseline;
+    gap: var(--ss-space-1);
+    white-space: nowrap;
+}
+
+.arrow {
+    color: var(--ss-ink-muted);
+}

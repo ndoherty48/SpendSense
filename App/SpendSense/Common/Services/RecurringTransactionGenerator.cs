@@ -42,6 +42,7 @@ public class RecurringTransactionGenerator(SpendSenseDbContext db, ILogger<Recur
                     CurrencyId = recurring.CurrencyId,
                     AccountId = recurring.AccountId,
                     ToAccountId = recurring.ToAccountId,
+                    AmountReceived = recurring.AmountReceived,
                     CategoryId = recurring.CategoryId,
                     TransactionDate = nextDate,
                     TransactionType = recurring.TransactionType,

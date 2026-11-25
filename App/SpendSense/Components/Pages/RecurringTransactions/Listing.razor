@@ -29,7 +29,7 @@ else
                     {
                         <Badge Tone="BadgeTone.Warn">Paused</Badge>
                     }
-                    <Money Amount="@TransactionVisuals.Amount(r)" Symbol="@(r.Currency?.Symbol ?? "£")" Signed="@TransactionVisuals.Signed(r)" Tone="@TransactionVisuals.AmountTone(r)" />
+                    <MovementAmount Item="r" />
                 </Trailing>
             </ListRow>
             <MudIconButton Icon="@Icons.Material.Filled.DeleteOutline" OnClick="() => Delete(r)" aria-label="@($"Delete {r.Name}")" />

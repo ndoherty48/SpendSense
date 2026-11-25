@@ -151,7 +151,7 @@
         {
             <ListRow Title="@t.Description" Subtitle="@RecentSubtitle(t)" Href="@($"/transactions/edit/{t.Id}")">
                 <Leading><IconTile Icon="@TransactionVisuals.Icon(t.TransactionType)" Tone="@TransactionVisuals.Tone(t.TransactionType)" Circle="true" /></Leading>
-                <Trailing><Money Amount="@TransactionVisuals.Amount(t)" Symbol="@(t.Currency?.Symbol ?? "£")" Signed="@TransactionVisuals.Signed(t)" Tone="@TransactionVisuals.AmountTone(t)" /></Trailing>
+                <Trailing><MovementAmount Item="t" /></Trailing>
             </ListRow>
         }
     </div>
@@ -305,7 +305,7 @@
             .Include(t => t.Category)
             .Include(t => t.Currency)
             .Include(t => t.Account)
-            .Include(t => t.ToAccount)
+            .Include(t => t.ToAccount).ThenInclude(a => a!.Currency)
             .Where(t => t.TransactionDate >= startOfMonth && t.TransactionDate < endOfMonth)
             .OrderByDescending(t => t.TransactionDate)
             .Take(10)

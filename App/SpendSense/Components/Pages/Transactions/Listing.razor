@@ -48,7 +48,7 @@ else
             <div class="item">
                 <ListRow Title="@t.Description" Subtitle="@TransactionVisuals.Subtitle(t)" Href="@($"/transactions/edit/{t.Id}")">
                     <Leading><IconTile Icon="@TransactionVisuals.Icon(t.TransactionType)" Tone="@TransactionVisuals.Tone(t.TransactionType)" Circle="true" /></Leading>
-                    <Trailing><Money Amount="@TransactionVisuals.Amount(t)" Symbol="@(t.Currency?.Symbol ?? "£")" Signed="@TransactionVisuals.Signed(t)" Tone="@TransactionVisuals.AmountTone(t)" /></Trailing>
+                    <Trailing><MovementAmount Item="t" /></Trailing>
                 </ListRow>
                 <MudIconButton Icon="@Icons.Material.Filled.DeleteOutline" OnClick="() => Delete(t)" aria-label="@($"Delete {t.Description}")" />
             </div>

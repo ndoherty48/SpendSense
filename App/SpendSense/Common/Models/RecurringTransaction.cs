@@ -21,6 +21,8 @@ public class RecurringTransaction : ITimestamped, IAccountMovement
     public int AccountId {get;set;}
     /// <summary>Copied to each generated transaction; makes a scheduled transfer or standing order into savings.</summary>
     public int? ToAccountId {get;set;}
+    /// <summary>Copied to each generated transaction; null unless the two accounts' currencies differ.</summary>
+    public double? AmountReceived {get;set;}
     [Required]
     public required FrequencyEnum Frequency { get; set; }
     [Required]

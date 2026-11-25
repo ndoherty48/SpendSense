@@ -1,0 +1,15 @@
+@using SpendSense.Common.Interfaces
+
+@* A transaction's or rule's amount in a list; a move between currencies also shows what arrived: "£100.00 → €115.20". *@
+<span class="movement-amount">
+    <Money Amount="@TransactionVisuals.Amount(Item)" Symbol="@(Item.Currency?.Symbol ?? "£")" Signed="@TransactionVisuals.Signed(Item)" Tone="@TransactionVisuals.AmountTone(Item)" />
+    @if (TransactionVisuals.Received(Item) is (var received, var symbol))
+    {
+        <span class="arrow" aria-label="received as">→</span>
+        <Money Amount="received" Symbol="@symbol" Tone="@TransactionVisuals.AmountTone(Item)" />
+    }
+</span>
+
+@code {
+    [Parameter, EditorRequired] public IAccountMovement Item { get; set; } = default!;
+}

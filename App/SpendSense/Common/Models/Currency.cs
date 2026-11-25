@@ -14,7 +14,6 @@ public class Currency : ITimestamped
     public string? Name { get; set; }
     [Required, MaxLength(5)]
     public string? Symbol { get; set; }
-    public double ExchangeRate { get; set; } = 1.0;
     public bool IsDefault { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }

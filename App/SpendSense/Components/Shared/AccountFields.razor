@@ -1,6 +1,7 @@
 @using SpendSense.Common.Interfaces
 @using SpendSense.Common.Models.Enums
 @using SpendSense.Common.Services
+@inject SpendSense.Common.Data.SpendSenseDbContext Db
 
 @* The account pickers for a transaction or recurring rule; which ones show depends on the type. *@
 @switch (Model.TransactionType)
@@ -22,6 +23,34 @@
         <AccountSelect Accounts="Accounts" Value="Model.AccountId" ValueChanged="SetFrom" Label="@(Model.TransactionType == TransactionTypeEnum.Income ? "Paid into" : "Paid from")" Error="@Error" />
         break;
 }
+@if (Crossing(Model, Accounts) is (var from, var to))
+{
+    @* Different currencies: the amount received is what's saved; the rate is a way to fill it in. *@
+    <div class="exchange">
+        <MudNumericField T="double?"
+                         Label="@($"Rate (1 {Code(from)} =)")"
+                         Value="rate"
+                         ValueChanged="SetRate"
+                         Format="0.####"
+                         Min="0"
+                         Variant="Variant.Outlined"
+                         HideSpinButtons="true"
+                         Adornment="Adornment.End"
+                         AdornmentText="@Code(to)"
+                         Class="rate" />
+        <MudNumericField T="double?"
+                         Label="Amount received"
+                         Value="Model.AmountReceived"
+                         ValueChanged="SetReceived"
+                         Format="0.00"
+                         Min="0"
+                         Variant="Variant.Outlined"
+                         HideSpinButtons="true"
+                         Adornment="Adornment.Start"
+                         AdornmentText="@to.Symbol"
+                         Class="received" />
+    </div>
+}
 
 @code {
     [Parameter, EditorRequired] public IAccountMovement Model { get; set; } = default!;
@@ -37,19 +66,48 @@
 
     IReadOnlyList<AccountBalance> Destinations => DestinationsFor(Model, Accounts);
 
+    // Kept here rather than on the model: only the amount received is saved.
+    double? rate;
+    double lastAmount;
+    (int From, int To)? pair;
+
+    protected override async Task OnInitializedAsync()
+    {
+        lastAmount = Model.Amount;
+        pair = CurrencyPair();
+        rate = CrossCurrency.Rate(Model.Amount, Model.AmountReceived);
+        // Opened with both accounts already chosen (e.g. ?from=&to=): suggest the last rate straight away.
+        if (rate is null && Model.AmountReceived is null && pair is (var f, var t))
+            rate = await CrossCurrency.LastRate(Db, f, t);
+    }
+
+    // The amount is edited by the parent form: keep the rate and work out the amount received again.
+    protected override void OnParametersSet()
+    {
+        if (Model.Amount == lastAmount)
+            return;
+        lastAmount = Model.Amount;
+        if (pair is null)
+            return;
+        if (rate is { } r)
+            Model.AmountReceived = Model.Amount > 0 ? CrossCurrency.Received(Model.Amount, r) : null;
+        else
+            rate = CrossCurrency.Rate(Model.Amount, Model.AmountReceived);
+    }
+
     async Task SetFrom(int? id)
     {
         Model.AccountId = id ?? 0;
         // Keep the destination valid for the new source.
         if (Model.ToAccountId is { } to && Destinations.All(a => a.Account.Id != to))
             Model.ToAccountId = null;
-        await OnChanged.InvokeAsync();
+        await AccountsChanged();
     }
 
     async Task SetTo(int? id)
     {
         Model.ToAccountId = id;
-        await OnChanged.InvokeAsync();
+        await AccountsChanged();
     }
 
     async Task Swap()
@@ -57,19 +115,64 @@
         if (Model.ToAccountId is not { } to)
             return;
         (Model.AccountId, Model.ToAccountId) = (to, Model.AccountId);
+        // The same money going the other way: the amounts swap and the rate inverts.
+        if (pair is (var f, var t) && Model.AmountReceived is { } received)
+        {
+            (Model.Amount, Model.AmountReceived) = (received, Model.Amount);
+            lastAmount = Model.Amount;
+            rate = CrossCurrency.Rate(Model.Amount, Model.AmountReceived);
+            pair = (t, f);
+        }
+        await AccountsChanged();
+    }
+
+    async Task SetRate(double? value)
+    {
+        rate = value is > 0 ? value : null;
+        Model.AmountReceived = rate is { } r && Model.Amount > 0 ? CrossCurrency.Received(Model.Amount, r) : null;
         await OnChanged.InvokeAsync();
     }
+
+    async Task SetReceived(double? value)
+    {
+        Model.AmountReceived = value is > 0 ? Math.Round(value.Value, 2) : null;
+        rate = CrossCurrency.Rate(Model.Amount, Model.AmountReceived) ?? rate;
+        await OnChanged.InvokeAsync();
+    }
+
+    // A new pair of currencies starts from the last rate used between them; the same pair keeps what was typed.
+    async Task AccountsChanged()
+    {
+        var current = CurrencyPair();
+        if (current != pair)
+        {
+            pair = current;
+            rate = current is (var f, var t) ? await CrossCurrency.LastRate(Db, f, t) : null;
+            Model.AmountReceived = rate is { } r && Model.Amount > 0 ? CrossCurrency.Received(Model.Amount, r) : null;
+        }
+        await OnChanged.InvokeAsync();
+    }
+
+    (int From, int To)? CurrencyPair() =>
+        Crossing(Model, Accounts) is (var from, var to) ? (from.Account.CurrencyId, to.Account.CurrencyId) : null;
+
+    static string Code(AccountBalance item) => item.Account.Currency?.Code ?? item.Symbol;
 
     public static AccountBalance? Find(IReadOnlyList<AccountBalance> accounts, int? id) =>
         id is null ? null : accounts.FirstOrDefault(a => a.Account.Id == id);
 
-    /// <summary>Where money can go: any other account in the source's currency.</summary>
-    public static IReadOnlyList<AccountBalance> DestinationsFor(IAccountMovement model, IReadOnlyList<AccountBalance> accounts)
+    /// <summary>Where money can go: any other account, in any currency.</summary>
+    public static IReadOnlyList<AccountBalance> DestinationsFor(IAccountMovement model, IReadOnlyList<AccountBalance> accounts) =>
+        accounts.Where(a => a.Account.Id != model.AccountId).ToList();
+
+    /// <summary>The two accounts of a move between different currencies; null for anything else.</summary>
+    public static (AccountBalance From, AccountBalance To)? Crossing(IAccountMovement model, IReadOnlyList<AccountBalance> accounts)
     {
-        var from = Find(accounts, model.AccountId);
-        return accounts
-            .Where(a => a.Account.Id != model.AccountId && (from is null || a.Account.CurrencyId == from.Account.CurrencyId))
-            .ToList();
+        if (model.TransactionType is not (TransactionTypeEnum.Transfer or TransactionTypeEnum.Savings))
+            return null;
+        if (Find(accounts, model.AccountId) is not { } from || Find(accounts, model.ToAccountId) is not { } to || from == to)
+            return null;
+        return from.Account.CurrencyId != to.Account.CurrencyId ? (from, to) : null;
     }
 
     /// <summary>A message if the accounts don't make sense for the type, otherwise null.</summary>
@@ -84,15 +187,19 @@
             return model.TransactionType == TransactionTypeEnum.Transfer ? "Choose the account to move money into." : null;
         if (model.ToAccountId == model.AccountId)
             return "Choose a different account to move money into.";
-        if (Find(accounts, model.ToAccountId) is not { } to || to.Account.CurrencyId != from.Account.CurrencyId)
-            return "Both accounts must use the same currency.";
+        if (Find(accounts, model.ToAccountId) is null)
+            return "Choose the account to move money into.";
+        if (Crossing(model, accounts) is not null && model.AmountReceived is not > 0)
+            return "Enter the amount received or the rate.";
         return null;
     }
 
-    /// <summary>Only transfers and savings keep a destination.</summary>
-    public static void Normalise(IAccountMovement model)
+    /// <summary>Only transfers and savings keep a destination, and only a move between currencies an amount received.</summary>
+    public static void Normalise(IAccountMovement model, IReadOnlyList<AccountBalance> accounts)
     {
         if (model.TransactionType is not (TransactionTypeEnum.Transfer or TransactionTypeEnum.Savings))
             model.ToAccountId = null;
+        if (Crossing(model, accounts) is null)
+            model.AmountReceived = null;
     }
 }

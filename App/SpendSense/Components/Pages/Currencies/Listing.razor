@@ -19,7 +19,7 @@ else
     @foreach (var currency in Elements!)
     {
         <div class="item">
-            <ListRow Title="@($"{currency.Code} — {currency.Name}")" Subtitle="@($"Rate {currency.ExchangeRate}")">
+            <ListRow Title="@($"{currency.Code} — {currency.Name}")">
                 <Leading><span class="symbol" aria-hidden="true">@currency.Symbol</span></Leading>
                 <Trailing>
                     @if (currency.IsDefault)

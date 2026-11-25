@@ -8,7 +8,7 @@ namespace SpendSense.Common.Services;
 /// <summary>Writes transactions as CSV for spreadsheets (RFC 4180 quoting; see ADR 0003 for the columns).</summary>
 public static class TransactionCsv
 {
-    public const string Header = "Date,Description,Type,Category,Account,To account,Amount,Currency,Notes";
+    public const string Header = "Date,Description,Type,Category,Account,To account,Amount,Currency,Notes,Amount received,Received currency";
 
     public static void Write(IEnumerable<Transaction> transactions, TextWriter writer)
     {
@@ -25,7 +25,9 @@ public static class TransactionCsv
                 Text(t.ToAccount?.Name),
                 SignedAmount(t).ToString("0.00", CultureInfo.InvariantCulture),
                 Text(t.Currency?.Code),
-                Text(t.Notes)));
+                Text(t.Notes),
+                t.AmountReceived?.ToString("0.00", CultureInfo.InvariantCulture) ?? "",
+                t.AmountReceived is null ? "" : Text(t.ToAccount?.Currency?.Code)));
             writer.Write("\r\n");
         }
     }

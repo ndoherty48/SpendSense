@@ -110,7 +110,9 @@ error screen.
 - **Accounts** (`docs/adr/0002-accounts.md`): every `Transaction` and `RecurringTransaction` has a required
   `AccountId` and an optional `ToAccountId` (FKs are `Restrict`; a used account is archived, not deleted).
   `ToAccountId` is required for `TransactionTypeEnum.Transfer`, optional for `Savings`, null otherwise, and
-  the transaction's currency is its account's currency. **Transfers never count toward budgets**: code that
+  the transaction's currency is its account's currency. A move between currencies also stores
+  `AmountReceived` (destination currency; null otherwise); the rate is derived, never stored
+  (`docs/adr/0004-cross-currency-transfers.md`, `CrossCurrency`). Sum what arrives as `AmountReceived ?? Amount`. **Transfers never count toward budgets**: code that
   totals spending, income or savings must match a type positively (`== Expense`), never "not Income". A
   default "Main account" (Id 1) is seeded via `HasData`.
 - **Balances are computed, never stored**: `AccountBalanceService` (`Common/Services/`) sums opening balance +
@@ -141,7 +143,8 @@ and `docs/design/tokens.md` (tokens, verified contrast). The rules that matter w
   `CurrencySelect`, `EnumSelect<T>`, `DateField`, `ToggleRow`, `ColorSwatchPicker`, `AccountSelect`,
   `AccountFields`). `AccountFields` holds the account pickers and validation for both transaction and
   recurring forms (via `IAccountMovement`); `TransactionVisuals` decides a row's icon, sign and subtitle
-  (a transfer is shown "From → To" without a sign). In debug builds `/dev/gallery` (linked
+  (a transfer is shown "From → To" without a sign); `MovementAmount` is a list row's amount, adding
+  "→ €115.20" for a move between currencies. In debug builds `/dev/gallery` (linked
   from More) shows them all in both themes.
 - **All money renders through `<Money/>`** (or `MoneyFormat` for text) so the privacy mode, mono digits and
   sign glyph apply everywhere. Never format amounts with `ToString("F2")` or a hard-coded symbol in markup.
@@ -199,3 +202,17 @@ both AppHost-style and MAUI builders; it's referenced by the MAUI app project it
 See `ROADMAP.md` for planned work (CSV/PDF bank import, receipt attachments, cloud sync via API
 Gateway + Lambda + DynamoDB + Cognito). The Architecture Decisions section of `README.md` documents
 why choices like SQLite-local-first and repository pattern were made.
+
+## Agent skills
+
+### Issue tracker
+
+Issues are tracked in GitHub Issues on `ndoherty48/SpendSense` (via the `gh` CLI). See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default vocabulary: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: one `GLOSSARY.md` at the repo root (created when needed) plus `docs/adr/`. See `docs/agents/domain.md`.

@@ -30,6 +30,15 @@ public class AccountBalanceTests
     }
 
     [Fact]
+    public void Delta_between_currencies_uses_each_side_of_the_move()
+    {
+        var t = Transaction(TransactionTypeEnum.Transfer, 100, accountId: 1, toAccountId: 2, amountReceived: 115.2);
+
+        Assert.Equal(-100, AccountBalanceService.Delta(t, accountId: 1));
+        Assert.Equal(115.2, AccountBalanceService.Delta(t, accountId: 2));
+    }
+
+    [Fact]
     public void Delta_on_an_unrelated_account_is_zero()
     {
         var t = Transaction(TransactionTypeEnum.Transfer, 100, accountId: 1, toAccountId: 2);

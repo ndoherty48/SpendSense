@@ -17,8 +17,8 @@ public class AccountFieldsTests
         Balance(Account(4, "Euro cash", AccountTypeEnum.Cash, currency: Eur), 50)
     ];
 
-    static string? Validate(TransactionTypeEnum type, int from, int? to) =>
-        AccountFields.Validate(Transaction(type, 10, from, to), Accounts);
+    static string? Validate(TransactionTypeEnum type, int from, int? to, double? received = null) =>
+        AccountFields.Validate(Transaction(type, 10, from, to, amountReceived: received), Accounts);
 
     [Theory]
     [InlineData(TransactionTypeEnum.Expense)]
@@ -53,9 +53,27 @@ public class AccountFieldsTests
     [Theory]
     [InlineData(TransactionTypeEnum.Transfer)]
     [InlineData(TransactionTypeEnum.Savings)]
-    public void Destination_must_share_the_source_currency(TransactionTypeEnum type)
+    public void A_move_between_currencies_needs_the_amount_received(TransactionTypeEnum type)
     {
-        Assert.Equal("Both accounts must use the same currency.", Validate(type, from: 1, to: 4));
+        Assert.Equal("Enter the amount received or the rate.", Validate(type, from: 1, to: 4));
+        Assert.Equal("Enter the amount received or the rate.", Validate(type, from: 1, to: 4, received: 0));
+        Assert.Null(Validate(type, from: 1, to: 4, received: 11.52));
+    }
+
+    [Fact]
+    public void A_move_in_one_currency_needs_no_amount_received()
+    {
+        Assert.Null(Validate(TransactionTypeEnum.Transfer, from: 1, to: 3));
+    }
+
+    [Theory]
+    [InlineData(TransactionTypeEnum.Transfer, 1, 4, true)]
+    [InlineData(TransactionTypeEnum.Savings, 4, 1, true)]
+    [InlineData(TransactionTypeEnum.Transfer, 1, 3, false)]
+    [InlineData(TransactionTypeEnum.Expense, 1, 4, false)]
+    public void Crossing_is_only_a_move_between_currencies(TransactionTypeEnum type, int from, int to, bool expected)
+    {
+        Assert.Equal(expected, AccountFields.Crossing(Transaction(type, 10, from, to), Accounts) is not null);
     }
 
     [Fact]
@@ -65,13 +83,13 @@ public class AccountFieldsTests
     }
 
     [Fact]
-    public void Destinations_exclude_the_source_and_other_currencies()
+    public void Destinations_are_every_other_account_in_any_currency()
     {
         var model = Transaction(TransactionTypeEnum.Transfer, 10, accountId: 1);
 
         var names = AccountFields.DestinationsFor(model, Accounts).Select(a => a.Account.Name);
 
-        Assert.Equal(["Visa card", "Rainy day"], names);
+        Assert.Equal(["Visa card", "Rainy day", "Euro cash"], names);
     }
 
     [Theory]
@@ -83,8 +101,21 @@ public class AccountFieldsTests
     {
         var model = Transaction(type, 10, accountId: 1, toAccountId: 3);
 
-        AccountFields.Normalise(model);
+        AccountFields.Normalise(model, Accounts);
 
         Assert.Equal(expected, model.ToAccountId);
+    }
+
+    [Theory]
+    [InlineData(TransactionTypeEnum.Transfer, 4, 11.52)]
+    [InlineData(TransactionTypeEnum.Transfer, 3, null)]
+    [InlineData(TransactionTypeEnum.Expense, 4, null)]
+    public void Normalise_keeps_an_amount_received_only_between_currencies(TransactionTypeEnum type, int to, double? expected)
+    {
+        var model = Transaction(type, 10, accountId: 1, toAccountId: to, amountReceived: 11.52);
+
+        AccountFields.Normalise(model, Accounts);
+
+        Assert.Equal(expected, model.AmountReceived);
     }
 }
