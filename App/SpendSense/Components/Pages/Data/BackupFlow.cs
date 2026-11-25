@@ -13,7 +13,7 @@ namespace SpendSense.Components.Pages.Data;
 /// </summary>
 public class BackupFlow(BackupService backups, IFileExchange files, IDialogService dialogs, ISnackbar snackbar, NavigationManager navigation)
 {
-    /// <summary>Sets or changes the backup password (ADR 0004).</summary>
+    /// <summary>Sets or changes the backup password (ADR 0005).</summary>
     public const string PasswordPage = "/data/backup-password";
 
     /// <summary>

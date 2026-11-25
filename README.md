@@ -82,7 +82,7 @@ dotnet ef migrations add <MigrationName> --framework net11.0
 ## Architecture Decisions
 
 - **SQLite** — local-first, works offline, no server dependency
-- **Encryption at rest** — SQLite3 Multiple Ciphers with a device key in secure storage; backups get their own key, wrapped by a password and a recovery code ([ADR 0004](docs/adr/0004-encryption-at-rest.md))
+- **Encryption at rest** — SQLite3 Multiple Ciphers with a device key in secure storage; backups get their own key, wrapped by a password and a recovery code ([ADR 0005](docs/adr/0005-encryption-at-rest.md))
 - **Repository pattern** — thin layer over DbContext for testability
 - **SaveChanges interceptors** — auto-set CreatedAt/UpdatedAt timestamps
 - **Preferences API** — persists settings (theme, active budget period) via platform-native storage

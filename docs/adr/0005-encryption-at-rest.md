@@ -1,4 +1,4 @@
-# ADR 0004: Encryption at rest
+# ADR 0005: Encryption at rest
 
 - Status: Accepted
 - Date: 2026-10-18

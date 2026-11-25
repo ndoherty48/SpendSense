@@ -17,7 +17,7 @@ using SpendSense.Tests.TestDoubles;
 namespace SpendSense.Tests.Data;
 
 /// <summary>
-/// Backups are real encrypted zips (ADR 0004): written from, inspected against and restored over a live encrypted
+/// Backups are real encrypted zips (ADR 0005): written from, inspected against and restored over a live encrypted
 /// database file. Plaintext backups from before encryption must still restore.
 /// </summary>
 public sealed class BackupServiceTests : DatabaseTest, IDisposable
@@ -47,7 +47,7 @@ public sealed class BackupServiceTests : DatabaseTest, IDisposable
 
     static CancellationToken Ct => TestContext.Current.CancellationToken;
 
-    /// <summary>A plaintext SpendSense database, as backups were before ADR 0004.</summary>
+    /// <summary>A plaintext SpendSense database, as backups were before ADR 0005.</summary>
     static SpendSenseDbContext OpenPlaintext(string path) =>
         new(new DbContextOptionsBuilder<SpendSenseDbContext>()
             .UseSqlite(new SqliteConnectionStringBuilder { DataSource = path, Pooling = false }.ToString())

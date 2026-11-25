@@ -25,7 +25,7 @@ namespace SpendSense.Tests.Support;
 /// <summary>
 /// bUnit context with the app's services: MudBlazor (JS interop loose, no popover provider needed), settings
 /// on in-memory preferences, and a migrated in-memory SQLite database for components that query. Pass
-/// <c>encryptedDatabase</c> for an encrypted database file keyed like the app's, which backups need (ADR 0004).
+/// <c>encryptedDatabase</c> for an encrypted database file keyed like the app's, which backups need (ADR 0005).
 /// </summary>
 public abstract class ComponentTest : BunitContext
 {

@@ -11,7 +11,7 @@ public static class SpendSenseDbExtensions
     extension(IServiceCollection services)
     {
         /// <summary>
-        /// The encrypted database (ADR 0004): EF over SQLite3 Multiple Ciphers, keyed on every connection by
+        /// The encrypted database (ADR 0005): EF over SQLite3 Multiple Ciphers, keyed on every connection by
         /// <see cref="DatabaseKeyInterceptor"/>. Nothing may query it until <see cref="DatabaseOpener.Open"/> has
         /// loaded the key; <c>DatabaseGate</c> makes the UI wait for that.
         /// </summary>

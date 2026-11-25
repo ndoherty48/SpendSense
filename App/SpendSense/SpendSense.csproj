@@ -49,7 +49,7 @@
         <TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
     </PropertyGroup>
 
-    <!-- The Keychain entitlement (SecureStorage holds the database key, ADR 0004) needs a provisioning profile, so it's
+    <!-- The Keychain entitlement (SecureStorage holds the database key, ADR 0005) needs a provisioning profile, so it's
          only requested when one is configured. Unsigned Debug builds use the base entitlements and a file fallback. -->
     <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst' And '$(CodesignProvision)' != ''">
         <CodesignEntitlements>Platforms\MacCatalyst\Entitlements.Keychain.plist</CodesignEntitlements>

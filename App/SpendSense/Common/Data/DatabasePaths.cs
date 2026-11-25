@@ -10,7 +10,7 @@ public static class DatabasePaths
     /// <summary>Pre-restore safety copies (ADR 0003).</summary>
     public static string SafetyCopies(IFileSystem fileSystem) => Path.Join(Folder(fileSystem), "Backups");
 
-    /// <summary>Databases set aside by "Start fresh" because their key was missing (ADR 0004).</summary>
+    /// <summary>Databases set aside by "Start fresh" because their key was missing (ADR 0005).</summary>
     public static string Locked(IFileSystem fileSystem) => Path.Join(Folder(fileSystem), "Locked");
 
     /// <summary>The database file and its SQLite sidecar files.</summary>

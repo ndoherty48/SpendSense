@@ -1,7 +1,7 @@
 namespace SpendSense.Common.Security;
 
 /// <summary>
-/// Debug builds on Mac Catalyst only (ADR 0004): the Keychain refuses unsigned builds without the
+/// Debug builds on Mac Catalyst only (ADR 0005): the Keychain refuses unsigned builds without the
 /// <c>keychain-access-groups</c> entitlement, so when it fails, secrets go to plain files in
 /// <paramref name="directory"/> instead. Never registered in a Release build.
 /// </summary>

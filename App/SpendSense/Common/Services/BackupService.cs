@@ -27,12 +27,12 @@ public sealed record BackupInfo(
     /// <summary>An encrypted backup this device can't open by itself: ask for its password or recovery code.</summary>
     public static BackupInfo Locked(string? problem = null) => new(false, problem, IsLocked: true);
 
-    /// <summary>The unwrapped key of an encrypted backup; null for a plaintext backup from before ADR 0004.</summary>
+    /// <summary>The unwrapped key of an encrypted backup; null for a plaintext backup from before ADR 0005.</summary>
     internal byte[]? Key { get; init; }
 }
 
 /// <summary>
-/// Backs up the whole database to a file, restores one, and exports transactions as CSV (ADRs 0003 and 0004).
+/// Backs up the whole database to a file, restores one, and exports transactions as CSV (ADRs 0003 and 0005).
 /// A backup is a zip: a manifest, and the database encrypted with the backup's own key, which the backup password
 /// and recovery code unwrap. Files go to the cache directory and are handed to the share sheet; nothing is kept
 /// here long-term.
@@ -115,7 +115,7 @@ public class BackupService(SpendSenseDbContext db, IFileSystem fileSystem, Setti
         if (!File.Exists(path))
             return BackupInfo.Invalid("The file couldn't be read.");
 
-        // A plaintext database: a backup made before encryption (ADR 0004 decision 6).
+        // A plaintext database: a backup made before encryption (ADR 0005 decision 6).
         if (SqliteCipher.IsPlaintext(path))
             return Summarise(path, key: null);
 

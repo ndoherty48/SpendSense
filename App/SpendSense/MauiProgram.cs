@@ -31,7 +31,7 @@ public static class MauiProgram
 		builder.Services.AddSingleton<IFileExchange, MauiFileExchange>();
 		builder.Services.AddSingleton(Clipboard.Default);
 #if WINDOWS
-		// Unpackaged, so SecureStorage has no package identity to use (ADR 0004).
+		// Unpackaged, so SecureStorage has no package identity to use (ADR 0005).
 		builder.Services.AddSingleton<ISecretStore, SpendSense.Platforms.Windows.DpapiSecretStore>();
 #elif MACCATALYST && DEBUG
 		// Unsigned Debug builds can't use the Keychain; fall back to files so `dotnet run` keeps working.

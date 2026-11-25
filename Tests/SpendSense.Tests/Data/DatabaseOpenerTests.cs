@@ -12,7 +12,7 @@ using SpendSense.Tests.TestDoubles;
 
 namespace SpendSense.Tests.Data;
 
-/// <summary>Opening the encrypted database at startup (ADR 0004 decisions 2–4), against real files.</summary>
+/// <summary>Opening the encrypted database at startup (ADR 0005 decisions 2–4), against real files.</summary>
 public sealed class DatabaseOpenerTests : IDisposable
 {
     readonly TempFileSystem files = new();
@@ -40,7 +40,7 @@ public sealed class DatabaseOpenerTests : IDisposable
 
     async Task<byte[]> StoredKey() => (await secrets.Get(DatabaseOpener.DeviceKeyName))!;
 
-    /// <summary>A plaintext database as the app made it before ADR 0004: migrated by EF, in WAL mode.</summary>
+    /// <summary>A plaintext database as the app made it before ADR 0005: migrated by EF, in WAL mode.</summary>
     async Task CreatePlaintextDatabase(string description)
     {
         Directory.CreateDirectory(DatabasePaths.Folder(files));
@@ -189,6 +189,23 @@ public sealed class DatabaseOpenerTests : IDisposable
         Assert.Equal(oldKey, kept);
         Assert.True(SqliteCipher.Opens(Path.Join(locked, "SpendSense.db"), kept));
         Assert.NotEqual(oldKey, await StoredKey());
+    }
+
+    [Fact]
+    public async Task Data_migrated_by_a_newer_version_is_left_untouched()
+    {
+        await Opener.Open();
+        using (var connection = SqliteCipher.Open(DatabasePath, key.Value))
+            SqliteCipher.Execute(connection,
+                "INSERT INTO __EFMigrationsHistory (MigrationId, ProductVersion) VALUES ('29991231000000_FromTheFuture', '11.0.0');");
+        SqliteConnection.ClearAllPools();
+
+        var reopened = new DatabaseKey();
+        Assert.Equal(DatabaseState.NewerVersion, await new DatabaseOpener(secrets, files, reopened).Open());
+
+        Assert.False(reopened.IsLoaded);
+        Assert.NotNull(await secrets.Get(DatabaseOpener.DeviceKeyName));
+        Assert.True(SqliteCipher.Opens(DatabasePath, await StoredKey()));
     }
 
     [Fact]

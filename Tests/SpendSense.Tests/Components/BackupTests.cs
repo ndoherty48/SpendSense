@@ -17,7 +17,7 @@ namespace SpendSense.Tests.Components;
 
 /// <summary>
 /// The backup actions as the user reaches them: Preferences → Data, the backup password page, unlocking a backup
-/// from another device, and the dashboard reminder. The database is a real encrypted file (ADR 0004).
+/// from another device, and the dashboard reminder. The database is a real encrypted file (ADR 0005).
 /// </summary>
 public class BackupTests : ComponentTest
 {

@@ -34,7 +34,7 @@
 - The database is encrypted with SQLite3 Multiple Ciphers, keyed by a device key in secure storage; existing data is encrypted on the first launch after updating
 - Backups are encrypted zips protected by a backup password and a recovery code; old plaintext backups still restore
 - A recovery screen (restore a backup, or start fresh) when the key is missing
-- Design: [ADR 0004](docs/adr/0004-encryption-at-rest.md)
+- Design: [ADR 0005](docs/adr/0005-encryption-at-rest.md)
 - Still to check on devices: iOS, Mac Catalyst (signed, with the Keychain entitlement) and Windows
 
 ### Accounts ✅
@@ -109,7 +109,7 @@
 
 ### Automatic Backups
 - Back up on a schedule to a folder chosen once (Files/iCloud), keeping the last N
-- Builds on the manual backup/restore (ADRs 0003 and 0004); needs the remembered backup keys
+- Builds on the manual backup/restore (ADRs 0003 and 0005); needs the remembered backup keys
 
 ### Filtered CSV Export
 - Export a date range, or filter by category, type or account before exporting

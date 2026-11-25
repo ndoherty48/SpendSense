@@ -4,8 +4,9 @@
 @inject DatabaseOpener Opener
 @inject IServiceProvider Services
 
-@* Nothing touches the database until its key is loaded (ADR 0004 decision 2): this opens it, then shows the app, the
-   recovery screen when the key is missing, or what went wrong. *@
+@* Nothing touches the database until its key is loaded (ADR 0005 decision 2): this opens it, then shows the app, the
+   recovery screen when the key is missing, an update prompt when a newer version migrated the data, or what went
+   wrong. *@
 @switch (phase)
 {
     case Phase.Ready:
@@ -14,6 +15,15 @@
     case Phase.KeyMissing:
         <LayoutView Layout="typeof(Layout.FocusLayout)">
             <Recover OnRecovered="Open" />
+        </LayoutView>
+        break;
+    case Phase.NewerVersion:
+        <LayoutView Layout="typeof(Layout.FocusLayout)">
+            <PageHeader Title="Update SpendSense" />
+            <p role="alert">
+                Your data was last opened by a newer version of SpendSense. Update the app to open it. Nothing has
+                been changed.
+            </p>
         </LayoutView>
         break;
     case Phase.Failed:
@@ -29,7 +39,7 @@
 }
 
 @code {
-    enum Phase { Opening, Ready, KeyMissing, Failed }
+    enum Phase { Opening, Ready, KeyMissing, NewerVersion, Failed }
 
     [Parameter] public RenderFragment? ChildContent { get; set; }
 
@@ -43,10 +53,14 @@
         phase = Phase.Opening;
         try
         {
-            if (await Opener.Open() == DatabaseState.KeyMissing)
+            switch (await Opener.Open())
             {
-                phase = Phase.KeyMissing;
-                return;
+                case DatabaseState.KeyMissing:
+                    phase = Phase.KeyMissing;
+                    return;
+                case DatabaseState.NewerVersion:
+                    phase = Phase.NewerVersion;
+                    return;
             }
         }
         catch (Exception ex)
